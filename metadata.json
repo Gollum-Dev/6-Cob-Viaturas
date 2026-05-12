@@ -1,0 +1,6 @@
+{
+  "name": "Fire Fleet Control",
+  "description": "Sistema profissional de gestão e controle de viaturas para o Corpo de Bombeiros, incluindo checklists diários, manutenção e logs de auditoria.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

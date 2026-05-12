@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter", sans-serif;
+  
+  --color-primary: #af101a;
+  --color-primary-container: #d32f2f;
+  --color-on-primary: #ffffff;
+  
+  --color-secondary: #546067;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #d7e4ec;
+  
+  --color-tertiary: #565858;
+  
+  --color-background: #fff8f7;
+  --color-on-background: #271816;
+  
+  --color-surface: #fff8f7;
+  --color-on-surface: #271816;
+  --color-surface-container: #ffe9e7;
+  --color-surface-container-low: #fff0ef;
+  --color-surface-container-high: #ffe2de;
+  --color-surface-container-highest: #f9dcd9;
+  
+  --color-outline: #8f6f6c;
+  --color-outline-variant: #e4beba;
+  
+  --color-error: #ba1a1a;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-sans antialiased;
+  }
+}
+
+/* Custom class for the specific data-mono style mentioned in design system */
+.font-data-mono {
+  font-family: 'Inter', monospace;
+  font-feature-settings: 'tnum' on, 'lnum' on;
+}
