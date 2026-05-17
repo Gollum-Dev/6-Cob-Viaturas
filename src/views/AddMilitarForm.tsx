@@ -18,7 +18,7 @@ export default function AddMilitarForm() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -33,12 +33,12 @@ export default function AddMilitarForm() {
     }
 
     setIsSubmitting(true);
-    const success = register(password, role, milNumber, rank, name, unit);
+    const success = await register(password, role, milNumber, rank, name, unit);
     
     if (success) {
       navigate('/militares');
     } else {
-      setError('Este Número de Militar já está cadastrado no sistema.');
+      setError('Ocorreu um erro ao cadastrar o militar. Verifique se ele já está cadastrado.');
       setIsSubmitting(false);
     }
   };

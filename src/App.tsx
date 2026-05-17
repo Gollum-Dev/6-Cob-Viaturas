@@ -18,7 +18,19 @@ import EditMilitarForm from './views/EditMilitarForm';
 import { UserRole } from './types';
 
 function AppContent() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
+
+  if (isLoading && !isAuthenticated) {
+    // Show a loading screen while checking initial session or during login
+    return (
+      <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant">Iniciando Sistema...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Login />;

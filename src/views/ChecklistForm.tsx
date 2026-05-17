@@ -23,7 +23,7 @@ const checklistItems = [
 
 export default function ChecklistForm() {
   const navigate = useNavigate();
-  const { vehicles } = useVehicles();
+  const { vehicles, updateVehicle } = useVehicles();
   const { user } = useAuth();
   const { addSubmission } = useReports();
   const [statuses, setStatuses] = useState<Record<number, boolean>>(
@@ -33,6 +33,7 @@ export default function ChecklistForm() {
   const [odometer, setOdometer] = useState<string>('');
   const [selectedPrefix, setSelectedPrefix] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
 
   const toggleStatus = (index: number) => {
     setStatuses(prev => ({ ...prev, [index]: !prev[index] }));
@@ -42,7 +43,7 @@ export default function ChecklistForm() {
     setObservations(prev => ({ ...prev, [index]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPrefix) {
       alert('Selecione uma viatura');
@@ -52,9 +53,29 @@ export default function ChecklistForm() {
       alert('Informe o odômetro');
       return;
     }
+    if (!isDeclarationChecked) {
+      alert('Você deve marcar a caixa de Declaração Operacional para confirmar a veracidade dos dados antes de enviar o checklist.');
+      return;
+    }
 
     const vehicle = vehicles.find(v => v.prefix === selectedPrefix);
     if (!vehicle || !user) return;
+
+    const newOdometer = Number(odometer);
+    const currentOdometer = vehicle.odometer || 0;
+
+    if (newOdometer < currentOdometer) {
+      alert(`Erro: O odômetro informado (${newOdometer} km) não pode ser menor que o odômetro atual da viatura (${currentOdometer} km). Verifique o valor.`);
+      return;
+    }
+
+    if (newOdometer > currentOdometer) {
+      const diff = newOdometer - currentOdometer;
+      const confirmed = window.confirm(`A viatura rodou ${diff} km desde o último registro.\n\nConfirma o novo odômetro de ${newOdometer} km?`);
+      if (!confirmed) {
+        return;
+      }
+    }
 
     setIsSubmitting(true);
 
@@ -66,7 +87,7 @@ export default function ChecklistForm() {
       userName: user.name,
       userRank: user.rank,
       userMilNumber: user.milNumber,
-      odometer: Number(odometer),
+      odometer: newOdometer,
       items: checklistItems.map((item, index) => ({
         description: item,
         status: statuses[index],
@@ -74,13 +95,24 @@ export default function ChecklistForm() {
       }))
     };
 
-    // Simulate network delay
-    setTimeout(() => {
-      addSubmission(submissionData);
-      setIsSubmitting(false);
+    try {
+      await addSubmission(submissionData);
+      
+      // Update vehicle's odometer if it changed
+      if (newOdometer > currentOdometer) {
+         if (updateVehicle) {
+            await updateVehicle(vehicle.id, { odometer: newOdometer });
+         }
+      }
+
       alert('Checklist enviado com sucesso!');
       navigate('/');
-    }, 1000);
+    } catch (err) {
+      alert('Erro ao enviar checklist. Tente novamente.');
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -247,7 +279,10 @@ export default function ChecklistForm() {
               <div className="flex items-center gap-4 bg-surface-container p-4 rounded-lg border border-outline-variant group cursor-pointer hover:border-primary-container transition-all">
                 <input 
                   type="checkbox" 
-                  id="declaration" 
+                  id="declaration"
+                  required
+                  checked={isDeclarationChecked}
+                  onChange={(e) => setIsDeclarationChecked(e.target.checked)}
                   className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary h-5 transition-all"
                 />
                 <label htmlFor="declaration" className="text-[11px] font-black text-on-surface uppercase tracking-wider cursor-pointer">

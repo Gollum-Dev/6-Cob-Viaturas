@@ -10,8 +10,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -21,9 +22,20 @@ export default function Login() {
       return;
     }
 
-    const success = login(milNumber, password);
-    if (!success) {
-      setError('Credenciais inválidas ou usuário não encontrado.');
+    setIsAuthenticating(true);
+    const errorMsg = await login(milNumber, password);
+    setIsAuthenticating(false);
+
+    if (errorMsg) {
+      // Translate common Supabase error messages
+      let displayError = errorMsg;
+      if (errorMsg.includes('Invalid login credentials')) {
+        displayError = 'Credenciais inválidas. Verifique seu número e senha.';
+      } else if (errorMsg.includes('Email not confirmed')) {
+        displayError = 'E-mail não confirmado no banco de dados.';
+      }
+      
+      setError(displayError);
     }
   };
 
@@ -143,9 +155,12 @@ export default function Login() {
 
               <button
                 type="submit"
-                className="w-full bg-primary text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition-all shadow-xl hover:shadow-primary/20 active:scale-[0.98] mt-4 flex items-center justify-center gap-2"
+                disabled={isAuthenticating}
+                className={`w-full bg-primary text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl mt-4 flex items-center justify-center gap-2 ${
+                  isAuthenticating ? 'opacity-70 cursor-not-allowed' : 'hover:bg-black hover:shadow-primary/20 active:scale-[0.98]'
+                }`}
               >
-                Autenticar no Sistema
+                {isAuthenticating ? 'Autenticando...' : 'Autenticar no Sistema'}
                 <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               </button>
             </form>

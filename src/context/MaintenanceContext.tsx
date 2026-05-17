@@ -1,70 +1,108 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { MaintenanceRecord, MaintenanceStatus, MaintenanceType } from '../types';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
 
 interface MaintenanceContextType {
   records: MaintenanceRecord[];
-  addRecord: (record: Omit<MaintenanceRecord, 'id'>) => void;
-  updateRecord: (id: string, updates: Partial<MaintenanceRecord>) => void;
-  deleteRecord: (id: string) => void;
+  isLoading: boolean;
+  addRecord: (record: Omit<MaintenanceRecord, 'id'>) => Promise<void>;
+  updateRecord: (id: string, updates: Partial<MaintenanceRecord>) => Promise<void>;
+  deleteRecord: (id: string) => Promise<void>;
+  refreshRecords: () => Promise<void>;
 }
 
 const MaintenanceContext = createContext<MaintenanceContextType | undefined>(undefined);
 
-const initialRecords: MaintenanceRecord[] = [
-  {
-    id: '1',
-    vehicleId: '1', 
-    type: MaintenanceType.BRAKE_SERVICE,
-    workshop: 'Oficina Central',
-    date: '2023-10-20',
-    odometerAtMaintenance: 45000,
-    status: MaintenanceStatus.IN_PROGRESS,
-    cost: 4250,
-    progress: 65,
-    estimatedDelivery: '2023-10-23'
-  },
-  {
-    id: '2',
-    vehicleId: '2', 
-    type: MaintenanceType.ELECTRICAL,
-    workshop: 'Auto Elétrica Wagner',
-    date: '2023-10-21',
-    odometerAtMaintenance: 32000,
-    status: MaintenanceStatus.IN_PROGRESS,
-    cost: 890,
-    progress: 40,
-    estimatedDelivery: '2023-10-22'
-  }
-];
+function mapRecordFromDB(dbR: any): MaintenanceRecord {
+  return {
+    id: dbR.id,
+    vehicleId: dbR.vehicle_id,
+    type: dbR.type as MaintenanceType,
+    workshop: dbR.workshop,
+    date: dbR.date?.split('T')[0],
+    odometerAtMaintenance: dbR.odometer_at_maintenance,
+    status: dbR.status as MaintenanceStatus,
+    cost: Number(dbR.cost),
+    notes: dbR.notes,
+    progress: dbR.progress,
+    estimatedDelivery: dbR.estimated_delivery?.split('T')[0],
+  };
+}
+
+function mapRecordToDB(r: Partial<MaintenanceRecord>): any {
+  const dbR: any = {};
+  if (r.vehicleId !== undefined) dbR.vehicle_id = r.vehicleId;
+  if (r.type !== undefined) dbR.type = r.type;
+  if (r.workshop !== undefined) dbR.workshop = r.workshop;
+  if (r.date !== undefined) dbR.date = r.date ? new Date(r.date).toISOString() : null;
+  if (r.odometerAtMaintenance !== undefined) dbR.odometer_at_maintenance = r.odometerAtMaintenance;
+  if (r.status !== undefined) dbR.status = r.status;
+  if (r.cost !== undefined) dbR.cost = r.cost;
+  if (r.notes !== undefined) dbR.notes = r.notes;
+  if (r.progress !== undefined) dbR.progress = r.progress;
+  if (r.estimatedDelivery !== undefined) dbR.estimated_delivery = r.estimatedDelivery ? new Date(r.estimatedDelivery).toISOString() : null;
+  return dbR;
+}
 
 export function MaintenanceProvider({ children }: { children: ReactNode }) {
-  const [records, setRecords] = useState<MaintenanceRecord[]>(() => {
-    const saved = localStorage.getItem('fire_fleet_maintenance');
-    return saved ? JSON.parse(saved) : initialRecords;
-  });
+  const [records, setRecords] = useState<MaintenanceRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
+
+  const fetchRecords = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase.from('maintenance_records').select('*').order('created_at', { ascending: false });
+    if (!error && data) {
+      setRecords(data.map(mapRecordFromDB));
+    } else {
+      console.error('Error fetching maintenance records:', error);
+    }
+    setIsLoading(false);
+  };
 
   useEffect(() => {
-    localStorage.setItem('fire_fleet_maintenance', JSON.stringify(records));
-  }, [records]);
+    if (isAuthenticated) {
+      fetchRecords();
+    } else {
+      setRecords([]);
+    }
+  }, [isAuthenticated]);
 
-  const addRecord = (data: Omit<MaintenanceRecord, 'id'>) => {
-    const newRecord: MaintenanceRecord = {
-      ...data,
-      id: crypto.randomUUID(),
-    };
-    setRecords((prev) => [newRecord, ...prev]);
+  const addRecord = async (data: Omit<MaintenanceRecord, 'id'>) => {
+    const dbPayload = mapRecordToDB(data);
+    const { data: inserted, error } = await supabase.from('maintenance_records').insert([dbPayload]).select().single();
+    if (!error && inserted) {
+      setRecords((prev) => [mapRecordFromDB(inserted), ...prev]);
+    } else {
+      console.error('Error adding maintenance record:', error);
+      throw error;
+    }
   };
 
-  const updateRecord = (id: string, updates: Partial<MaintenanceRecord>) => {
-    setRecords((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+  const updateRecord = async (id: string, updates: Partial<MaintenanceRecord>) => {
+    const dbPayload = mapRecordToDB(updates);
+    const { error } = await supabase.from('maintenance_records').update(dbPayload).eq('id', id);
+    if (!error) {
+      setRecords((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+    } else {
+      console.error('Error updating maintenance record:', error);
+      throw error;
+    }
   };
 
-  const deleteRecord = (id: string) => {
-    setRecords((prev) => prev.filter((r) => r.id !== id));
+  const deleteRecord = async (id: string) => {
+    const { error } = await supabase.from('maintenance_records').delete().eq('id', id);
+    if (!error) {
+      setRecords((prev) => prev.filter((r) => r.id !== id));
+    } else {
+      console.error('Error deleting maintenance record:', error);
+      throw error;
+    }
   };
 
   return (
-    <MaintenanceContext.Provider value={{ records, addRecord, updateRecord, deleteRecord }}>
+    <MaintenanceContext.Provider value={{ records, isLoading, addRecord, updateRecord, deleteRecord, refreshRecords: fetchRecords }}>
       {children}
     </MaintenanceContext.Provider>
   );

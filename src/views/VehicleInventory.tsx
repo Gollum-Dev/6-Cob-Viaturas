@@ -163,13 +163,13 @@ export default function VehicleInventory() {
           <table className="w-full text-left">
             <thead className="bg-surface-container-low/50 text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] border-b border-outline-variant">
               <tr>
-                <th className="px-8 py-5 min-w-[220px]">Prefixo</th>
-                <th className="px-8 py-5">Placa</th>
-                <th className="px-8 py-5 min-w-[180px]">Unidade</th>
+                <th className="px-4 py-5 min-w-[160px]">Prefixo</th>
+                <th className="px-4 py-5">Placa</th>
+                <th className="px-4 py-5 min-w-[140px]">Unidade</th>
                 <th className="px-4 py-5">Tipo</th>
                 <th className="px-4 py-5 text-center">Status</th>
-                <th className="px-8 py-5">Odômetro</th>
-                <th className="px-8 py-5 text-center">Ações</th>
+                <th className="px-4 py-5">Odômetro</th>
+                <th className="px-4 py-5 text-center">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/30">
@@ -177,7 +177,7 @@ export default function VehicleInventory() {
                 const statusInfo = getStatusInfo(v.status);
                 return (
                   <tr key={v.id} className="hover:bg-surface-container-low/30 transition-colors group">
-                    <td className="px-8 py-6 min-w-[220px]">
+                    <td className="px-4 py-6 min-w-[160px]">
                        <div className="flex items-center gap-4">
                          <div className="w-12 h-12 rounded-2xl bg-surface-container-high border border-outline-variant overflow-hidden flex-shrink-0 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
                            {v.imageUrl ? (
@@ -189,10 +189,10 @@ export default function VehicleInventory() {
                          <span className="font-black text-on-surface tracking-tight uppercase leading-none">{v.prefix}</span>
                        </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 py-6">
                       <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">{v.plate}</span>
                     </td>
-                    <td className="px-8 py-6 min-w-[180px]">
+                    <td className="px-4 py-6 min-w-[140px]">
                        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-70">
                           {v.unit}
                        </span>
@@ -207,13 +207,13 @@ export default function VehicleInventory() {
                         {statusInfo.label}
                       </span>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 py-6">
                       <div className="flex items-baseline gap-1">
                         <span className="font-black text-on-surface tracking-tight">{v.odometer.toLocaleString()}</span>
                         <span className="text-[8px] font-black text-on-surface-variant uppercase opacity-50">KM</span>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 py-6">
                       <div className="flex justify-center gap-2">
                           <button 
                             onClick={() => navigate(`/viaturas/editar/${v.id}`)}

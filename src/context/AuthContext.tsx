@@ -1,147 +1,276 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
+import { supabase } from '../lib/supabase';
 
-interface RegisteredUser extends User {
-  password: string;
-}
-
+// We map registered users locally for the UI (like a user management screen) if needed,
+// but for true security, fetching users should happen on the backend or via RLS policies.
 interface AuthContextType {
   user: User | null;
-  registeredUsers: RegisteredUser[];
-  login: (milNumber: string, password: string) => boolean;
-  register: (password: string, role: UserRole, milNumber: string, rank: string, name: string, unit: string) => boolean;
-  updateUser: (id: string, updates: Partial<RegisteredUser>) => void;
-  deleteUser: (id: string) => void;
-  logout: () => void;
+  registeredUsers: User[]; // keeping this for compatibility with other views if they need it
+  login: (milNumber: string, password: string) => Promise<string | null>;
+  register: (password: string, role: UserRole, milNumber: string, rank: string, name: string, unit: string) => Promise<boolean>;
+  updateUser: (id: string, updates: Partial<User>) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('fleet_user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-
-  const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>(() => {
-    const saved = localStorage.getItem('fleet_registered_users');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('fleet_registered_users', JSON.stringify(registeredUsers));
-  }, [registeredUsers]);
+    let mounted = true;
 
+    // Failsafe: force loading to false after 5 seconds no matter what
+    const failsafe = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000);
+
+    const fetchProfile = async (userId: string) => {
+      const fetchPromise = supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout fetching profile')), 5000)
+      );
+      
+      try {
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        return { data, error };
+      } catch (err: any) {
+        return { data: null, error: err };
+      }
+    };
+
+    async function getInitialSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user && mounted) {
+          const { data: profile, error } = await fetchProfile(session.user.id);
+
+          if (profile && mounted) {
+            setUser({
+              id: profile.id,
+              role: profile.role as UserRole,
+              milNumber: profile.mil_number,
+              rank: profile.rank,
+              name: profile.name,
+              unit: profile.unit,
+            });
+          } else if (error) {
+            console.error('Failed to fetch profile during initial session, but preserving session:', error);
+            // We do NOT setUser(null) here because a transient network error shouldn't log the user out.
+          }
+        }
+      } catch (err) {
+        console.error("Error getting initial session:", err);
+      } finally {
+        if (mounted) setIsLoading(false);
+        clearTimeout(failsafe);
+      }
+    }
+
+    getInitialSession();
+
+    // Listen to Supabase auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('>>> [AUTH] onAuthStateChange event:', event, 'Session exists:', !!session);
+      
+      if (event === 'INITIAL_SESSION') return; // Handled by getInitialSession
+
+      // Only fetch profile if this is a new sign in
+      if (session?.user && mounted && event === 'SIGNED_IN') {
+        console.log('>>> [AUTH] Fetching profile for event:', event);
+        if (mounted) setIsLoading(true);
+
+        const { data: profile, error } = await fetchProfile(session.user.id);
+
+        console.log('>>> [AUTH] Profile fetch from listener returned!', { profile, error });
+
+        if (profile && mounted) {
+          console.log('>>> [AUTH] Profile found in listener. Calling setUser...');
+          setUser({
+            id: profile.id,
+            role: profile.role as UserRole,
+            milNumber: profile.mil_number,
+            rank: profile.rank,
+            name: profile.name,
+            unit: profile.unit,
+          });
+        } else if (error && mounted) {
+           console.error('Failed to fetch profile in onAuthStateChange:', error);
+           // Do not setUser(null) here! Keep whatever session state we have.
+        }
+      } else if (!session && mounted) {
+        console.log('>>> [AUTH] No session user, setting user to null');
+        setUser(null);
+      }
+      if (mounted) setIsLoading(false);
+      console.log('>>> [AUTH] onAuthStateChange listener finished');
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      clearTimeout(failsafe);
+    };
+  }, []);
+
+  // Fetch all users for admin management if needed
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('fleet_user', JSON.stringify(user));
+    if (user?.role === UserRole.ADMINISTRADOR) {
+      const fetchUsers = async () => {
+        const { data } = await supabase.from('users').select('*');
+        if (data) {
+          setRegisteredUsers(data.map(u => ({
+            id: u.id,
+            role: u.role as UserRole,
+            milNumber: u.mil_number,
+            rank: u.rank,
+            name: u.name,
+            unit: u.unit,
+          })));
+        }
+      };
+      fetchUsers();
     } else {
-      localStorage.removeItem('fleet_user');
+      setRegisteredUsers([]);
     }
   }, [user]);
 
-  const login = (milNumber: string, password: string) => {
-    // Check registered users first
-    const foundUser = registeredUsers.find(
-      u => u.milNumber === milNumber && u.password === password
-    );
+  const milNumberToEmail = (milNumber: string) => `mil${milNumber}@cbmmg.mg.gov.br`;
 
-    if (foundUser) {
-      const { password: _, ...userSession } = foundUser;
-      setUser(userSession);
-      return true;
-    }
-
-    // Default password logic for military access
-    if (password === 'transporte123' && milNumber === '1000000') {
-      const transportUser: RegisteredUser = {
-        id: 'user-transporte',
-        password: password,
-        milNumber: milNumber,
-        role: UserRole.ADMINISTRADOR,
-        rank: 'Administrador',
-        name: 'Administrador do Sistema',
-        unit: 'POUSO ALEGRE',
-      };
+  const login = async (milNumber: string, password: string): Promise<string | null> => {
+    try {
+      console.log('>>> [AUTH] Starting login for milNumber:', milNumber);
       
-      const { password: _, ...userSession } = transportUser;
-      setUser(userSession);
-      return true;
-    }
-
-    if (password === '123456' && /^\d{7}$/.test(milNumber)) {
-      const newUser: RegisteredUser = {
-        id: Math.random().toString(36).substr(2, 9),
-        password: password,
-        milNumber: milNumber,
-        role: UserRole.OPERACIONAL, // Default role
-        rank: 'Praça',
-        name: `Militar ${milNumber}`,
-        unit: 'ITAJUBA',
-      };
-
-      setRegisteredUsers(prev => [...prev, newUser]);
+      console.log('>>> [AUTH] Calling supabase.auth.signInWithPassword...');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: milNumberToEmail(milNumber),
+        password,
+      });
       
-      const { password: _, ...userSession } = newUser;
-      setUser(userSession);
-      return true;
-    }
+      console.log('>>> [AUTH] signInWithPassword returned!', { data, error });
+      
+      if (error) return error.message;
+      if (!data?.user) return 'Erro desconhecido ao autenticar.';
 
-    return false;
+      console.log('>>> [AUTH] Fetching user profile from users table for id:', data.user.id);
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      console.log('>>> [AUTH] Profile fetch returned!', { profile, profileError });
+
+      if (profile) {
+        console.log('>>> [AUTH] Profile found. Calling setUser...');
+        setUser({
+          id: profile.id,
+          role: profile.role as UserRole,
+          milNumber: profile.mil_number,
+          rank: profile.rank,
+          name: profile.name,
+          unit: profile.unit,
+        });
+        return null; // Null means success
+      } else {
+        console.error("Profile not found after login", profileError);
+        return 'Perfil de usuário não encontrado no banco de dados.';
+      }
+    } catch (err: any) {
+      console.error(err);
+      return err.message || 'Erro inesperado.';
+    }
   };
 
-  const register = (password: string, role: UserRole, milNumber: string, rank: string, name: string, unit: string) => {
-    if (registeredUsers.some(u => u.milNumber === milNumber)) {
-      return false; // User already exists
-    }
+  const register = async (password: string, role: UserRole, milNumber: string, rank: string, name: string, unit: string) => {
+    try {
+      const { data, error } = await supabase.rpc('create_military_user', {
+        p_mil_number: milNumber,
+        p_password: password,
+        p_role: role,
+        p_rank: rank,
+        p_name: name,
+        p_unit: unit
+      });
 
-    const newUser: RegisteredUser = {
-      id: Math.random().toString(36).substr(2, 9),
-      password,
-      role,
-      milNumber,
-      rank,
-      name,
-      unit,
+      if (error) {
+        console.error('Registration failed via RPC:', error);
+        return false;
+      }
+
+      // Atualiza a lista local de usuários se for administrador
+      if (user?.role === UserRole.ADMINISTRADOR) {
+        setRegisteredUsers(prev => [...prev, {
+          id: data,
+          role,
+          milNumber,
+          rank,
+          name,
+          unit,
+        }]);
+      }
+
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const updateUser = async (id: string, updates: Partial<User>) => {
+    const dbUpdates = {
+      ...(updates.role && { role: updates.role }),
+      ...(updates.milNumber && { mil_number: updates.milNumber }),
+      ...(updates.rank && { rank: updates.rank }),
+      ...(updates.name && { name: updates.name }),
+      ...(updates.unit && { unit: updates.unit }),
     };
 
-    setRegisteredUsers(prev => [...prev, newUser]);
-    return true;
-  };
-
-  const updateUser = (id: string, updates: Partial<RegisteredUser>) => {
-    setRegisteredUsers(prev => {
-      const updated = prev.map(u => u.id === id ? { ...u, ...updates } : u);
-      
-      // Sync session if current user is updated
-      if (user && user.id === id) {
-        const updatedUser = updated.find(u => u.id === id);
-        if (updatedUser) {
-          const { password: _, ...userSession } = updatedUser;
-          setUser(userSession);
-        }
+    const { error } = await supabase.from('users').update(dbUpdates).eq('id', id);
+    if (!error) {
+      // Update local state for fast UI refresh
+      setRegisteredUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
+      if (user?.id === id) {
+        setUser(prev => prev ? { ...prev, ...updates } : null);
       }
-      
-      return updated;
-    });
-  };
-
-  const deleteUser = (id: string) => {
-    setRegisteredUsers(currentUsers => {
-      const updatedUsers = currentUsers.filter(u => u.id !== id);
-      // Immediately sync with localStorage as an extra precaution
-      localStorage.setItem('fleet_registered_users', JSON.stringify(updatedUsers));
-      return updatedUsers;
-    });
-    
-    // If current user is deleted, logout
-    if (user && user.id === id) {
-      logout();
+    } else {
+      console.error('Update failed', error);
     }
   };
 
-  const logout = () => {
+  const deleteUser = async (id: string) => {
+    try {
+      // Use RPC to securely delete from both public.users and auth.users
+      const { error } = await supabase.rpc('delete_military_user', {
+        p_user_id: id
+      });
+
+      if (!error) {
+        setRegisteredUsers(prev => prev.filter(u => u.id !== id));
+        if (user?.id === id) {
+          await logout();
+        }
+      } else {
+        console.error('Delete failed via RPC:', error);
+      }
+    } catch (err) {
+      console.error('Unexpected error during delete:', err);
+    }
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 
@@ -156,7 +285,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updateUser,
       deleteUser, 
       logout, 
-      isAuthenticated 
+      isAuthenticated,
+      isLoading
     }}>
       {children}
     </AuthContext.Provider>

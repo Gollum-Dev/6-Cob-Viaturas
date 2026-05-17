@@ -1,51 +1,115 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Vehicle, VehicleStatus } from '../types';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
 
 interface VehicleContextType {
   vehicles: Vehicle[];
-  addVehicle: (vehicle: Omit<Vehicle, 'id'>) => void;
-  updateVehicle: (id: string, vehicle: Partial<Vehicle>) => void;
-  deleteVehicle: (id: string) => void;
+  isLoading: boolean;
+  addVehicle: (vehicle: Omit<Vehicle, 'id'>) => Promise<void>;
+  updateVehicle: (id: string, vehicle: Partial<Vehicle>) => Promise<void>;
+  deleteVehicle: (id: string) => Promise<void>;
   getVehicle: (id: string) => Vehicle | undefined;
+  refreshVehicles: () => Promise<void>;
 }
 
 const VehicleContext = createContext<VehicleContextType | undefined>(undefined);
 
-// Dados iniciais para demonstração caso o localStorage esteja vazio
-const initialVehicles: Vehicle[] = [
-  { id: '1', prefix: 'AB-1024', plate: 'BRA2E24', type: 'SALVAMENTO', unit: 'ITAJUBA', status: VehicleStatus.AVAILABLE, odometer: 45230, lastOilChangeDate: '2024-03-10', lastOilChangeOdometer: 44000, tireValidityDate: '2026-12-30' },
-  { id: '2', prefix: 'AS-2001', plate: 'KLO9J12', type: 'SOCORRO', unit: 'POUSO ALEGRE', status: VehicleStatus.DOWN, odometer: 128910, lastOilChangeDate: '2024-01-15', lastOilChangeOdometer: 125000, tireValidityDate: '2025-06-15' },
-  { id: '3', prefix: 'UC-0045', plate: 'MPR4F88', type: 'ADMINISTRATIVO', unit: 'EXTREMA', status: VehicleStatus.DISCHARGE_AVAILABLE, odometer: 12102, lastOilChangeDate: '2023-05-20', lastOilChangeOdometer: 10000, tireValidityDate: '2027-01-01' },
-  { id: '4', prefix: 'UR-1209', plate: 'PYX8G32', type: 'RESGATE', unit: 'PARAISOPOLIS', status: VehicleStatus.DISCHARGE_PROCESS, odometer: 88400, lastOilChangeDate: '2024-02-12', lastOilChangeOdometer: 85000, tireValidityDate: '2026-08-20' },
-  { id: '5', prefix: 'AP-0504', plate: 'HGB2S11', type: 'APOIO', unit: 'ITAJUBA', status: VehicleStatus.AVAILABLE, odometer: 33210, lastOilChangeDate: '2024-04-05', lastOilChangeOdometer: 32000, tireValidityDate: '2025-11-10' },
-];
+// Helper function to map DB to React
+function mapVehicleFromDB(dbV: any): Vehicle {
+  return {
+    id: dbV.id,
+    prefix: dbV.prefix,
+    plate: dbV.plate,
+    type: dbV.type,
+    unit: dbV.unit,
+    status: dbV.status as VehicleStatus,
+    odometer: dbV.odometer,
+    lastOilChangeDate: dbV.last_oil_change_date?.split('T')[0],
+    lastOilChangeOdometer: dbV.last_oil_change_odometer,
+    nextOilChangeDate: dbV.next_oil_change_date?.split('T')[0],
+    tireValidityDate: dbV.tire_validity_date?.split('T')[0],
+    lastMaintenance: dbV.last_maintenance?.split('T')[0],
+    imageUrl: dbV.image_url,
+  };
+}
+
+// Helper to map React to DB
+function mapVehicleToDB(v: Partial<Vehicle>): any {
+  const dbV: any = {};
+  if (v.prefix !== undefined) dbV.prefix = v.prefix;
+  if (v.plate !== undefined) dbV.plate = v.plate;
+  if (v.type !== undefined) dbV.type = v.type;
+  if (v.unit !== undefined) dbV.unit = v.unit;
+  if (v.status !== undefined) dbV.status = v.status;
+  if (v.odometer !== undefined) dbV.odometer = v.odometer;
+  
+  if (v.lastOilChangeDate !== undefined) dbV.last_oil_change_date = v.lastOilChangeDate ? new Date(v.lastOilChangeDate).toISOString() : null;
+  if (v.lastOilChangeOdometer !== undefined) dbV.last_oil_change_odometer = v.lastOilChangeOdometer;
+  if (v.nextOilChangeDate !== undefined) dbV.next_oil_change_date = v.nextOilChangeDate ? new Date(v.nextOilChangeDate).toISOString() : null;
+  if (v.tireValidityDate !== undefined) dbV.tire_validity_date = v.tireValidityDate ? new Date(v.tireValidityDate).toISOString() : null;
+  if (v.lastMaintenance !== undefined) dbV.last_maintenance = v.lastMaintenance ? new Date(v.lastMaintenance).toISOString() : null;
+  if (v.imageUrl !== undefined) dbV.image_url = v.imageUrl;
+
+  return dbV;
+}
 
 export function VehicleProvider({ children }: { children: ReactNode }) {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
-    const saved = localStorage.getItem('fire_fleet_vehicles');
-    return saved ? JSON.parse(saved) : initialVehicles;
-  });
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
+
+  const fetchVehicles = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false });
+    if (!error && data) {
+      setVehicles(data.map(mapVehicleFromDB));
+    } else {
+      console.error('Error fetching vehicles:', error);
+    }
+    setIsLoading(false);
+  };
 
   useEffect(() => {
-    localStorage.setItem('fire_fleet_vehicles', JSON.stringify(vehicles));
-  }, [vehicles]);
+    if (isAuthenticated) {
+      fetchVehicles();
+    } else {
+      setVehicles([]);
+    }
+  }, [isAuthenticated]);
 
-  const addVehicle = (vehicleData: Omit<Vehicle, 'id'>) => {
-    const newVehicle: Vehicle = {
-      ...vehicleData,
-      id: crypto.randomUUID(),
-    };
-    setVehicles((prev) => [...prev, newVehicle]);
+  const addVehicle = async (vehicleData: Omit<Vehicle, 'id'>) => {
+    const dbPayload = mapVehicleToDB(vehicleData);
+    const { data, error } = await supabase.from('vehicles').insert([dbPayload]).select().single();
+    if (!error && data) {
+      setVehicles((prev) => [mapVehicleFromDB(data), ...prev]);
+    } else {
+      console.error('Error adding vehicle:', error);
+      throw error;
+    }
   };
 
-  const updateVehicle = (id: string, vehicleData: Partial<Vehicle>) => {
-    setVehicles((prev) => 
-      prev.map((v) => (v.id === id ? { ...v, ...vehicleData } : v))
-    );
+  const updateVehicle = async (id: string, vehicleData: Partial<Vehicle>) => {
+    const dbPayload = mapVehicleToDB(vehicleData);
+    const { error } = await supabase.from('vehicles').update(dbPayload).eq('id', id);
+    if (!error) {
+      setVehicles((prev) => 
+        prev.map((v) => (v.id === id ? { ...v, ...vehicleData } : v))
+      );
+    } else {
+      console.error('Error updating vehicle:', error);
+      throw error;
+    }
   };
 
-  const deleteVehicle = (id: string) => {
-    setVehicles((prev) => prev.filter((v) => v.id !== id));
+  const deleteVehicle = async (id: string) => {
+    const { error } = await supabase.from('vehicles').delete().eq('id', id);
+    if (!error) {
+      setVehicles((prev) => prev.filter((v) => v.id !== id));
+    } else {
+      console.error('Error deleting vehicle:', error);
+      throw error;
+    }
   };
 
   const getVehicle = (id: string) => {
@@ -55,10 +119,12 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
   return (
     <VehicleContext.Provider value={{ 
       vehicles, 
+      isLoading,
       addVehicle, 
       updateVehicle, 
       deleteVehicle, 
-      getVehicle 
+      getVehicle,
+      refreshVehicles: fetchVehicles
     }}>
       {children}
     </VehicleContext.Provider>

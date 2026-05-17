@@ -33,7 +33,7 @@ export default function EditMilitarForm() {
     }
   }, [id, registeredUsers, navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -42,7 +42,7 @@ export default function EditMilitarForm() {
       return;
     }
 
-    if (!rank || !password || !name) {
+    if (!rank || !name) {
       setError('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
@@ -59,7 +59,7 @@ export default function EditMilitarForm() {
         }
     }
 
-    updateUser(id!, {
+    await updateUser(id!, {
       password,
       role,
       milNumber,
