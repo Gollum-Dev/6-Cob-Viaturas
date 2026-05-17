@@ -11,6 +11,22 @@ const OIL_CHANGE_THRESHOLD = 10000;
 const TIRE_ROTATION_THRESHOLD = 10000;
 const TIRE_REPLACEMENT_THRESHOLD = 40000;
 
+const getKeyword = (description: string): string => {
+  const desc = description.toUpperCase();
+  if (desc.includes("LUZES INTERIORES")) return "Luzes";
+  if (desc.includes("BUZINA")) return "Buzina";
+  if (desc.includes("SIRENE") || desc.includes("FÁDÓ") || desc.includes("FADO")) return "Sirene/Fádó";
+  if (desc.includes("PAINEL")) return "Painel";
+  if (desc.includes("PALHETA")) return "Palhetas";
+  if (desc.includes("PARA-BRISA") || desc.includes("PARABRISA")) return "Para-brisa";
+  if (desc.includes("SISTEMA DE LIMPADOR")) return "Limpadores";
+  if (desc.includes("PNEUS")) return "Pneus";
+  if (desc.includes("ARREFECIMENTO") || desc.includes("RADIADOR")) return "Arrefecimento";
+  if (desc.includes("ÓLEO DO MOTOR") || desc.includes("OLEO DO MOTOR")) return "Óleo do Motor";
+  if (desc.includes("COMBUSTÍVEL") || desc.includes("COMBUSTIVEL")) return "Combustível";
+  return description.length > 20 ? description.substring(0, 17) + "..." : description;
+};
+
 export default function MaintenanceControl() {
   const { vehicles } = useVehicles();
   const { records, addRecord, updateRecord } = useMaintenance();
@@ -552,7 +568,7 @@ export default function MaintenanceControl() {
                         </td>
                         <td className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase">{issue.userName}</td>
                         <td className="px-6 py-4">
-                          <span className="text-xs font-bold text-error uppercase tracking-tight">{issue.item}</span>
+                          <span className="text-xs font-bold text-error uppercase tracking-tight">{getKeyword(issue.item)}</span>
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-xs text-on-surface-variant font-medium leading-relaxed max-w-xs">{issue.observation}</p>
