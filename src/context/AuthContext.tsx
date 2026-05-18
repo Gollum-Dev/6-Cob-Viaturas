@@ -124,26 +124,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Fetch all users for admin management if needed
+  // Fetch all users for admin or unit management if needed
   useEffect(() => {
-    if (user?.role === UserRole.ADMINISTRADOR) {
-      const fetchUsers = async () => {
-        const { data } = await supabase.from('users').select('*');
-        if (data) {
-          setRegisteredUsers(data.map(u => ({
-            id: u.id,
-            role: u.role as UserRole,
-            milNumber: u.mil_number,
-            rank: u.rank,
-            name: u.name,
-            unit: u.unit,
-          })));
-        }
-      };
-      fetchUsers();
-    } else {
+    if (!user) {
       setRegisteredUsers([]);
+      return;
     }
+
+    const fetchUsers = async () => {
+      let query = supabase.from('users').select('*');
+      
+      // If not ADMINISTRADOR, filter by their own unit
+      if (user.role !== UserRole.ADMINISTRADOR) {
+        query = query.eq('unit', user.unit);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) {
+        setRegisteredUsers(data.map(u => ({
+          id: u.id,
+          role: u.role as UserRole,
+          milNumber: u.mil_number,
+          rank: u.rank,
+          name: u.name,
+          unit: u.unit,
+        })));
+      } else if (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+
+    fetchUsers();
   }, [user]);
 
   const milNumberToEmail = (milNumber: string) => `mil${milNumber}@cbmmg.mg.gov.br`;

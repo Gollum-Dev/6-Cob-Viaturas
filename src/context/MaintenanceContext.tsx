@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { MaintenanceRecord, MaintenanceStatus, MaintenanceType } from '../types';
+import { MaintenanceRecord, MaintenanceStatus, MaintenanceType, UserRole } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { useVehicles } from './VehicleContext';
 
 interface MaintenanceContextType {
   records: MaintenanceRecord[];
@@ -48,13 +49,23 @@ function mapRecordToDB(r: Partial<MaintenanceRecord>): any {
 export function MaintenanceProvider({ children }: { children: ReactNode }) {
   const [records, setRecords] = useState<MaintenanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { vehicles } = useVehicles();
 
   const fetchRecords = async () => {
+    if (!user) return;
     setIsLoading(true);
     const { data, error } = await supabase.from('maintenance_records').select('*').order('created_at', { ascending: false });
     if (!error && data) {
-      setRecords(data.map(mapRecordFromDB));
+      let mapped = data.map(mapRecordFromDB);
+      
+      // If not ADMINISTRADOR, filter by allowed vehicles of this unit
+      if (user.role !== UserRole.ADMINISTRADOR) {
+        const allowedVehicleIds = new Set(vehicles.map(v => v.id));
+        mapped = mapped.filter(rec => allowedVehicleIds.has(rec.vehicleId));
+      }
+      
+      setRecords(mapped);
     } else {
       console.error('Error fetching maintenance records:', error);
     }
@@ -62,12 +73,12 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       fetchRecords();
     } else {
       setRecords([]);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user, vehicles]);
 
   const addRecord = async (data: Omit<MaintenanceRecord, 'id'>) => {
     const dbPayload = mapRecordToDB(data);

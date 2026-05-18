@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Vehicle, VehicleStatus } from '../types';
+import { Vehicle, VehicleStatus, UserRole } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -57,11 +57,19 @@ function mapVehicleToDB(v: Partial<Vehicle>): any {
 export function VehicleProvider({ children }: { children: ReactNode }) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const fetchVehicles = async () => {
+    if (!user) return;
     setIsLoading(true);
-    const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('vehicles').select('*');
+    
+    // Only filter by unit if the user is NOT an ADMINISTRADOR
+    if (user.role !== UserRole.ADMINISTRADOR) {
+      query = query.eq('unit', user.unit);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
     if (!error && data) {
       setVehicles(data.map(mapVehicleFromDB));
     } else {
@@ -71,12 +79,12 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       fetchVehicles();
     } else {
       setVehicles([]);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const addVehicle = async (vehicleData: Omit<Vehicle, 'id'>) => {
     const dbPayload = mapVehicleToDB(vehicleData);

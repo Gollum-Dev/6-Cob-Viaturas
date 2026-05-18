@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ChecklistSubmission } from '../types';
+import { ChecklistSubmission, UserRole } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { useVehicles } from './VehicleContext';
 
 interface ReportContextType {
   submissions: ChecklistSubmission[];
@@ -33,8 +34,10 @@ export function ReportProvider({ children }: { children: ReactNode }) {
   const [submissions, setSubmissions] = useState<ChecklistSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isAuthenticated, user } = useAuth();
+  const { vehicles } = useVehicles();
 
   const fetchSubmissions = async () => {
+    if (!user) return;
     setIsLoading(true);
     const { data, error } = await supabase
       .from('checklists')
@@ -42,7 +45,15 @@ export function ReportProvider({ children }: { children: ReactNode }) {
       .order('created_at', { ascending: false });
     
     if (!error && data) {
-      setSubmissions(data.map(mapSubmissionFromDB));
+      let mapped = data.map(mapSubmissionFromDB);
+      
+      // If not ADMINISTRADOR, filter by allowed vehicles of this unit
+      if (user.role !== UserRole.ADMINISTRADOR) {
+        const allowedVehicleIds = new Set(vehicles.map(v => v.id));
+        mapped = mapped.filter(sub => allowedVehicleIds.has(sub.vehicleId));
+      }
+      
+      setSubmissions(mapped);
     } else {
       console.error('Error fetching checklists:', error);
     }
@@ -50,12 +61,12 @@ export function ReportProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       fetchSubmissions();
     } else {
       setSubmissions([]);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user, vehicles]);
 
   const addSubmission = async (data: Omit<ChecklistSubmission, 'id' | 'timestamp'>) => {
     if (!user) throw new Error("Usuário não autenticado");

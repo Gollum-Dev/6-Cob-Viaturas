@@ -2,17 +2,19 @@ import { Car, Save, ArrowLeft, Camera, Shield, Gauge, Hash, Zap, Settings, Dropl
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVehicles } from '../context/VehicleContext';
-import { VehicleStatus } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { VehicleStatus, UserRole } from '../types';
 
 export default function AddVehicleForm() {
   const navigate = useNavigate();
   const { addVehicle } = useVehicles();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     prefix: '',
     plate: '',
     type: 'SALVAMENTO',
-    unit: 'ITAJUBA',
+    unit: user?.role === UserRole.ADMINISTRADOR ? 'ITAJUBA' : user?.unit || 'ITAJUBA',
     odometer: 0,
     lastOilChangeDate: '',
     nextOilChangeDate: '',
@@ -120,7 +122,8 @@ export default function AddVehicleForm() {
                   <select 
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none"
+                    disabled={user?.role !== UserRole.ADMINISTRADOR}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none disabled:opacity-75 disabled:cursor-not-allowed"
                     required
                   >
                     <option value="ITAJUBA">ITAJUBA</option>

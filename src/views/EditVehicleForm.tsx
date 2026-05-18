@@ -2,13 +2,15 @@ import { Car, Save, ArrowLeft, Camera, Shield, Gauge, Hash, Zap, Trash2, Setting
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useVehicles } from '../context/VehicleContext';
-import { VehicleStatus } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { VehicleStatus, UserRole } from '../types';
 import { cn } from '../lib/utils';
 
 export default function EditVehicleForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getVehicle, updateVehicle, deleteVehicle } = useVehicles();
+  const { user } = useAuth();
   
   const [formData, setFormData] = useState({
     prefix: '',
@@ -183,7 +185,8 @@ export default function EditVehicleForm() {
                   <select 
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none"
+                    disabled={user?.role !== UserRole.ADMINISTRADOR}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none disabled:opacity-75 disabled:cursor-not-allowed"
                     required
                   >
                     <option value="ITAJUBA">ITAJUBA</option>

@@ -6,14 +6,14 @@ import { UserPlus, Award, Shield, Lock, ArrowLeft, Save, AlertTriangle, User, Ma
 import { motion } from 'motion/react';
 
 export default function AddMilitarForm() {
-  const { register } = useAuth();
+  const { register, user: currentUser } = useAuth();
   const navigate = useNavigate();
   
   const [milNumber, setMilNumber] = useState('');
   const [name, setName] = useState('');
   const [rank, setRank] = useState('Sd');
   const [role, setRole] = useState<UserRole>(UserRole.OPERACIONAL);
-  const [unit, setUnit] = useState('POUSO ALEGRE');
+  const [unit, setUnit] = useState(currentUser?.role === UserRole.ADMINISTRADOR ? 'POUSO ALEGRE' : currentUser?.unit || 'POUSO ALEGRE');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -150,7 +150,9 @@ export default function AddMilitarForm() {
                     onChange={(e) => setRole(e.target.value as UserRole)}
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner appearance-none cursor-pointer"
                   >
-                    <option value={UserRole.ADMINISTRADOR}>ADMINISTRADOR</option>
+                    {currentUser?.role === UserRole.ADMINISTRADOR && (
+                      <option value={UserRole.ADMINISTRADOR}>ADMINISTRADOR</option>
+                    )}
                     <option value={UserRole.CIA_OP}>CIA OP</option>
                     <option value={UserRole.CBU}>CBU</option>
                     <option value={UserRole.OPERACIONAL}>OPERACIONAL</option>
@@ -165,11 +167,13 @@ export default function AddMilitarForm() {
                   <select
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner appearance-none cursor-pointer"
+                    disabled={currentUser?.role !== UserRole.ADMINISTRADOR}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner appearance-none cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
                   >
                     <option value="POUSO ALEGRE">POUSO ALEGRE</option>
                     <option value="ITAJUBA">ITAJUBA</option>
                     <option value="EXTREMA">EXTREMA</option>
+                    <option value="PARAISOPOLIS">PARAISOPOLIS</option>
                   </select>
                 </div>
 
