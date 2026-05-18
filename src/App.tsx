@@ -39,6 +39,7 @@ function AppContent() {
   }
 
   const isOperacional = user?.role === UserRole.OPERACIONAL;
+  const canAccessMaintenanceAndRevisions = user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.CIA_OP;
 
   return (
     <Router>
@@ -61,8 +62,12 @@ function AppContent() {
               <Route path="militares/novo" element={<AddMilitarForm />} />
               <Route path="militares/editar/:id" element={<EditMilitarForm />} />
               <Route path="checklist" element={<ChecklistForm />} />
-              <Route path="manutencao" element={<MaintenanceControl />} />
-              <Route path="revisoes" element={<RevisionsControl />} />
+              {canAccessMaintenanceAndRevisions && (
+                <>
+                  <Route path="manutencao" element={<MaintenanceControl />} />
+                  <Route path="revisoes" element={<RevisionsControl />} />
+                </>
+              )}
               <Route path="relatorios" element={<AuditLogs />} />
               <Route path="configuracoes" element={<SettingsView />} />
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -14,8 +14,8 @@ const navItems = [
   { icon: Car, label: 'Viaturas', href: '/viaturas', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: Users, label: 'Militares', href: '/militares', roles: [UserRole.ADMINISTRADOR] },
   { icon: ClipboardCheck, label: 'Checklist Diário', href: '/checklist', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
-  { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
-  { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
+  { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP] },
+  { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP] },
   { icon: FileText, label: 'Relatórios', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
 ];
 
