@@ -10,6 +10,7 @@ import AddVehicleForm from './views/AddVehicleForm';
 import EditVehicleForm from './views/EditVehicleForm';
 import ChecklistForm from './views/ChecklistForm';
 import MaintenanceControl from './views/MaintenanceControl';
+import RevisionsControl from './views/RevisionsControl';
 import AuditLogs from './views/AuditLogs';
 import Login from './views/Login';
 import MilitarManagement from './views/MilitarManagement';
@@ -59,6 +60,7 @@ function AppContent() {
               <Route path="militares/editar/:id" element={<EditMilitarForm />} />
               <Route path="checklist" element={<ChecklistForm />} />
               <Route path="manutencao" element={<MaintenanceControl />} />
+              <Route path="revisoes" element={<RevisionsControl />} />
               <Route path="relatorios" element={<AuditLogs />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>

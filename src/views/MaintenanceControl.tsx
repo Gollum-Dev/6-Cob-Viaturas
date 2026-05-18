@@ -1,15 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Wrench, Clock, CheckCircle2, AlertCircle, AlertTriangle, TrendingUp, DollarSign, Calendar, MapPin, ChevronRight, Filter, Plus, Car, History, Settings, Thermometer, Droplets, Disc, Gauge } from 'lucide-react';
+import { Wrench, AlertTriangle, Plus, Trash2, Filter, DollarSign, CheckCircle2, FileSpreadsheet } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useVehicles } from '../context/VehicleContext';
 import { useMaintenance } from '../context/MaintenanceContext';
 import { useReports } from '../context/ReportContext';
-import { MaintenanceType, MaintenanceStatus, MaintenanceRecord } from '../types';
+import { MaintenanceType, MaintenanceStatus } from '../types';
 import { cn } from '../lib/utils';
-
-const OIL_CHANGE_THRESHOLD = 10000;
-const TIRE_ROTATION_THRESHOLD = 10000;
-const TIRE_REPLACEMENT_THRESHOLD = 40000;
 
 /**
  * Retorna uma palavra-chave simplificada para os itens de inspeção do checklist diário.
@@ -33,7 +29,7 @@ const getKeyword = (description: string): string => {
 
 export default function MaintenanceControl() {
   const { vehicles } = useVehicles();
-  const { records, addRecord, updateRecord } = useMaintenance();
+  const { records, addRecord, updateRecord, deleteRecord } = useMaintenance();
   const { submissions } = useReports();
   
   const [showAddForm, setShowAddForm] = useState(false);
@@ -44,33 +40,28 @@ export default function MaintenanceControl() {
   const [odometer, setOdometer] = useState('');
   const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus>(MaintenanceStatus.IN_PROGRESS);
 
-  // Get current odometer for each vehicle from submissions or base data
-  const vehicleStats = useMemo(() => {
-    return vehicles.map(v => {
-      const vehicleSubmissions = submissions.filter(s => s.vehicleId === v.id);
-      const currentOdo = vehicleSubmissions.length > 0 
-        ? Math.max(...vehicleSubmissions.map(s => s.odometer), v.odometer)
-        : v.odometer;
+  const [filterVehicle, setFilterVehicle] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
-      const vehicleRecords = records.filter(r => r.vehicleId === v.id && r.status === MaintenanceStatus.COMPLETED);
-      
-      const lastOilChangeRecord = vehicleRecords.find(r => r.type === MaintenanceType.OIL_CHANGE);
-      const baseOilOdo = lastOilChangeRecord ? lastOilChangeRecord.odometerAtMaintenance : (v.lastOilChangeOdometer || 0);
-      const kmSinceOilChange = currentOdo - baseOilOdo;
-      
-      const lastTireWork = vehicleRecords.find(r => r.type === MaintenanceType.TIRE_ROTATION || r.type === MaintenanceType.TIRE_REPLACEMENT);
-      const kmSinceTireWork = lastTireWork ? currentOdo - lastTireWork.odometerAtMaintenance : currentOdo;
-
-      return {
-        ...v,
-        currentOdo,
-        kmSinceOilChange,
-        kmSinceTireWork,
-        oilStatus: kmSinceOilChange > OIL_CHANGE_THRESHOLD ? 'EXCEDIDO' : 'OK',
-        tireStatus: kmSinceTireWork > TIRE_ROTATION_THRESHOLD ? 'NECESSÁRIO' : 'OK'
-      };
+  const filteredRecords = useMemo(() => {
+    return records.filter(r => {
+      const matchVehicle = !filterVehicle || r.vehicleId === filterVehicle;
+      const matchStatus = !filterStatus || r.status === filterStatus;
+      return matchVehicle && matchStatus;
     });
-  }, [vehicles, submissions, records]);
+  }, [records, filterVehicle, filterStatus]);
+
+  const totalFilteredCost = useMemo(() => {
+    return filteredRecords.reduce((sum, r) => sum + r.cost, 0);
+  }, [filteredRecords]);
+
+  const activeOrdersCount = useMemo(() => {
+    return records.filter(r => r.status === MaintenanceStatus.IN_PROGRESS).length;
+  }, [records]);
+
+  const completedOrdersCount = useMemo(() => {
+    return records.filter(r => r.status === MaintenanceStatus.COMPLETED).length;
+  }, [records]);
 
   const checklistIssues = useMemo(() => {
     const issues: { submissionId: string; vehiclePrefix: string; vehicleType: string; userName: string; item: string; observation: string; date: string }[] = [];
@@ -93,79 +84,6 @@ export default function MaintenanceControl() {
     
     return issues.reverse(); // Newest first
   }, [submissions]);
-
-  const totalMonthlyCost = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    return records
-      .filter(r => {
-        const d = new Date(r.date);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      })
-      .reduce((acc, r) => acc + r.cost, 0);
-  }, [records]);
-
-  const tireValidityAlerts = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return vehicles
-      .filter(v => v.tireValidityDate)
-      .map(v => {
-        const [year, month, day] = v.tireValidityDate!.split('-').map(Number);
-        const validityDate = new Date(year, month - 1, day);
-        validityDate.setHours(0, 0, 0, 0);
-
-        const diffTime = validityDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        return {
-          ...v,
-          daysRemaining: diffDays
-        };
-      })
-      .sort((a, b) => a.daysRemaining - b.daysRemaining);
-  }, [vehicles]);
-
-  const oilChangeAlerts = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return vehicles
-      .filter(v => v.nextOilChangeDate)
-      .map(v => {
-        const [year, month, day] = v.nextOilChangeDate!.split('-').map(Number);
-        const validityDate = new Date(year, month - 1, day);
-        validityDate.setHours(0, 0, 0, 0);
-
-        const diffTime = validityDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        return {
-          ...v,
-          daysRemaining: diffDays
-        };
-      })
-      .sort((a, b) => a.daysRemaining - b.daysRemaining);
-  }, [vehicles]);
-
-  const oilChangeKmAlerts = useMemo(() => {
-    return vehicles
-      .filter(v => v.lastOilChangeOdometer !== undefined)
-      .map(v => {
-        const nextChangeKm = (v.lastOilChangeOdometer || 0) + 10000;
-        const kmRemaining = nextChangeKm - v.odometer;
-        
-        return {
-          ...v,
-          nextChangeKm,
-          kmRemaining
-        };
-      })
-      .sort((a, b) => a.kmRemaining - b.kmRemaining);
-  }, [vehicles]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,238 +219,7 @@ export default function MaintenanceControl() {
       </div>
 
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        <div className="xl:col-span-8 space-y-8">
-          {/* Alerta de Validade de Pneus Section */}
-          <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
-              <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
-                <Disc className="w-5 h-5 text-primary" />
-                Alerta de Validade de Pneus
-              </h3>
-              <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full uppercase">
-                {tireValidityAlerts.length} Monitorados
-              </span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-container/30 border-b border-outline-variant">
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Viatura</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Validade</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Dias Restantes</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/30">
-                  {tireValidityAlerts.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
-                        Nenhuma data de validade de pneus cadastrada.
-                      </td>
-                    </tr>
-                  ) : (
-                    tireValidityAlerts.map((alert) => (
-                      <tr key={alert.id} className="hover:bg-surface-container-low/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
-                          <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
-                        </td>
-                        <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">
-                          {new Date(alert.tireValidityDate!).toLocaleDateString('pt-BR')}
-                        </td>
-                        <td className="px-6 py-4">
-                          {alert.daysRemaining < 0 ? (
-                            <span className="bg-error/10 text-error px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-error/20">Vencido</span>
-                          ) : alert.daysRemaining <= 30 ? (
-                            <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200">Próx. ao Vencimento</span>
-                          ) : (
-                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200">Regular</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                           <span className={cn(
-                             "text-xs font-bold font-data-mono",
-                             alert.daysRemaining < 0 ? "text-error" : alert.daysRemaining <= 30 ? "text-amber-600" : "text-on-surface-variant"
-                           )}>
-                             {alert.daysRemaining < 0 ? `${Math.abs(alert.daysRemaining)} dias atrás` : `${alert.daysRemaining} dias`}
-                           </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button 
-                            onClick={() => {
-                              setSelectedVehicleId(alert.id);
-                              setMaintenanceType(MaintenanceType.TIRE_REPLACEMENT);
-                              setWorkshop('Borracharia Credenciada');
-                              setShowAddForm(true);
-                            }}
-                            className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap"
-                          >
-                            Agendar Troca
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* Alerta de Troca de Óleo (KM) Section */}
-          <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
-              <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
-                <Gauge className="w-5 h-5 text-primary" />
-                Alerta de Troca de Óleo (KM)
-              </h3>
-              <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full uppercase">
-                {oilChangeKmAlerts.length} Monitorados
-              </span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-container/30 border-b border-outline-variant">
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Viatura</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Próxima Troca</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">KM Restante</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/30">
-                  {oilChangeKmAlerts.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
-                        Nenhuma informação de quilometragem de óleo cadastrada.
-                      </td>
-                    </tr>
-                  ) : (
-                    oilChangeKmAlerts.map((alert) => (
-                      <tr key={alert.id} className="hover:bg-surface-container-low/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
-                          <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
-                        </td>
-                        <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">
-                          {alert.nextChangeKm.toLocaleString()} KM
-                        </td>
-                        <td className="px-6 py-4">
-                          {alert.kmRemaining <= 0 ? (
-                            <span className="bg-error/10 text-error px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-error/20">Limite Atingido</span>
-                          ) : alert.kmRemaining <= 1000 ? (
-                            <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200">Revisão Próxima</span>
-                          ) : (
-                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200">Regular</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                           <span className={cn(
-                             "text-xs font-bold font-data-mono",
-                             alert.kmRemaining <= 0 ? "text-error" : alert.kmRemaining <= 1000 ? "text-amber-600" : "text-on-surface-variant"
-                           )}>
-                             {alert.kmRemaining <= 0 ? `Excedido em ${Math.abs(alert.kmRemaining).toLocaleString()} KM` : `${alert.kmRemaining.toLocaleString()} KM rest`}
-                           </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button 
-                            onClick={() => {
-                              setSelectedVehicleId(alert.id);
-                              setMaintenanceType(MaintenanceType.OIL_CHANGE);
-                              setWorkshop('Oficina Sede');
-                              setShowAddForm(true);
-                            }}
-                            className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap"
-                          >
-                            Agendar Troca
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* Alerta de Troca de Óleo Section */}
-          <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
-              <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
-                <Droplets className="w-5 h-5 text-primary" />
-                Alerta de Troca de Óleo
-              </h3>
-              <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full uppercase">
-                {oilChangeAlerts.length} Monitorados
-              </span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-container/30 border-b border-outline-variant">
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Viatura</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Próxima Troca</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Dias Restantes</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/30">
-                  {oilChangeAlerts.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
-                        Nenhuma data de próxima troca de óleo cadastrada.
-                      </td>
-                    </tr>
-                  ) : (
-                    oilChangeAlerts.map((alert) => (
-                      <tr key={alert.id} className="hover:bg-surface-container-low/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
-                          <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
-                        </td>
-                        <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">
-                          {new Date(alert.nextOilChangeDate!).toLocaleDateString('pt-BR')}
-                        </td>
-                        <td className="px-6 py-4">
-                          {alert.daysRemaining < 0 ? (
-                            <span className="bg-error/10 text-error px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-error/20">Vencido</span>
-                          ) : alert.daysRemaining <= 15 ? (
-                            <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200">Próx. ao Vencimento</span>
-                          ) : (
-                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-200">Regular</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                           <span className={cn(
-                             "text-xs font-bold font-data-mono",
-                             alert.daysRemaining < 0 ? "text-error" : alert.daysRemaining <= 15 ? "text-amber-600" : "text-on-surface-variant"
-                           )}>
-                             {alert.daysRemaining < 0 ? `${Math.abs(alert.daysRemaining)} dias atrás` : `${alert.daysRemaining} dias`}
-                           </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button 
-                            onClick={() => {
-                              setSelectedVehicleId(alert.id);
-                              setMaintenanceType(MaintenanceType.OIL_CHANGE);
-                              setWorkshop('Oficina Sede');
-                              setShowAddForm(true);
-                            }}
-                            className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap"
-                          >
-                            Agendar Troca
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
+      <div className="space-y-8">
 
           {/* Checklist Issues Planilha */}
           <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
@@ -597,52 +284,190 @@ export default function MaintenanceControl() {
               </table>
             </div>
           </section>
-        </div>
 
-        <div className="xl:col-span-4 space-y-6">
-           <section className="bg-white border border-outline-variant rounded-xl p-8 shadow-sm">
-                <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm mb-6 flex items-center gap-2">
-                  <History className="w-5 h-5 text-primary" />
-                  Últimos Eventos
-                </h3>
-                <div className="space-y-6">
-                    {records.filter(r => r.status === MaintenanceStatus.COMPLETED).slice(0, 5).map((item) => {
-                        const vehicle = vehicles.find(v => v.id === item.vehicleId);
-                        return (
-                          <div key={item.id} className="flex items-center justify-between group">
-                              <div className="flex items-center gap-4">
-                                  <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs border bg-surface-container border-outline-variant text-on-surface-variant">
-                                      {vehicle?.prefix}
-                                  </div>
-                                  <div>
-                                      <p className="text-sm font-bold text-on-surface">{item.type}</p>
-                                      <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{new Date(item.date).toLocaleDateString('pt-BR')}</p>
-                                  </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xs font-black text-green-700">R$ {item.cost.toLocaleString('pt-BR')}</p>
-                              </div>
-                          </div>
-                        );
-                    })}
-                    {records.filter(r => r.status === MaintenanceStatus.COMPLETED).length === 0 && (
-                      <p className="text-xs text-on-surface-variant italic text-center py-4">Nenhum histórico disponível.</p>
-                    )}
-                </div>
-           </section>
+          {/* Resumo Financeiro e Contadores de O.S. */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
+                <DollarSign className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Investimento Total</p>
+                <p className="text-xl font-black text-on-surface mt-1">
+                  R$ {totalFilteredCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                {filterVehicle || filterStatus ? (
+                  <p className="text-[9px] font-bold text-primary uppercase mt-0.5">Filtrado</p>
+                ) : (
+                  <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Geral da Frota</p>
+                )}
+              </div>
+            </div>
 
-           <div className="bg-surface-container-low border border-outline-variant rounded-xl p-8 shadow-sm relative overflow-hidden">
-                <div className="relative z-10 space-y-4">
-                    <h4 className="text-[11px] font-black text-secondary uppercase tracking-[0.2em]">Diretriz de Frota</h4>
-                    <p className="text-xs text-on-surface font-medium leading-relaxed italic">
-                      "A manutenção preventiva é investiminento, não custo. Uma viatura bem cuidada salva vidas e preserva o patrimônio público."
-                    </p>
+            <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center border border-amber-100">
+                <Wrench className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-black">O.S. Em Andamento</p>
+                <p className="text-xl font-black text-on-surface mt-1">{activeOrdersCount}</p>
+                <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Ativas no momento</p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-black">O.S. Concluídas</p>
+                <p className="text-xl font-black text-on-surface mt-1">{completedOrdersCount}</p>
+                <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Total concluído</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Planilha de Ordens de Serviço (Salvo em Banco) */}
+          <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-outline-variant bg-surface-container-low flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-primary" />
+                Planilha de Lançamentos de Manutenção
+              </h3>
+              
+              {/* Barra de Filtros */}
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg w-full sm:w-auto">
+                  <Filter className="w-3.5 h-3.5 text-on-surface-variant" />
+                  <select 
+                    value={filterVehicle}
+                    onChange={(e) => setFilterVehicle(e.target.value)}
+                    className="text-xs font-bold text-on-surface focus:outline-none bg-transparent w-full sm:w-auto"
+                  >
+                    <option value="">Todas as Viaturas</option>
+                    {vehicles.map(v => (
+                      <option key={v.id} value={v.id}>{v.prefix}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="absolute -bottom-8 -right-8 opacity-5">
-                    <Wrench className="w-32 h-32 text-secondary" />
+                <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg w-full sm:w-auto">
+                  <select 
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="text-xs font-bold text-on-surface focus:outline-none bg-transparent w-full sm:w-auto"
+                  >
+                    <option value="">Todos os Status</option>
+                    {Object.values(MaintenanceStatus).map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
                 </div>
-           </div>
-        </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-container/30 border-b border-outline-variant">
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Data</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Viatura</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Serviço / O.S.</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Oficina</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">KM</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[110px]">Custo</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Status (Banco)</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[130px]">Progresso</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/30">
+                  {filteredRecords.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                        Nenhum registro de manutenção encontrado para os filtros selecionados.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRecords.map((record) => {
+                      const vehicle = vehicles.find(v => v.id === record.vehicleId);
+                      return (
+                        <tr key={record.id} className="hover:bg-surface-container-low/50 transition-colors">
+                          <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">
+                            {record.date ? new Date(record.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'S/D'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-black text-primary text-xs uppercase">{vehicle?.prefix || 'VIATURA'}</span>
+                            <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{vehicle?.type || 'Tipo'}</span>
+                          </td>
+                          <td className="px-6 py-4 text-xs font-bold text-on-surface uppercase">
+                            {record.type}
+                          </td>
+                          <td className="px-6 py-4 text-xs text-on-surface font-medium">
+                            {record.workshop}
+                          </td>
+                          <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">
+                            {record.odometerAtMaintenance?.toLocaleString() || '0'} KM
+                          </td>
+                          <td className="px-6 py-4 text-xs font-bold text-green-700 font-data-mono">
+                            R$ {record.cost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <select 
+                              value={record.status}
+                              onChange={async (e) => {
+                                const newStatus = e.target.value as MaintenanceStatus;
+                                const newProgress = newStatus === MaintenanceStatus.COMPLETED ? 100 : newStatus === MaintenanceStatus.SCHEDULED ? 0 : 50;
+                                await updateRecord(record.id, { status: newStatus, progress: newProgress });
+                              }}
+                              className={cn(
+                                "text-[10px] font-black uppercase tracking-wider p-2 rounded-lg border focus:outline-none w-full",
+                                record.status === MaintenanceStatus.COMPLETED && "bg-green-50 text-green-700 border-green-200",
+                                record.status === MaintenanceStatus.IN_PROGRESS && "bg-amber-50 text-amber-700 border-amber-200",
+                                record.status === MaintenanceStatus.SCHEDULED && "bg-blue-50 text-blue-700 border-blue-200"
+                              )}
+                            >
+                              {Object.values(MaintenanceStatus).map(s => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+                                <div 
+                                  className={cn(
+                                    "h-full rounded-full transition-all duration-500",
+                                    record.status === MaintenanceStatus.COMPLETED ? "bg-green-600" : record.status === MaintenanceStatus.SCHEDULED ? "bg-blue-600" : "bg-primary"
+                                  )}
+                                  style={{ width: `${record.progress ?? 0}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] font-black text-on-surface-variant font-data-mono w-8">
+                                {record.progress ?? 0}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <button 
+                              onClick={async () => {
+                                if (window.confirm("Deseja realmente excluir este registro de manutenção permanente?")) {
+                                  await deleteRecord(record.id);
+                                }
+                              }}
+                              className="text-on-surface-variant hover:text-error transition-colors p-1"
+                              title="Excluir O.S."
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
       </div>
     </div>
   );

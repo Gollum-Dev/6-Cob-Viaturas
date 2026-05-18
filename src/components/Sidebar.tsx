@@ -1,4 +1,4 @@
-import { LayoutDashboard, Car, ClipboardCheck, Wrench, FileText, User as UserIcon, Settings, LogOut, Users } from 'lucide-react';
+import { LayoutDashboard, Car, ClipboardCheck, Wrench, FileText, User as UserIcon, Settings, LogOut, Users, Calendar } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
@@ -15,6 +15,7 @@ const navItems = [
   { icon: Users, label: 'Militares', href: '/militares', roles: [UserRole.ADMINISTRADOR] },
   { icon: ClipboardCheck, label: 'Checklist Diário', href: '/checklist', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
   { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
+  { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: FileText, label: 'Relatórios', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
 ];
 

@@ -1,4 +1,4 @@
-import { Car, Save, ArrowLeft, Camera, Shield, Gauge, Hash, Zap, Trash2, Settings, Droplets, Disc } from 'lucide-react';
+import { Car, Save, ArrowLeft, Camera, Shield, Gauge, Hash, Zap, Trash2, Settings, Droplets, Disc, MapPin } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useVehicles } from '../context/VehicleContext';
@@ -174,6 +174,22 @@ export default function EditVehicleForm() {
                     <option value="RESGATE">RESGATE</option>
                     <option value="APOIO">APOIO</option>
                     <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <MapPin className="w-3 h-3" /> Unidade da Viatura
+                  </label>
+                  <select 
+                    value={formData.unit}
+                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none"
+                    required
+                  >
+                    <option value="ITAJUBA">ITAJUBA</option>
+                    <option value="POUSO ALEGRE">POUSO ALEGRE</option>
+                    <option value="EXTREMA">EXTREMA</option>
+                    <option value="PARAISOPOLIS">PARAISOPOLIS</option>
                   </select>
                 </div>
                 <div className="space-y-2">
