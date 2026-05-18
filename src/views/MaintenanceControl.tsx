@@ -11,6 +11,10 @@ const OIL_CHANGE_THRESHOLD = 10000;
 const TIRE_ROTATION_THRESHOLD = 10000;
 const TIRE_REPLACEMENT_THRESHOLD = 40000;
 
+/**
+ * Retorna uma palavra-chave simplificada para os itens de inspeção do checklist diário.
+ * Evita poluição visual na tabela de manutenção com textos excessivamente longos.
+ */
 const getKeyword = (description: string): string => {
   const desc = description.toUpperCase();
   if (desc.includes("LUZES INTERIORES")) return "Luzes";
