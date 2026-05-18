@@ -75,40 +75,50 @@ export default function VehicleInventory() {
 
       <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant overflow-hidden shadow-sm">
         <div className="p-6 md:p-8 border-b border-outline-variant bg-surface-container-low/30">
-          <div className="flex flex-wrap gap-6 items-center">
-            <div className="flex flex-wrap gap-6 items-center flex-1">
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest pl-1">Tipo</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap gap-4 items-end w-full">
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[140px] w-full">
+              <label className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest pl-1">Tipo</label>
+              <div className="relative">
                 <select 
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="bg-transparent text-xs font-black focus:outline-none uppercase tracking-widest cursor-pointer pr-4"
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 pr-10 rounded-xl text-xs font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest cursor-pointer appearance-none text-on-surface"
                 >
                   {vehicleTypes.map(type => (
                     <option key={type} value={type}>{type === 'Todos' ? 'TODOS' : (type || '').toUpperCase()}</option>
                   ))}
                 </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant/60">
+                  <Filter className="w-3.5 h-3.5" />
+                </div>
               </div>
+            </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest pl-1">Unidade</label>
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[140px] w-full">
+              <label className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest pl-1">Unidade</label>
+              <div className="relative">
                 <select 
                   value={unitFilter}
                   onChange={(e) => setUnitFilter(e.target.value)}
-                  className="bg-transparent text-xs font-black focus:outline-none uppercase tracking-widest cursor-pointer pr-4"
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 pr-10 rounded-xl text-xs font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest cursor-pointer appearance-none text-on-surface"
                 >
                   {units.map(unit => (
                     <option key={unit} value={unit}>{unit === 'Todos' ? 'TODAS' : (unit || '').toUpperCase()}</option>
                   ))}
                 </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant/60">
+                  <MapPin className="w-3.5 h-3.5" />
+                </div>
               </div>
+            </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest pl-1">Status</label>
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[140px] w-full">
+              <label className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest pl-1">Status</label>
+              <div className="relative">
                 <select 
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="bg-transparent text-xs font-black focus:outline-none uppercase tracking-widest cursor-pointer pr-4"
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 pr-10 rounded-xl text-xs font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest cursor-pointer appearance-none text-on-surface"
                 >
                     <option value="Todos">TODOS</option>
                     <option value={VehicleStatus.AVAILABLE}>DISPONÍVEL</option>
@@ -116,20 +126,23 @@ export default function VehicleInventory() {
                     <option value={VehicleStatus.DISCHARGE_PROCESS}>P. DESCARGA</option>
                     <option value={VehicleStatus.DISCHARGE_AVAILABLE}>DISP. DESCARGA</option>
                 </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant/60">
+                  <Settings className="w-3.5 h-3.5" />
+                </div>
               </div>
-              
-              <button 
-                onClick={() => {
-                  setTypeFilter('Todos');
-                  setStatusFilter('Todos');
-                  setUnitFilter('Todos');
-                }}
-                className="flex items-center gap-2 px-4 py-2 text-on-surface-variant hover:text-primary font-black transition-all uppercase tracking-widest text-[10px]"
-              >
-                <Filter className="w-3 h-3" />
-                Limpar Filtros
-              </button>
             </div>
+            
+            <button 
+              onClick={() => {
+                setTypeFilter('Todos');
+                setStatusFilter('Todos');
+                setUnitFilter('Todos');
+              }}
+              className="flex items-center justify-center gap-2 h-[42px] px-6 border border-outline hover:bg-surface-container rounded-xl text-on-surface-variant hover:text-primary font-black transition-all uppercase tracking-widest text-[10px] w-full md:w-auto shrink-0 mt-2 md:mt-0"
+            >
+              <Filter className="w-3 h-3" />
+              Limpar Filtros
+            </button>
           </div>
         </div>
 
