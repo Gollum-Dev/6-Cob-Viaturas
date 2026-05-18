@@ -39,6 +39,7 @@ function AppContent() {
   }
 
   const isOperacional = user?.role === UserRole.OPERACIONAL;
+  const isCBU = user?.role === UserRole.CBU;
   const canAccessMaintenanceAndRevisions = user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.CIA_OP;
 
   return (
@@ -56,8 +57,12 @@ function AppContent() {
             <>
               <Route index element={<Dashboard />} />
               <Route path="viaturas" element={<VehicleInventory />} />
-              <Route path="viaturas/novo" element={<AddVehicleForm />} />
-              <Route path="viaturas/editar/:id" element={<EditVehicleForm />} />
+              {!isCBU && (
+                <>
+                  <Route path="viaturas/novo" element={<AddVehicleForm />} />
+                  <Route path="viaturas/editar/:id" element={<EditVehicleForm />} />
+                </>
+              )}
               <Route path="militares" element={<MilitarManagement />} />
               <Route path="militares/novo" element={<AddMilitarForm />} />
               <Route path="militares/editar/:id" element={<EditMilitarForm />} />

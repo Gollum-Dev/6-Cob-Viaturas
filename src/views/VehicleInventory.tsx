@@ -2,12 +2,16 @@ import { useState, useMemo } from 'react';
 import { Filter, Plus, Edit, Eye, ChevronLeft, ChevronRight, Trash2, Car } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useVehicles } from '../context/VehicleContext';
-import { VehicleStatus } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { VehicleStatus, UserRole } from '../types';
 import { cn } from '../lib/utils';
 
 export default function VehicleInventory() {
   const navigate = useNavigate();
   const { vehicles, deleteVehicle } = useVehicles();
+  const { user } = useAuth();
+
+  const isCBU = user?.role === UserRole.CBU;
 
   const [typeFilter, setTypeFilter] = useState('Todos');
   const [statusFilter, setStatusFilter] = useState('Todos');
@@ -88,13 +92,15 @@ export default function VehicleInventory() {
           </h1>
           <p className="text-on-surface-variant font-medium mt-1">Lista completa de unidades operacionais e de manutenção.</p>
         </div>
-        <Link 
-          to="/viaturas/novo" 
-          className="bg-primary text-white px-6 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg hover:shadow-primary/20 uppercase tracking-widest text-xs group"
-        >
-          <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          Adicionar Nova Viatura
-        </Link>
+        {!isCBU && (
+          <Link 
+            to="/viaturas/novo" 
+            className="bg-primary text-white px-6 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg hover:shadow-primary/20 uppercase tracking-widest text-xs group"
+          >
+            <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            Adicionar Nova Viatura
+          </Link>
+        )}
       </div>
 
 
@@ -169,7 +175,7 @@ export default function VehicleInventory() {
                 <th className="px-4 py-5">Tipo</th>
                 <th className="px-4 py-5 text-center">Status</th>
                 <th className="px-4 py-5">Odômetro</th>
-                <th className="px-4 py-5 text-center">Ações</th>
+                {!isCBU && <th className="px-4 py-5 text-center">Ações</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/30">
@@ -213,24 +219,26 @@ export default function VehicleInventory() {
                         <span className="text-[8px] font-black text-on-surface-variant uppercase opacity-50">KM</span>
                       </div>
                     </td>
-                    <td className="px-4 py-6">
-                      <div className="flex justify-center gap-2">
-                          <button 
-                            onClick={() => navigate(`/viaturas/editar/${v.id}`)}
-                            className="p-3 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
-                            title="Editar"
-                          >
-                              <Edit className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => deleteVehicle(v.id)}
-                            className="p-3 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all" 
-                            title="Remover"
-                          >
-                              <Trash2 className="w-4 h-4" />
-                          </button>
-                      </div>
-                    </td>
+                    {!isCBU && (
+                      <td className="px-4 py-6">
+                        <div className="flex justify-center gap-2">
+                            <button 
+                              onClick={() => navigate(`/viaturas/editar/${v.id}`)}
+                              className="p-3 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
+                              title="Editar"
+                            >
+                                <Edit className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => deleteVehicle(v.id)}
+                              className="p-3 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all" 
+                              title="Remover"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -258,20 +266,22 @@ export default function VehicleInventory() {
                       <p className="text-xs font-bold text-on-surface-variant mt-1 uppercase tracking-widest">{v.plate}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => navigate(`/viaturas/editar/${v.id}`)}
-                      className="p-3 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={() => deleteVehicle(v.id)}
-                      className="p-3 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
+                  {!isCBU && (
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => navigate(`/viaturas/editar/${v.id}`)}
+                        className="p-3 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => deleteVehicle(v.id)}
+                        className="p-3 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 py-4 border-y border-outline-variant/10">
