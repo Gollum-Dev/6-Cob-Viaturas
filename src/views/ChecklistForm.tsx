@@ -116,7 +116,7 @@ export default function ChecklistForm() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
         <div>
           <h1 className="text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-3">
