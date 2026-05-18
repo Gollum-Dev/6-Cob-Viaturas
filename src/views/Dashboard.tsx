@@ -91,11 +91,11 @@ export default function Dashboard() {
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-3">
-            <ShieldCheck className="w-8 h-8 text-primary" />
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2 sm:gap-3">
+            <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-primary flex-shrink-0" />
             Painel de Controle
           </h1>
-          <p className="text-on-surface-variant font-medium mt-1">Bem-vindo ao sistema de comando e controle da frota.</p>
+          <p className="text-[10px] sm:text-xs md:text-sm text-on-surface-variant font-medium mt-1">Bem-vindo ao sistema de comando e controle da frota.</p>
         </div>
       </div>
 

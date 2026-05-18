@@ -47,11 +47,11 @@ export default function SettingsView() {
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-3">
-          <Key className="w-8 h-8 text-primary" />
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2 sm:gap-3">
+          <Key className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-primary flex-shrink-0" />
           Configurações Pessoais
         </h1>
-        <p className="text-on-surface-variant font-medium mt-1">
+        <p className="text-[10px] sm:text-xs md:text-sm text-on-surface-variant font-medium mt-1">
           Visualize seus dados cadastrais e gerencie sua segurança.
         </p>
       </div>

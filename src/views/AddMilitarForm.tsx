@@ -53,11 +53,11 @@ export default function AddMilitarForm() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-3">
-            <UserPlus className="w-8 h-8 text-primary" />
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2 sm:gap-3">
+            <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-primary flex-shrink-0" />
             Novo Cadastro
           </h1>
-          <p className="text-on-surface-variant font-medium mt-1">Registrar novo acesso militar ao sistema.</p>
+          <p className="text-[10px] sm:text-xs md:text-sm text-on-surface-variant font-medium mt-1">Registrar novo acesso militar ao sistema.</p>
         </div>
       </div>
 

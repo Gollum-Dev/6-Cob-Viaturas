@@ -234,8 +234,8 @@ export default function RevisionsControl() {
       </AnimatePresence>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-lg sm:text-xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2 sm:gap-3">
-          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2 sm:gap-3">
+          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-primary flex-shrink-0" />
           Revisões Preventivas
         </h1>
         <button 
@@ -246,7 +246,7 @@ export default function RevisionsControl() {
           }}
           className="w-full sm:w-auto bg-primary text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg text-[10px] sm:text-xs uppercase tracking-widest group"
         >
-          <Plus className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+          <Plus className="w-3.5 h-3.5 group-hover:scale-110 transition-transform shrink-0" />
           Agendar Revisão
         </button>
       </div>
