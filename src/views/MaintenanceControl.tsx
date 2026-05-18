@@ -220,7 +220,6 @@ export default function MaintenanceControl() {
 
 
       <div className="space-y-8">
-
           {/* Checklist Issues Planilha */}
           <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
             <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
@@ -230,7 +229,9 @@ export default function MaintenanceControl() {
               </h3>
               <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full uppercase">{checklistIssues.length} Ressalvas Ativas</span>
             </div>
-            <div className="overflow-x-auto">
+
+            {/* Desktop View: Table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-surface-container/30 border-b border-outline-variant">
@@ -282,6 +283,49 @@ export default function MaintenanceControl() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile View: Card List */}
+            <div className="block md:hidden divide-y divide-outline-variant/30">
+              {checklistIssues.length === 0 ? (
+                <div className="px-4 py-8 text-center text-xs text-on-surface-variant italic opacity-50">
+                  Nenhuma ressalva pendente nos checklists.
+                </div>
+              ) : (
+                checklistIssues.map((issue, idx) => (
+                  <div key={`${issue.submissionId}-${idx}`} className="p-4 space-y-3 hover:bg-surface-container-low/30 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="font-black text-primary text-xs uppercase tracking-wider">{issue.vehiclePrefix}</span>
+                        <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{issue.vehicleType}</span>
+                      </div>
+                      <span className="text-xs font-bold text-on-surface-variant font-data-mono">{issue.date}</span>
+                    </div>
+
+                    <div className="text-xs space-y-2">
+                      <p className="font-semibold text-on-surface-variant"><span className="opacity-50 uppercase tracking-widest text-[8px] block mb-0.5 font-bold">Responsável</span>{issue.userName}</p>
+                      <p className="font-bold text-error uppercase tracking-tight"><span className="opacity-50 text-[8px] block mb-0.5 font-bold text-on-surface-variant">Item / Defeito</span>{getKeyword(issue.item)}</p>
+                      {issue.observation && (
+                        <p className="text-on-surface-variant font-medium leading-relaxed bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/30">{issue.observation}</p>
+                      )}
+                    </div>
+
+                    <div className="pt-2">
+                      <button 
+                        onClick={() => {
+                          setSelectedVehicleId(vehicles.find(v => v.prefix === issue.vehiclePrefix)?.id || '');
+                          setMaintenanceType(MaintenanceType.CORRECTIVE);
+                          setWorkshop('Oficina Sede');
+                          setShowAddForm(true);
+                        }}
+                        className="w-full bg-primary/5 hover:bg-primary text-primary hover:text-white py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-center border border-primary/10"
+                      >
+                        Abrir O.S.
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 
@@ -364,8 +408,8 @@ export default function MaintenanceControl() {
                 </div>
               </div>
             </div>
-
-            <div className="overflow-x-auto">
+            {/* Desktop View: Table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-surface-container/30 border-b border-outline-variant">
@@ -417,7 +461,7 @@ export default function MaintenanceControl() {
                               onChange={async (e) => {
                                 const newStatus = e.target.value as MaintenanceStatus;
                                 const newProgress = newStatus === MaintenanceStatus.COMPLETED ? 100 : newStatus === MaintenanceStatus.SCHEDULED ? 0 : 50;
-                                await updateRecord(record.id, { status: newStatus, progress: newProgress });
+                                  await updateRecord(record.id, { status: newStatus, progress: newProgress });
                               }}
                               className={cn(
                                 "text-[10px] font-black uppercase tracking-wider p-2 rounded-lg border focus:outline-none w-full",
@@ -466,6 +510,110 @@ export default function MaintenanceControl() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile View: Card List */}
+            <div className="block md:hidden divide-y divide-outline-variant/30">
+              {filteredRecords.length === 0 ? (
+                <div className="px-4 py-8 text-center text-xs text-on-surface-variant italic opacity-50">
+                  Nenhum registro de manutenção encontrado para os filtros selecionados.
+                </div>
+              ) : (
+                filteredRecords.map((record) => {
+                  const vehicle = vehicles.find(v => v.id === record.vehicleId);
+                  return (
+                    <div key={record.id} className="p-4 space-y-4 hover:bg-surface-container-low/30 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="font-black text-primary text-xs uppercase tracking-wider">{vehicle?.prefix || 'VIATURA'}</span>
+                          <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{vehicle?.type || 'Tipo'}</span>
+                        </div>
+                        <span className="text-xs font-bold text-on-surface-variant font-data-mono">
+                          {record.date ? new Date(record.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'S/D'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-xs font-bold">
+                        <div>
+                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Serviço / O.S.</span>
+                          <span className="text-on-surface uppercase text-xs">{record.type}</span>
+                        </div>
+                        <div>
+                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Oficina</span>
+                          <span className="text-on-surface-variant font-semibold">{record.workshop}</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-xs font-bold">
+                        <div>
+                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Quilometragem</span>
+                          <span className="text-on-surface-variant font-data-mono">{record.odometerAtMaintenance?.toLocaleString() || '0'} KM</span>
+                        </div>
+                        <div>
+                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Custo</span>
+                          <span className="text-green-700 font-data-mono">R$ {record.cost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-1">Status</span>
+                          <select 
+                            value={record.status}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value as MaintenanceStatus;
+                              const newProgress = newStatus === MaintenanceStatus.COMPLETED ? 100 : newStatus === MaintenanceStatus.SCHEDULED ? 0 : 50;
+                              await updateRecord(record.id, { status: newStatus, progress: newProgress });
+                            }}
+                            className={cn(
+                              "text-[10px] font-black uppercase tracking-wider p-2.5 rounded-lg border focus:outline-none w-full",
+                              record.status === MaintenanceStatus.COMPLETED && "bg-green-50 text-green-700 border-green-200",
+                              record.status === MaintenanceStatus.IN_PROGRESS && "bg-amber-50 text-amber-700 border-amber-200",
+                              record.status === MaintenanceStatus.SCHEDULED && "bg-blue-50 text-blue-700 border-blue-200"
+                            )}
+                          >
+                            {Object.values(MaintenanceStatus).map(s => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="w-1/3">
+                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-1">Progresso</span>
+                          <div className="flex items-center gap-1.5 mt-2">
+                            <div className="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+                              <div 
+                                className={cn(
+                                  "h-full rounded-full transition-all duration-500",
+                                  record.status === MaintenanceStatus.COMPLETED ? "bg-green-600" : record.status === MaintenanceStatus.SCHEDULED ? "bg-blue-600" : "bg-primary"
+                                )}
+                                style={{ width: `${record.progress ?? 0}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-black text-on-surface-variant font-data-mono">
+                              {record.progress ?? 0}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-outline-variant/30 flex justify-end">
+                        <button 
+                          onClick={async () => {
+                            if (window.confirm("Deseja realmente excluir este registro de manutenção permanente?")) {
+                              await deleteRecord(record.id);
+                            }
+                          }}
+                          className="flex items-center gap-1.5 text-[9px] font-black text-error uppercase tracking-widest hover:underline px-3 py-1 bg-error/5 hover:bg-error/10 border border-error/10 rounded-lg transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Excluir Registro
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </section>
       </div>

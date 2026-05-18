@@ -207,7 +207,10 @@ CREATE POLICY "Allow authenticated update" ON public.messages FOR UPDATE TO auth
         
         {/* Left Side: Military List (Only for Administrators) */}
         {isAdmin && (
-          <div className="w-full md:w-80 border-r border-outline-variant flex flex-col bg-surface-container-low/20">
+          <div className={cn(
+            "w-full md:w-80 border-r border-outline-variant flex flex-col bg-surface-container-low/20",
+            selectedUserId !== null && "hidden md:flex"
+          )}>
             <div className="p-4 border-b border-outline-variant space-y-3">
               <div className="relative">
                 <Search className="w-4 h-4 text-on-surface-variant/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -277,6 +280,7 @@ CREATE POLICY "Allow authenticated update" ON public.messages FOR UPDATE TO auth
         {/* Right Side: Conversation Thread */}
         <div className={cn(
           "flex-1 flex flex-col bg-surface-container-lowest",
+          selectedUserId === null && "hidden md:flex",
           isAdmin && !selectedUserId && "hidden md:flex justify-center items-center p-8 text-center"
         )}>
           {isAdmin && !selectedUserId ? (

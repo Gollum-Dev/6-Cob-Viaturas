@@ -165,7 +165,8 @@ export default function AuditLogs() {
             </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-surface-container-high/50 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
               <tr>
@@ -242,6 +243,74 @@ export default function AuditLogs() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View: Card List */}
+        <div className="block md:hidden divide-y divide-outline-variant/30">
+          {filteredSubmissions.length === 0 ? (
+            <div className="px-4 py-12 text-center text-on-surface-variant font-medium opacity-50 italic">
+              Nenhum checklist encontrado para os filtros aplicados.
+            </div>
+          ) : (
+            filteredSubmissions.map((sub) => {
+              const itemsOk = sub.items.filter(i => i.status).length;
+              const totalItems = sub.items.length;
+              const hasIssues = itemsOk < totalItems;
+
+              return (
+                <div key={sub.id} className="p-4 space-y-4 hover:bg-surface-container-low transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant">
+                        <User className="w-4 h-4 text-on-surface-variant" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-xs text-on-surface uppercase tracking-tight leading-tight">{sub.userName}</span>
+                        <span className="opacity-50 text-[9px] uppercase tracking-wider font-semibold">{sub.userRank} | {sub.userMilNumber}</span>
+                      </div>
+                    </div>
+                    <span className={cn(
+                      "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tight inline-flex items-center gap-1",
+                      hasIssues ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                    )}>
+                      {hasIssues ? <AlertTriangle className="w-2.5 h-2.5" /> : <Shield className="w-2.5 h-2.5" />}
+                      {hasIssues ? 'Com Ressalva' : 'Sem Alt.'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="block text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest mb-0.5">Viatura</span>
+                      <div className="flex items-center gap-1.5">
+                        <Car className="w-3.5 h-3.5 text-primary opacity-70" />
+                        <span className="font-bold text-on-surface">{sub.vehiclePrefix}</span>
+                        <span className="text-[9px] font-semibold text-on-surface-variant opacity-60">({sub.vehicleType})</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="block text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest mb-0.5">Odômetro / Data</span>
+                      <span className="font-data-mono text-on-surface block text-[11px] font-semibold leading-tight">{sub.odometer.toLocaleString('pt-BR')} KM</span>
+                      <span className="font-data-mono text-[9px] text-on-surface-variant/60 block">{sub.timestamp}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest mb-1">
+                      <span className="text-on-surface-variant/60">Itens Conformidade</span>
+                      <span className="text-on-surface">{itemsOk}/{totalItems}</span>
+                    </div>
+                    <div className="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+                      <div 
+                        className={cn("h-full rounded-full", itemsOk === totalItems ? "bg-green-500" : "bg-amber-500")}
+                        style={{ width: `${(itemsOk / totalItems) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
 
         <div className="p-6 bg-surface-container-low border-t border-outline-variant flex justify-center">

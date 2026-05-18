@@ -204,13 +204,13 @@ export default function ChecklistForm() {
           <div className="divide-y divide-outline-variant/30">
             {checklistItems.map((item, index) => (
               <div key={index} className="px-4 md:px-8 py-4 md:py-6 group hover:bg-surface-container-low transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-row items-center justify-between gap-4">
                   <p className="text-xs md:text-sm font-semibold text-on-surface leading-tight flex-1">
                     <span className="text-on-surface-variant font-data-mono mr-2 md:mr-3">{String(index + 1).padStart(2, '0')}.</span>
                     {item}
                   </p>
                   
-                  <div className="flex items-center justify-end">
+                  <div className="flex items-center justify-end shrink-0">
                     <button 
                       type="button"
                       onClick={() => toggleStatus(index)}
