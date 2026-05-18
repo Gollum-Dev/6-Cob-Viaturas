@@ -20,6 +20,10 @@ export default function RevisionsControl() {
   const [odometer, setOdometer] = useState('');
   const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus>(MaintenanceStatus.IN_PROGRESS);
 
+  const [tirePage, setTirePage] = useState(1);
+  const [oilKmPage, setOilKmPage] = useState(1);
+  const [oilDatePage, setOilDatePage] = useState(1);
+
   const tireValidityAlerts = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -79,6 +83,32 @@ export default function RevisionsControl() {
       })
       .sort((a, b) => a.kmRemaining - b.kmRemaining);
   }, [vehicles]);
+
+  const ITEMS_PER_PAGE = 3;
+
+  // Pagination for Tire Alerts
+  const totalTirePages = Math.ceil(tireValidityAlerts.length / ITEMS_PER_PAGE) || 1;
+  const currentTirePage = Math.min(tirePage, totalTirePages);
+  const paginatedTireAlerts = useMemo(() => {
+    const start = (currentTirePage - 1) * ITEMS_PER_PAGE;
+    return tireValidityAlerts.slice(start, start + ITEMS_PER_PAGE);
+  }, [tireValidityAlerts, currentTirePage]);
+
+  // Pagination for Oil KM Alerts
+  const totalOilKmPages = Math.ceil(oilChangeKmAlerts.length / ITEMS_PER_PAGE) || 1;
+  const currentOilKmPage = Math.min(oilKmPage, totalOilKmPages);
+  const paginatedOilKmAlerts = useMemo(() => {
+    const start = (currentOilKmPage - 1) * ITEMS_PER_PAGE;
+    return oilChangeKmAlerts.slice(start, start + ITEMS_PER_PAGE);
+  }, [oilChangeKmAlerts, currentOilKmPage]);
+
+  // Pagination for Oil Date Alerts
+  const totalOilDatePages = Math.ceil(oilChangeAlerts.length / ITEMS_PER_PAGE) || 1;
+  const currentOilDatePage = Math.min(oilDatePage, totalOilDatePages);
+  const paginatedOilDateAlerts = useMemo(() => {
+    const start = (currentOilDatePage - 1) * ITEMS_PER_PAGE;
+    return oilChangeAlerts.slice(start, start + ITEMS_PER_PAGE);
+  }, [oilChangeAlerts, currentOilDatePage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,7 +282,7 @@ export default function RevisionsControl() {
                     </td>
                   </tr>
                 ) : (
-                  tireValidityAlerts.slice(0, 3).map((alert) => (
+                  paginatedTireAlerts.map((alert) => (
                     <tr key={alert.id} className="hover:bg-surface-container-low/50 transition-colors">
                       <td className="px-6 py-4">
                         <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
@@ -298,6 +328,41 @@ export default function RevisionsControl() {
               </tbody>
             </table>
           </div>
+          {totalTirePages > 1 && (
+            <div className="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                Página {currentTirePage} de {totalTirePages}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={currentTirePage === 1}
+                  onClick={() => setTirePage(prev => Math.max(prev - 1, 1))}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    currentTirePage === 1
+                      ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
+                      : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
+                  )}
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  disabled={currentTirePage === totalTirePages}
+                  onClick={() => setTirePage(prev => Math.min(prev + 1, totalTirePages))}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    currentTirePage === totalTirePages
+                      ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
+                      : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
+                  )}
+                >
+                  Próximo
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Alerta de Troca de Óleo (KM) Section */}
@@ -330,7 +395,7 @@ export default function RevisionsControl() {
                     </td>
                   </tr>
                 ) : (
-                  oilChangeKmAlerts.slice(0, 3).map((alert) => (
+                  paginatedOilKmAlerts.map((alert) => (
                     <tr key={alert.id} className="hover:bg-surface-container-low/50 transition-colors">
                       <td className="px-6 py-4">
                         <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
@@ -376,6 +441,41 @@ export default function RevisionsControl() {
               </tbody>
             </table>
           </div>
+          {totalOilKmPages > 1 && (
+            <div className="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                Página {currentOilKmPage} de {totalOilKmPages}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={currentOilKmPage === 1}
+                  onClick={() => setOilKmPage(prev => Math.max(prev - 1, 1))}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    currentOilKmPage === 1
+                      ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
+                      : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
+                  )}
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  disabled={currentOilKmPage === totalOilKmPages}
+                  onClick={() => setOilKmPage(prev => Math.min(prev + 1, totalOilKmPages))}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    currentOilKmPage === totalOilKmPages
+                      ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
+                      : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
+                  )}
+                >
+                  Próximo
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Alerta de Troca de Óleo Section */}
@@ -408,7 +508,7 @@ export default function RevisionsControl() {
                     </td>
                   </tr>
                 ) : (
-                  oilChangeAlerts.slice(0, 3).map((alert) => (
+                  paginatedOilDateAlerts.map((alert) => (
                     <tr key={alert.id} className="hover:bg-surface-container-low/50 transition-colors">
                       <td className="px-6 py-4">
                         <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
@@ -454,6 +554,41 @@ export default function RevisionsControl() {
               </tbody>
             </table>
           </div>
+          {totalOilDatePages > 1 && (
+            <div className="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                Página {currentOilDatePage} de {totalOilDatePages}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={currentOilDatePage === 1}
+                  onClick={() => setOilDatePage(prev => Math.max(prev - 1, 1))}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    currentOilDatePage === 1
+                      ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
+                      : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
+                  )}
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  disabled={currentOilDatePage === totalOilDatePages}
+                  onClick={() => setOilDatePage(prev => Math.min(prev + 1, totalOilDatePages))}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    currentOilDatePage === totalOilDatePages
+                      ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
+                      : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
+                  )}
+                >
+                  Próximo
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </div>
