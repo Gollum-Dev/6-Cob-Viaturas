@@ -251,43 +251,57 @@ export default function VehicleInventory() {
         </div>
 
         {/* Mobile Card View */}
-        <div className="md:hidden divide-y divide-outline-variant/30 px-6">
+        <div className="md:hidden grid grid-cols-1 gap-4 p-6">
           {filteredVehicles.map((v) => {
             const statusInfo = getStatusInfo(v.status);
             return (
               <div 
                 key={v.id} 
                 onClick={() => setSelectedVehicle(v)}
-                className="py-6 space-y-4 cursor-pointer"
+                className="bg-surface-container-low/40 border border-outline-variant/60 rounded-2xl p-5 space-y-4 hover:border-primary/35 transition-all shadow-sm cursor-pointer"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-surface-container-high border border-outline-variant overflow-hidden flex-shrink-0 flex items-center justify-center shadow-inner">
+                {/* Header: Vehicle Image/Prefix & Actions */}
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-surface-container-high border border-outline-variant overflow-hidden flex-shrink-0 flex items-center justify-center shadow-inner">
                       {v.imageUrl ? (
                         <img src={v.imageUrl} alt={v.prefix} className="w-full h-full object-cover" />
                       ) : (
-                        <Car className="w-8 h-8 text-primary/60 opacity-50" />
+                        <Car className="w-5 h-5 text-primary/60 opacity-55" />
                       )}
                     </div>
-                    <div>
-                      <h2 className="text-xl font-black text-on-surface tracking-tight uppercase leading-none">{v.prefix}</h2>
-                      <p className="text-xs font-bold text-on-surface-variant mt-1 uppercase tracking-widest">{v.plate}</p>
+                    <div className="min-w-0">
+                      <h2 className="text-sm font-black text-on-surface uppercase tracking-tight leading-none truncate">
+                        {v.prefix}
+                      </h2>
+                      {v.model && (
+                        <p className="text-[9px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest mt-1 truncate">
+                          {v.model}
+                        </p>
+                      )}
+                      <p className="text-[9px] font-bold text-on-surface-variant/70 uppercase tracking-widest mt-0.5">
+                        Placa: {v.plate}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+
+                  {/* Actions in top-right */}
+                  <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                     <button 
                       onClick={() => setSelectedVehicle(v)}
-                      className="p-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                      className="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg border border-outline-variant/40 bg-surface-container-lowest transition-all"
+                      title="Visualizar Ficha Técnica"
                     >
-                      <Eye className="w-5 h-5" />
+                      <Eye className="w-3.5 h-3.5" />
                     </button>
                     {!isCBU && (
                       <>
                         <button 
                           onClick={() => navigate(`/viaturas/editar/${v.id}`)}
-                          className="p-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                          className="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg border border-outline-variant/40 bg-surface-container-lowest transition-all"
+                          title="Editar"
                         >
-                          <Edit className="w-5 h-5" />
+                          <Edit className="w-3.5 h-3.5" />
                         </button>
                         <button 
                           onClick={() => {
@@ -295,33 +309,40 @@ export default function VehicleInventory() {
                               deleteVehicle(v.id);
                             }
                           }}
-                          className="p-2.5 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all"
+                          className="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 rounded-lg border border-outline-variant/40 bg-surface-container-lowest transition-all cursor-pointer"
+                          title="Remover"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </>
                     )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 py-4 border-y border-outline-variant/10">
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest">Unidade</p>
-                    <p className="text-[11px] font-black text-on-surface uppercase tracking-tight">{v.unit}</p>
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-3 py-3 border-t border-b border-outline-variant/15">
+                  <div className="space-y-0.5">
+                    <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest">Unidade</p>
+                    <p className="text-[10px] font-black text-on-surface uppercase tracking-tight truncate">{v.unit}</p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest">Tipo</p>
-                    <p className="text-[11px] font-black text-on-surface uppercase tracking-tight">{v.type}</p>
+                  <div className="space-y-0.5">
+                    <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest">Tipo</p>
+                    <p className="text-[10px] font-black text-on-surface uppercase tracking-tight truncate">{v.type}</p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest">Odômetro</p>
-                    <p className="text-[11px] font-black text-on-surface uppercase tracking-tight">{v.odometer.toLocaleString()} KM</p>
+                  <div className="space-y-0.5">
+                    <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest">Odômetro</p>
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-[10px] font-black text-on-surface uppercase tracking-tight">{v.odometer.toLocaleString()}</span>
+                      <span className="text-[7px] font-black text-on-surface-variant uppercase opacity-55">KM</span>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest">Status</p>
-                    <span className={cn("inline-block px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest", statusInfo.color)}>
-                      {statusInfo.label}
-                    </span>
+                  <div className="space-y-0.5">
+                    <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest">Status</p>
+                    <div>
+                      <span className={cn("inline-block px-2.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest whitespace-nowrap", statusInfo.color)}>
+                        {statusInfo.label}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
