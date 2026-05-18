@@ -58,20 +58,14 @@ export default function AddVehicleForm() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
       {/* Header com Botão de Voltar */}
-      <div className="flex items-center gap-3 md:gap-4">
+      <div className="flex items-center">
         <button 
           onClick={() => navigate('/viaturas')}
-          className="p-2 md:p-3 bg-surface-container-low border border-outline-variant rounded-2xl text-on-surface-variant hover:text-primary transition-all shadow-sm"
+          className="p-2 md:p-3 bg-surface-container-low border border-outline-variant rounded-2xl text-on-surface-variant hover:text-primary transition-all shadow-sm flex items-center gap-2 font-black text-[10px] uppercase tracking-widest"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
+          <span>Voltar</span>
         </button>
-        <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2 sm:gap-3">
-             <Car className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-primary flex-shrink-0" />
-             Nova Viatura
-          </h1>
-          <p className="text-[10px] sm:text-xs md:text-sm text-on-surface-variant font-medium mt-1">Inclusão de unidade operacional na frota ativa do sistema.</p>
-        </div>
       </div>
 
       <form className="space-y-6 md:space-y-8 pb-12" onSubmit={handleSubmit}>

@@ -57,23 +57,23 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
 
   return (
     <header className="h-16 flex justify-between items-center px-4 md:px-8 bg-white/90 border-b border-outline-variant fixed top-0 left-0 right-0 lg:sticky lg:top-0 z-40 backdrop-blur-md">
-      <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
+      <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
         <button 
           onClick={onMenuClick}
-          className="lg:hidden p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors"
+          className="lg:hidden p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
         >
           <Menu className="w-6 h-6" />
         </button>
-      </div>
 
-      {/* Título e Subtítulo Centralizado no Mobile */}
-      <div className="lg:hidden flex flex-col items-center justify-center text-center px-2 flex-1 min-w-0">
-        <span className="text-[11px] font-black text-on-surface leading-tight uppercase tracking-wider truncate w-full">
-          {title}
-        </span>
-        <span className="text-[8px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest truncate w-full mt-0.5">
-          {subtitle}
-        </span>
+        {/* Título e Descrição da Página para Todas as Versões */}
+        <div className="flex flex-col items-start justify-center min-w-0">
+          <span className="text-[11px] md:text-sm lg:text-base font-black text-on-surface leading-tight uppercase tracking-wider truncate w-full">
+            {title}
+          </span>
+          <span className="text-[8px] md:text-[9px] lg:text-[11px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest truncate w-full mt-0.5">
+            {subtitle}
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 md:gap-8 flex-shrink-0">

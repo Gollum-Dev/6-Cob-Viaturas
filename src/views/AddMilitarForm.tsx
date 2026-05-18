@@ -45,20 +45,14 @@ export default function AddMilitarForm() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-3 md:gap-4">
+      <div className="flex items-center">
         <button 
           onClick={() => navigate('/militares')}
-          className="p-2 md:p-3 bg-surface-container-low border border-outline-variant rounded-2xl text-on-surface-variant hover:text-primary transition-all shadow-sm"
+          className="p-2 md:p-3 bg-surface-container-low border border-outline-variant rounded-2xl text-on-surface-variant hover:text-primary transition-all shadow-sm flex items-center gap-2 font-black text-[10px] uppercase tracking-widest"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
+          <span>Voltar</span>
         </button>
-        <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2 sm:gap-3">
-            <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-primary flex-shrink-0" />
-            Novo Cadastro
-          </h1>
-          <p className="text-[10px] sm:text-xs md:text-sm text-on-surface-variant font-medium mt-1">Registrar novo acesso militar ao sistema.</p>
-        </div>
       </div>
 
       <div className="bg-surface-container-lowest rounded-[24px] md:rounded-[32px] border border-outline-variant overflow-hidden shadow-xl">

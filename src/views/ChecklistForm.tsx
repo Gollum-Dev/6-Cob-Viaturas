@@ -117,14 +117,7 @@ export default function ChecklistForm() {
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
-        <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2 sm:gap-3">
-            <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-primary flex-shrink-0" />
-            Conferência Diária
-          </h1>
-          <p className="text-[10px] sm:text-xs md:text-sm text-on-surface-variant font-medium mt-1">Protocolo de recebimento e inspeção técnica.</p>
-        </div>
+      <div className="flex justify-end">
         <div className="flex items-center gap-3 bg-surface-container-low px-4 py-3 rounded-2xl border border-outline-variant shadow-inner w-fit">
           <Clock className="w-4 h-4 text-primary" />
           <p className="font-data-mono text-xs md:text-sm font-bold text-on-surface">{new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })} | {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>

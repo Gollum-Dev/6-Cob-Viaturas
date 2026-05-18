@@ -233,11 +233,7 @@ export default function RevisionsControl() {
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2 sm:gap-3">
-          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-primary flex-shrink-0" />
-          Revisões Preventivas
-        </h1>
+      <div className="flex justify-end mb-6">
         <button 
           onClick={() => {
             setMaintenanceType(MaintenanceType.PREVENTIVE_GENERAL);
