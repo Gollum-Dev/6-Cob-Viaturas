@@ -16,6 +16,7 @@ import Login from './views/Login';
 import MilitarManagement from './views/MilitarManagement';
 import AddMilitarForm from './views/AddMilitarForm';
 import EditMilitarForm from './views/EditMilitarForm';
+import SettingsView from './views/Settings';
 import { UserRole } from './types';
 
 function AppContent() {
@@ -47,6 +48,7 @@ function AppContent() {
             <>
               <Route index element={<Navigate to="/checklist" replace />} />
               <Route path="checklist" element={<ChecklistForm />} />
+              <Route path="configuracoes" element={<SettingsView />} />
               <Route path="*" element={<Navigate to="/checklist" replace />} />
             </>
           ) : (
@@ -62,6 +64,7 @@ function AppContent() {
               <Route path="manutencao" element={<MaintenanceControl />} />
               <Route path="revisoes" element={<RevisionsControl />} />
               <Route path="relatorios" element={<AuditLogs />} />
+              <Route path="configuracoes" element={<SettingsView />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
           )}

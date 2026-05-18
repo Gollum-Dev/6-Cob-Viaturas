@@ -11,6 +11,7 @@ interface AuthContextType {
   register: (password: string, role: UserRole, milNumber: string, rank: string, name: string, unit: string) => Promise<boolean>;
   updateUser: (id: string, updates: Partial<User>) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<{ success: boolean; error: string | null }>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -280,6 +281,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updatePassword = async (newPassword: string): Promise<{ success: boolean; error: string | null }> => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true, error: null };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Erro inesperado.' };
+    }
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -295,6 +308,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register, 
       updateUser,
       deleteUser, 
+      updatePassword,
       logout, 
       isAuthenticated,
       isLoading
