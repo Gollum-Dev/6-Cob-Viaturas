@@ -252,7 +252,7 @@ export default function RevisionsControl() {
                     </td>
                   </tr>
                 ) : (
-                  tireValidityAlerts.map((alert) => (
+                  tireValidityAlerts.slice(0, 3).map((alert) => (
                     <tr key={alert.id} className="hover:bg-surface-container-low/50 transition-colors">
                       <td className="px-6 py-4">
                         <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
@@ -330,7 +330,7 @@ export default function RevisionsControl() {
                     </td>
                   </tr>
                 ) : (
-                  oilChangeKmAlerts.map((alert) => (
+                  oilChangeKmAlerts.slice(0, 3).map((alert) => (
                     <tr key={alert.id} className="hover:bg-surface-container-low/50 transition-colors">
                       <td className="px-6 py-4">
                         <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
@@ -408,7 +408,7 @@ export default function RevisionsControl() {
                     </td>
                   </tr>
                 ) : (
-                  oilChangeAlerts.map((alert) => (
+                  oilChangeAlerts.slice(0, 3).map((alert) => (
                     <tr key={alert.id} className="hover:bg-surface-container-low/50 transition-colors">
                       <td className="px-6 py-4">
                         <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
