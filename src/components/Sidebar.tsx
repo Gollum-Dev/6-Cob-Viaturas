@@ -1,6 +1,7 @@
-import { LayoutDashboard, Car, ClipboardCheck, Wrench, FileText, User as UserIcon, Settings, LogOut, Users, Calendar } from 'lucide-react';
+import { LayoutDashboard, Car, ClipboardCheck, Wrench, FileText, User as UserIcon, Settings, LogOut, Users, Calendar, MessageSquare } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useChat } from '../context/ChatContext';
 import { UserRole } from '../types';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -17,6 +18,7 @@ const navItems = [
   { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP] },
   { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP] },
   { icon: FileText, label: 'Relatórios', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
+  { icon: MessageSquare, label: 'Mensagens', href: '/chat', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
 ];
 
 interface SidebarProps {
@@ -26,6 +28,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
+  const { unreadCount } = useChat();
 
   const filteredNavItems = navItems.filter(item => 
     user && item.roles.includes(user.role)
@@ -62,7 +65,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             }
           >
             <item.icon className="mr-4 w-5 h-5 opacity-70" />
-            <span className="text-sm uppercase font-black tracking-widest text-[11px]">{item.label}</span>
+            <span className="text-sm uppercase font-black tracking-widest text-[11px] flex-1">{item.label}</span>
+            {item.label === 'Mensagens' && unreadCount > 0 && (
+              <span className="bg-error text-white font-black text-[9px] px-2 py-0.5 rounded-full mr-4 animate-pulse">
+                {unreadCount}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

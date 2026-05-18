@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Filter, Plus, Edit, Eye, ChevronLeft, ChevronRight, Trash2, Car } from 'lucide-react';
+import { Filter, Plus, Edit, Eye, ChevronLeft, ChevronRight, Trash2, Car, X, Radio, DollarSign, Disc, Settings, FileText, Calendar, Hash, Zap, Shield, MapPin } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useVehicles } from '../context/VehicleContext';
 import { useAuth } from '../context/AuthContext';
-import { VehicleStatus, UserRole } from '../types';
+import { VehicleStatus, UserRole, Vehicle } from '../types';
 import { cn } from '../lib/utils';
 
 export default function VehicleInventory() {
@@ -16,6 +16,7 @@ export default function VehicleInventory() {
   const [typeFilter, setTypeFilter] = useState('Todos');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [unitFilter, setUnitFilter] = useState('Todos');
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
   const getStatusInfo = (status: VehicleStatus) => {
     switch (status) {
@@ -26,64 +27,33 @@ export default function VehicleInventory() {
       case VehicleStatus.DISCHARGE_PROCESS:
         return { label: 'P. Descarga', color: 'bg-orange-100 text-orange-700' };
       case VehicleStatus.DISCHARGE_AVAILABLE:
-        return { label: 'Disp. Descarga', color: 'bg-error/10 text-error' };
+        return { label: 'Disp. Descarga', color: 'bg-red-100 text-red-700' };
       default:
-        return { label: status, color: 'bg-surface-container text-on-surface' };
+        return { label: 'Desconhecido', color: 'bg-surface-container text-on-surface' };
     }
   };
 
   const vehicleTypes = useMemo(() => {
     const types = new Set(vehicles.map(v => v.type));
-    return ['Todos', ...Array.from(types)].sort();
+    return ['Todos', ...Array.from(types)];
   }, [vehicles]);
 
   const units = useMemo(() => {
-    const distinctUnits = new Set(vehicles.map(v => v.unit).filter(Boolean));
-    return ['Todos', 'ITAJUBA', 'POUSO ALEGRE', 'EXTREMA', 'PARAISOPOLIS', ...Array.from(distinctUnits)].filter((v, i, a) => a.indexOf(v) === i);
+    const u = new Set(vehicles.map(v => v.unit));
+    return ['Todos', ...Array.from(u)];
   }, [vehicles]);
 
-  const filteredVehicles = vehicles.filter((v) => {
-    const matchesType = typeFilter === 'Todos' || v.type === typeFilter;
-    const matchesStatus = statusFilter === 'Todos' || v.status === statusFilter;
-    const matchesUnit = unitFilter === 'Todos' || v.unit === unitFilter;
-
-    return matchesType && matchesStatus && matchesUnit;
-  });
-
-  const getTypeColorSheet = (type: string) => {
-    switch ((type || '').toUpperCase()) {
-      case 'SOCORRO':
-        return 'bg-blue-100/80 text-blue-700';
-      case 'SALVAMENTO':
-        return 'bg-green-100/80 text-green-700';
-      case 'RESGATE':
-        return 'bg-red-100/80 text-red-700 font-black';
-      case 'ADMINISTRATIVO':
-        return 'bg-yellow-100/80 text-yellow-800';
-      case 'APOIO':
-        return 'bg-gray-100/80 text-gray-600';
-      default:
-        return 'bg-surface-container text-on-surface';
-    }
-  };
-
-  const getUnitColorSheet = (unit: string) => {
-    switch ((unit || '').toUpperCase()) {
-      case 'ITAJUBA':
-        return 'bg-purple-100/80 text-purple-700';
-      case 'POUSO ALEGRE':
-        return 'bg-cyan-100/80 text-cyan-700';
-      case 'EXTREMA':
-        return 'bg-emerald-100/80 text-emerald-700';
-      case 'PARAISOPOLIS':
-        return 'bg-orange-100/80 text-orange-700';
-      default:
-        return 'bg-surface-container text-on-surface';
-    }
-  };
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter(v => {
+      const matchType = typeFilter === 'Todos' || v.type === typeFilter;
+      const matchStatus = statusFilter === 'Todos' || v.status === statusFilter;
+      const matchUnit = unitFilter === 'Todos' || v.unit === unitFilter;
+      return matchType && matchStatus && matchUnit;
+    });
+  }, [vehicles, typeFilter, statusFilter, unitFilter]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 relative">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-on-surface uppercase tracking-tight flex items-center gap-3">
@@ -102,7 +72,6 @@ export default function VehicleInventory() {
           </Link>
         )}
       </div>
-
 
       <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant overflow-hidden shadow-sm">
         <div className="p-6 md:p-8 border-b border-outline-variant bg-surface-container-low/30">
@@ -175,28 +144,37 @@ export default function VehicleInventory() {
                 <th className="px-4 py-5">Tipo</th>
                 <th className="px-4 py-5 text-center">Status</th>
                 <th className="px-4 py-5">Odômetro</th>
-                {!isCBU && <th className="px-4 py-5 text-center">Ações</th>}
+                <th className="px-4 py-5 text-center">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/30">
               {filteredVehicles.map((v) => {
                 const statusInfo = getStatusInfo(v.status);
                 return (
-                  <tr key={v.id} className="hover:bg-surface-container-low/30 transition-colors group">
+                  <tr 
+                    key={v.id} 
+                    onClick={() => setSelectedVehicle(v)}
+                    className="hover:bg-surface-container-low/30 transition-colors group cursor-pointer"
+                  >
                     <td className="px-4 py-6 min-w-[160px]">
                        <div className="flex items-center gap-4">
-                         <div className="w-12 h-12 rounded-2xl bg-surface-container-high border border-outline-variant overflow-hidden flex-shrink-0 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
-                           {v.imageUrl ? (
-                             <img src={v.imageUrl} alt={v.prefix} className="w-full h-full object-cover" />
-                           ) : (
-                             <Car className="w-6 h-6 text-primary/60 opacity-50" />
-                           )}
-                         </div>
-                         <span className="font-black text-on-surface tracking-tight uppercase leading-none">{v.prefix}</span>
+                          <div className="w-12 h-12 rounded-2xl bg-surface-container-high border border-outline-variant overflow-hidden flex-shrink-0 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
+                            {v.imageUrl ? (
+                              <img src={v.imageUrl} alt={v.prefix} className="w-full h-full object-cover" />
+                            ) : (
+                              <Car className="w-6 h-6 text-primary/60 opacity-50" />
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-black text-on-surface tracking-tight uppercase leading-none block">{v.prefix}</span>
+                            {v.model && (
+                              <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wide opacity-60 block mt-0.5">{v.model}</span>
+                            )}
+                          </div>
                        </div>
                     </td>
-                    <td className="px-4 py-6">
-                      <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">{v.plate}</span>
+                    <td className="px-4 py-6 text-xs font-bold text-on-surface-variant uppercase tracking-widest">
+                      {v.plate}
                     </td>
                     <td className="px-4 py-6 min-w-[140px]">
                        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-70">
@@ -216,29 +194,42 @@ export default function VehicleInventory() {
                     <td className="px-4 py-6">
                       <div className="flex items-baseline gap-1">
                         <span className="font-black text-on-surface tracking-tight">{v.odometer.toLocaleString()}</span>
-                        <span className="text-[8px] font-black text-on-surface-variant uppercase opacity-50">KM</span>
+                        <span className="text-[8px] font-black text-on-surface-variant uppercase opacity-55">KM</span>
                       </div>
                     </td>
-                    {!isCBU && (
-                      <td className="px-4 py-6">
-                        <div className="flex justify-center gap-2">
-                            <button 
-                              onClick={() => navigate(`/viaturas/editar/${v.id}`)}
-                              className="p-3 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
-                              title="Editar"
-                            >
-                                <Edit className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={() => deleteVehicle(v.id)}
-                              className="p-3 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all" 
-                              title="Remover"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        </div>
-                      </td>
-                    )}
+                    <td className="px-4 py-6" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-center gap-1">
+                          <button 
+                            onClick={() => setSelectedVehicle(v)}
+                            className="p-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
+                            title="Visualizar Ficha Técnica"
+                          >
+                              <Eye className="w-4 h-4" />
+                          </button>
+                          {!isCBU && (
+                            <>
+                              <button 
+                                onClick={() => navigate(`/viaturas/editar/${v.id}`)}
+                                className="p-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
+                                title="Editar"
+                              >
+                                  <Edit className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  if (confirm(`Deseja realmente remover a viatura ${v.prefix}?`)) {
+                                    deleteVehicle(v.id);
+                                  }
+                                }}
+                                className="p-2.5 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all" 
+                                title="Remover"
+                              >
+                                  <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -251,7 +242,11 @@ export default function VehicleInventory() {
           {filteredVehicles.map((v) => {
             const statusInfo = getStatusInfo(v.status);
             return (
-              <div key={v.id} className="py-6 space-y-4">
+              <div 
+                key={v.id} 
+                onClick={() => setSelectedVehicle(v)}
+                className="py-6 space-y-4 cursor-pointer"
+              >
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-2xl bg-surface-container-high border border-outline-variant overflow-hidden flex-shrink-0 flex items-center justify-center shadow-inner">
@@ -266,22 +261,34 @@ export default function VehicleInventory() {
                       <p className="text-xs font-bold text-on-surface-variant mt-1 uppercase tracking-widest">{v.plate}</p>
                     </div>
                   </div>
-                  {!isCBU && (
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => navigate(`/viaturas/editar/${v.id}`)}
-                        className="p-3 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      <button 
-                        onClick={() => deleteVehicle(v.id)}
-                        className="p-3 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      onClick={() => setSelectedVehicle(v)}
+                      className="p-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                    >
+                      <Eye className="w-5 h-5" />
+                    </button>
+                    {!isCBU && (
+                      <>
+                        <button 
+                          onClick={() => navigate(`/viaturas/editar/${v.id}`)}
+                          className="p-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if (confirm(`Deseja realmente remover a viatura ${v.prefix}?`)) {
+                              deleteVehicle(v.id);
+                            }
+                          }}
+                          className="p-2.5 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 py-4 border-y border-outline-variant/10">
@@ -322,6 +329,223 @@ export default function VehicleInventory() {
           </div>
         </div>
       </div>
+
+      {/* Sliding Drawer for Vehicle Details */}
+      {selectedVehicle && (
+        <>
+          {/* Backdrop Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity animate-in fade-in duration-300"
+            onClick={() => setSelectedVehicle(null)}
+          />
+          
+          {/* Drawer Panel */}
+          <div className="fixed inset-y-0 right-0 w-full sm:w-[520px] md:w-[620px] bg-white border-l border-outline-variant shadow-2xl z-50 flex flex-col transform transition-all duration-300 ease-out animate-in slide-in-from-right">
+            
+            {/* Header com Imagem */}
+            <div className="relative h-64 bg-surface-container-high border-b border-outline-variant flex-shrink-0 overflow-hidden">
+              {selectedVehicle.imageUrl ? (
+                <img src={selectedVehicle.imageUrl} alt={selectedVehicle.prefix} className="w-full h-full object-cover transition-transform hover:scale-105 duration-700" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/30 flex items-center justify-center">
+                  <Car className="w-24 h-24 text-primary/40 animate-pulse" />
+                </div>
+              )}
+              
+              {/* Close button */}
+              <button 
+                onClick={() => setSelectedVehicle(null)}
+                className="absolute top-4 right-4 p-2.5 bg-black/40 hover:bg-black/60 text-white rounded-xl transition-all shadow-md active:scale-95"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Floating Info Plate */}
+              <div className="absolute bottom-4 left-4 right-4 bg-black/70 backdrop-blur-md p-4 rounded-2xl text-white flex justify-between items-center shadow-lg">
+                <div>
+                  <h2 className="text-2xl font-black uppercase tracking-tight leading-none">{selectedVehicle.prefix}</h2>
+                  <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mt-1.5 flex items-center gap-1">
+                    <Hash className="w-3 h-3 text-primary" /> {selectedVehicle.plate}
+                  </p>
+                </div>
+                <span className={cn("px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm", 
+                  selectedVehicle.status === VehicleStatus.AVAILABLE 
+                    ? "bg-green-500 text-white" 
+                    : "bg-error text-white"
+                )}>
+                  {getStatusInfo(selectedVehicle.status).label}
+                </span>
+              </div>
+            </div>
+
+            {/* Content Scroll Area */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              
+              {/* Seção 1: Identificação Geral */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2 border-b border-outline-variant/30 pb-2">
+                  <Car className="w-4 h-4" /> Identificação Geral
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Classe</span>
+                    <span className="text-xs font-bold text-on-surface uppercase block mt-1">{selectedVehicle.vehicleClass || 'Não Informada'}</span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Modelo / Marca</span>
+                    <span className="text-xs font-bold text-on-surface uppercase block mt-1">{selectedVehicle.model || 'Não Informado'}</span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Patrimônio</span>
+                    <span className="text-xs font-bold text-on-surface uppercase block mt-1">{selectedVehicle.patrimony || 'Não Informado'}</span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Ano de Fabricação</span>
+                    <span className="text-xs font-bold text-on-surface uppercase block mt-1">{selectedVehicle.yearOfManufacture || 'Não Informado'}</span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Unidade</span>
+                    <span className="text-xs font-bold text-on-surface uppercase block mt-1">{selectedVehicle.unit}</span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Tipo Operacional</span>
+                    <span className="text-xs font-bold text-on-surface uppercase block mt-1">{selectedVehicle.type}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção 2: Controle de Odômetro e Manutenção */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2 border-b border-outline-variant/30 pb-2">
+                  <Settings className="w-4 h-4" /> Controle de Manutenção
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30 col-span-2">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Odômetro Atual</span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-xl font-black text-on-surface tracking-tight">{selectedVehicle.odometer.toLocaleString()}</span>
+                      <span className="text-[9px] font-black text-on-surface-variant uppercase opacity-55">KM</span>
+                    </div>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Última Troca de Óleo</span>
+                    <span className="text-xs font-bold text-on-surface block mt-1">
+                      {selectedVehicle.lastOilChangeDate ? new Date(selectedVehicle.lastOilChangeDate + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não Cadastrada'}
+                    </span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">KM na Última Troca</span>
+                    <span className="text-xs font-bold text-on-surface block mt-1">
+                      {selectedVehicle.lastOilChangeOdometer ? `${selectedVehicle.lastOilChangeOdometer.toLocaleString()} KM` : 'Não Cadastrado'}
+                    </span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30 col-span-2">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Próxima Troca de Óleo</span>
+                    <span className="text-xs font-bold text-on-surface block mt-1">
+                      {selectedVehicle.nextOilChangeDate ? new Date(selectedVehicle.nextOilChangeDate + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não Cadastrada'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção 3: Comunicação e Pneus */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2 border-b border-outline-variant/30 pb-2">
+                  <Radio className="w-4 h-4" /> Comunicação & Pneus
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30 col-span-2">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Modelo do Rádio Comunicador</span>
+                    <span className="text-xs font-bold text-on-surface uppercase block mt-1">{selectedVehicle.radioModel || 'Não Cadastrado'}</span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Patrimônio do Rádio</span>
+                    <span className="text-xs font-bold text-on-surface uppercase block mt-1">{selectedVehicle.radioPatrimony || 'Não Cadastrado'}</span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Situação do Rádio</span>
+                    <div className="mt-1">
+                      <span className={cn(
+                        "inline-block px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest",
+                        selectedVehicle.radioStatus === 'FUNCIONANDO 5.5' && "bg-green-100 text-green-700",
+                        selectedVehicle.radioStatus === 'FUNCIONANDO 3.3' && "bg-blue-100 text-blue-700",
+                        selectedVehicle.radioStatus === 'RÁDIO INOPERANTE' && "bg-red-100 text-red-700",
+                        selectedVehicle.radioStatus === 'NÃO TEM RÁDIO' && "bg-surface-container-high text-on-surface-variant",
+                        selectedVehicle.radioStatus === 'RÁDIO NÃO FOI TESTADO' && "bg-amber-100 text-amber-700",
+                        !selectedVehicle.radioStatus && "bg-surface-container text-on-surface"
+                      )}>
+                        {selectedVehicle.radioStatus || 'NÃO CADASTRADO'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Pneu Dianteiro</span>
+                    <span className="text-xs font-bold text-on-surface uppercase block mt-1">{selectedVehicle.frontTireModel || 'Não Cadastrado'}</span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Pneu Traseiro</span>
+                    <span className="text-xs font-bold text-on-surface uppercase block mt-1">{selectedVehicle.rearTireModel || 'Não Cadastrado'}</span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30 col-span-2">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Validade dos Pneus</span>
+                    <span className="text-xs font-bold text-on-surface block mt-1">
+                      {selectedVehicle.tireValidityDate ? new Date(selectedVehicle.tireValidityDate + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não Cadastrada'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção 4: Valores Financeiros */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2 border-b border-outline-variant/30 pb-2">
+                  <DollarSign className="w-4 h-4" /> Valores Financeiros
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Valor Contábil (Estado)</span>
+                    <span className="text-sm font-black text-on-surface block mt-1 text-primary">
+                      {selectedVehicle.vehicleValue ? selectedVehicle.vehicleValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Não Cadastrado'}
+                    </span>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/30">
+                    <span className="text-[9px] font-black text-on-surface-variant/50 uppercase tracking-widest block">Valor Venal (Mercado)</span>
+                    <span className="text-sm font-black text-on-surface block mt-1 text-primary">
+                      {selectedVehicle.marketValue ? selectedVehicle.marketValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Não Cadastrado'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer com Ações */}
+            <div className="p-6 bg-surface-container-low border-t border-outline-variant flex gap-3 flex-shrink-0">
+              {selectedVehicle.documentLink && (
+                <button 
+                  onClick={() => window.open(selectedVehicle.documentLink, '_blank')}
+                  className="flex-1 bg-surface-container border border-outline text-on-surface-variant font-black p-3.5 rounded-xl hover:bg-surface-container-high transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                >
+                  <FileText className="w-4 h-4" />
+                  Documento CRLV
+                </button>
+              )}
+              {!isCBU && (
+                <button 
+                  onClick={() => {
+                    setSelectedVehicle(null);
+                    navigate(`/viaturas/editar/${selectedVehicle.id}`);
+                  }}
+                  className="flex-1 bg-primary text-white font-black p-3.5 rounded-xl hover:bg-primary-container shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                >
+                  <Edit className="w-4 h-4" />
+                  Editar Viatura
+                </button>
+              )}
+            </div>
+
+          </div>
+        </>
+      )}
     </div>
   );
 }

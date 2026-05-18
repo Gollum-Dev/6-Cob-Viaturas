@@ -31,6 +31,20 @@ function mapVehicleFromDB(dbV: any): Vehicle {
     tireValidityDate: dbV.tire_validity_date?.split('T')[0],
     lastMaintenance: dbV.last_maintenance?.split('T')[0],
     imageUrl: dbV.image_url,
+    
+    // Novos campos
+    vehicleClass: dbV.vehicle_class,
+    patrimony: dbV.patrimony,
+    yearOfManufacture: dbV.year_of_manufacture,
+    model: dbV.model,
+    documentLink: dbV.document_link,
+    radioModel: dbV.radio_model,
+    radioPatrimony: dbV.radio_patrimony,
+    radioStatus: dbV.radio_status,
+    frontTireModel: dbV.front_tire_model,
+    rearTireModel: dbV.rear_tire_model,
+    vehicleValue: dbV.vehicle_value,
+    marketValue: dbV.market_value,
   };
 }
 
@@ -50,6 +64,20 @@ function mapVehicleToDB(v: Partial<Vehicle>): any {
   if (v.tireValidityDate !== undefined) dbV.tire_validity_date = v.tireValidityDate ? new Date(v.tireValidityDate).toISOString() : null;
   if (v.lastMaintenance !== undefined) dbV.last_maintenance = v.lastMaintenance ? new Date(v.lastMaintenance).toISOString() : null;
   if (v.imageUrl !== undefined) dbV.image_url = v.imageUrl;
+
+  // Novos campos
+  if (v.vehicleClass !== undefined) dbV.vehicle_class = v.vehicleClass;
+  if (v.patrimony !== undefined) dbV.patrimony = v.patrimony;
+  if (v.yearOfManufacture !== undefined) dbV.year_of_manufacture = v.yearOfManufacture;
+  if (v.model !== undefined) dbV.model = v.model;
+  if (v.documentLink !== undefined) dbV.document_link = v.documentLink;
+  if (v.radioModel !== undefined) dbV.radio_model = v.radioModel;
+  if (v.radioPatrimony !== undefined) dbV.radio_patrimony = v.radioPatrimony;
+  if (v.radioStatus !== undefined) dbV.radio_status = v.radioStatus;
+  if (v.frontTireModel !== undefined) dbV.front_tire_model = v.frontTireModel;
+  if (v.rearTireModel !== undefined) dbV.rear_tire_model = v.rearTireModel;
+  if (v.vehicleValue !== undefined) dbV.vehicle_value = v.vehicleValue;
+  if (v.marketValue !== undefined) dbV.market_value = v.marketValue;
 
   return dbV;
 }

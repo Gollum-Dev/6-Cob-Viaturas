@@ -41,6 +41,20 @@ export interface Vehicle {
   tireValidityDate?: string;
   lastMaintenance?: string;
   image?: string;
+  
+  // Novos campos adicionados
+  vehicleClass?: string;
+  patrimony?: string;
+  yearOfManufacture?: number;
+  model?: string;
+  documentLink?: string;
+  radioModel?: string;
+  radioPatrimony?: string;
+  radioStatus?: string;
+  frontTireModel?: string;
+  rearTireModel?: string;
+  vehicleValue?: number;
+  marketValue?: number;
 }
 
 export interface ChecklistItem {
@@ -105,4 +119,15 @@ export interface AuditLog {
   resourceType: string;
   ip: string;
   severity: 'ALERTA' | 'AVISO' | 'INFO';
+}
+
+export interface ChatMessage {
+  id: string;
+  sender_id: string;
+  receiver_id: string | null; // null means sent to "Administrators"
+  content: string;
+  created_at: string;
+  is_read: boolean;
+  sender_name: string;
+  sender_rank: string;
 }

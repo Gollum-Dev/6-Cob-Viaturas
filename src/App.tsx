@@ -17,6 +17,8 @@ import MilitarManagement from './views/MilitarManagement';
 import AddMilitarForm from './views/AddMilitarForm';
 import EditMilitarForm from './views/EditMilitarForm';
 import SettingsView from './views/Settings';
+import ChatView from './views/Chat';
+import { ChatProvider } from './context/ChatContext';
 import { UserRole } from './types';
 
 function AppContent() {
@@ -50,6 +52,7 @@ function AppContent() {
             <>
               <Route index element={<Navigate to="/checklist" replace />} />
               <Route path="checklist" element={<ChecklistForm />} />
+              <Route path="chat" element={<ChatView />} />
               <Route path="configuracoes" element={<SettingsView />} />
               <Route path="*" element={<Navigate to="/checklist" replace />} />
             </>
@@ -67,6 +70,7 @@ function AppContent() {
               <Route path="militares/novo" element={<AddMilitarForm />} />
               <Route path="militares/editar/:id" element={<EditMilitarForm />} />
               <Route path="checklist" element={<ChecklistForm />} />
+              <Route path="chat" element={<ChatView />} />
               {canAccessMaintenanceAndRevisions && (
                 <>
                   <Route path="manutencao" element={<MaintenanceControl />} />
@@ -90,7 +94,9 @@ export default function App() {
       <VehicleProvider>
         <ReportProvider>
           <MaintenanceProvider>
-            <AppContent />
+            <ChatProvider>
+              <AppContent />
+            </ChatProvider>
           </MaintenanceProvider>
         </ReportProvider>
       </VehicleProvider>

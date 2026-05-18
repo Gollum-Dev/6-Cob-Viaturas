@@ -1,4 +1,4 @@
-import { Car, Save, ArrowLeft, Camera, Shield, Gauge, Hash, Zap, Settings, Droplets, Disc, MapPin } from 'lucide-react';
+import { Car, Save, ArrowLeft, Camera, Shield, Gauge, Hash, Zap, Settings, Droplets, Disc, MapPin, Radio, DollarSign, FileText, Calendar } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVehicles } from '../context/VehicleContext';
@@ -21,7 +21,21 @@ export default function AddVehicleForm() {
     lastOilChangeOdometer: 0,
     tireValidityDate: '',
     imageUrl: '',
-    status: VehicleStatus.AVAILABLE
+    status: VehicleStatus.AVAILABLE,
+    
+    // Novos campos solicitados
+    vehicleClass: '',
+    patrimony: '',
+    yearOfManufacture: new Date().getFullYear(),
+    model: '',
+    documentLink: '',
+    radioModel: '',
+    radioPatrimony: '',
+    radioStatus: 'RÁDIO NÃO FOI TESTADO',
+    frontTireModel: '',
+    rearTireModel: '',
+    vehicleValue: 0,
+    marketValue: 0
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,7 +56,7 @@ export default function AddVehicleForm() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
       {/* Header com Botão de Voltar */}
       <div className="flex items-center gap-3 md:gap-4">
         <button 
@@ -65,6 +79,8 @@ export default function AddVehicleForm() {
           
           {/* Coluna Principal: Dados Técnicos */}
           <div className="lg:col-span-8 space-y-6 md:space-y-8">
+            
+            {/* Seção 1: Informações de Identificação */}
             <section className="bg-white border border-outline-variant rounded-xl p-5 md:p-8 shadow-sm space-y-6 md:space-y-8">
               <div className="flex items-center gap-4 border-b border-outline-variant/30 pb-4">
                 <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
@@ -76,36 +92,40 @@ export default function AddVehicleForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-                    <Zap className="w-3 h-3" /> Prefix (Cód. Operacional)
+                    <Zap className="w-3 h-3 text-primary" /> Prefixo (Cód. Operacional)
                   </label>
                   <input 
                     type="text" 
                     placeholder="Ex: ABTS-01" 
                     value={formData.prefix}
                     onChange={(e) => setFormData({ ...formData, prefix: e.target.value })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container"
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> Placa do Veículo
+                    <Hash className="w-3 h-3 text-primary" /> Placa do Veículo
                   </label>
                   <input 
                     type="text" 
-                    placeholder="BRA2E24" 
+                    placeholder="Ex: BRA2E24" 
                     value={formData.plate}
                     onChange={(e) => setFormData({ ...formData, plate: e.target.value })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container"
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Tipo de Viatura</label>
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Car className="w-3 h-3 text-primary" /> Tipo de Viatura
+                  </label>
                   <select 
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none"
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary appearance-none"
                     required
                   >
                     <option value="SALVAMENTO">SALVAMENTO</option>
@@ -115,15 +135,42 @@ export default function AddVehicleForm() {
                     <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
                   </select>
                 </div>
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-                    <MapPin className="w-3 h-3" /> Unidade da Viatura
+                    <Shield className="w-3 h-3 text-primary" /> Classe da Viatura
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Auto Bomba Tanque Socorro" 
+                    value={formData.vehicleClass}
+                    onChange={(e) => setFormData({ ...formData, vehicleClass: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Zap className="w-3 h-3 text-primary" /> Modelo / Fabricante
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Toyota Hilux 4x4" 
+                    value={formData.model}
+                    onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <MapPin className="w-3 h-3 text-primary" /> Unidade da Viatura
                   </label>
                   <select 
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                     disabled={user?.role !== UserRole.ADMINISTRADOR}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none disabled:opacity-75 disabled:cursor-not-allowed"
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary appearance-none disabled:opacity-75 disabled:cursor-not-allowed"
                     required
                   >
                     <option value="ITAJUBA">ITAJUBA</option>
@@ -132,85 +179,249 @@ export default function AddVehicleForm() {
                     <option value="PARAISOPOLIS">PARAISOPOLIS</option>
                   </select>
                 </div>
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-                    <Gauge className="w-3 h-3" /> Odômetro de Entrada
+                    <Hash className="w-3 h-3 text-primary" /> Número de Patrimônio
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: PMG-123456" 
+                    value={formData.patrimony}
+                    onChange={(e) => setFormData({ ...formData, patrimony: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Calendar className="w-3 h-3 text-primary" /> Ano de Fabricação
+                  </label>
+                  <input 
+                    type="number" 
+                    placeholder="Ex: 2023" 
+                    value={formData.yearOfManufacture}
+                    onChange={(e) => setFormData({ ...formData, yearOfManufacture: parseInt(e.target.value) || 0 })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Seção 2: Controle de Manutenção, Óleo & Pneus */}
+            <section className="bg-white border border-outline-variant rounded-xl p-5 md:p-8 shadow-sm space-y-6 md:space-y-8">
+              <div className="flex items-center gap-4 border-b border-outline-variant/30 pb-4">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Settings className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-lg md:text-xl font-bold text-on-surface">Controle Técnico & Operacional</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Gauge className="w-3 h-3 text-primary" /> Odômetro Atual (KM)
                   </label>
                   <input 
                     type="number" 
                     placeholder="0" 
                     value={formData.odometer}
                     onChange={(e) => setFormData({ ...formData, odometer: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container"
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
                     required
                   />
                 </div>
-              </div>
-            </section>
 
-            <section className="bg-white border border-outline-variant rounded-xl p-5 md:p-8 shadow-sm space-y-6 md:space-y-8">
-              <div className="flex items-center gap-4 border-b border-outline-variant/30 pb-4">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
-                  <Settings className="w-5 h-5 text-primary" />
-                </div>
-                <h3 className="text-lg md:text-xl font-bold text-on-surface">Controle de Manutenção Preventiva</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-                    <Droplets className="w-3 h-3" /> Data Úl. Troca de Óleo
+                    <Droplets className="w-3 h-3 text-primary" /> Data da Última Troca de Óleo
                   </label>
                   <input 
                     type="date" 
                     value={formData.lastOilChangeDate}
                     onChange={(e) => setFormData({ ...formData, lastOilChangeDate: e.target.value })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container"
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
                   />
                 </div>
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-                    <Droplets className="w-3 h-3" /> Data Próx. Troca de Óleo
-                  </label>
-                  <input 
-                    type="date" 
-                    value={formData.nextOilChangeDate}
-                    onChange={(e) => setFormData({ ...formData, nextOilChangeDate: e.target.value })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-                    <Gauge className="w-3 h-3" /> KM Úl. Troca de Óleo
+                    <Gauge className="w-3 h-3 text-primary" /> Odomêtro na Última Troca de Óleo
                   </label>
                   <input 
                     type="number" 
                     placeholder="0" 
                     value={formData.lastOilChangeOdometer}
                     onChange={(e) => setFormData({ ...formData, lastOilChangeOdometer: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container"
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
                   />
                 </div>
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-                    <Disc className="w-3 h-3" /> Validade dos Pneus
+                    <Droplets className="w-3 h-3 text-primary" /> Data da Próxima Troca de Óleo
+                  </label>
+                  <input 
+                    type="date" 
+                    value={formData.nextOilChangeDate}
+                    onChange={(e) => setFormData({ ...formData, nextOilChangeDate: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Disc className="w-3 h-3 text-primary" /> Modelo do Pneu Dianteiro
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Michelin 215/75 R17.5" 
+                    value={formData.frontTireModel}
+                    onChange={(e) => setFormData({ ...formData, frontTireModel: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Disc className="w-3 h-3 text-primary" /> Modelo do Pneu Traseiro
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Michelin 215/75 R17.5" 
+                    value={formData.rearTireModel}
+                    onChange={(e) => setFormData({ ...formData, rearTireModel: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Calendar className="w-3 h-3 text-primary" /> Validade dos Pneus
                   </label>
                   <input 
                     type="date" 
                     value={formData.tireValidityDate}
                     onChange={(e) => setFormData({ ...formData, tireValidityDate: e.target.value })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container"
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
             </section>
 
+            {/* Seção 3: Equipamentos de Rádio & Comunicação */}
+            <section className="bg-white border border-outline-variant rounded-xl p-5 md:p-8 shadow-sm space-y-6 md:space-y-8">
+              <div className="flex items-center gap-4 border-b border-outline-variant/30 pb-4">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Radio className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-lg md:text-xl font-bold text-on-surface">Comunicação e Rádio</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Radio className="w-3 h-3 text-primary" /> Modelo do Rádio Comunicador
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Motorola APX 2000 VHF" 
+                    value={formData.radioModel}
+                    onChange={(e) => setFormData({ ...formData, radioModel: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Hash className="w-3 h-3 text-primary" /> Patrimônio do Rádio
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: RAD-987654" 
+                    value={formData.radioPatrimony}
+                    onChange={(e) => setFormData({ ...formData, radioPatrimony: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Shield className="w-3 h-3 text-primary" /> Situação do Rádio
+                  </label>
+                  <select 
+                    value={formData.radioStatus}
+                    onChange={(e) => setFormData({ ...formData, radioStatus: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary appearance-none"
+                  >
+                    <option value="FUNCIONANDO 5.5">FUNCIONANDO 5.5</option>
+                    <option value="FUNCIONANDO 3.3">FUNCIONANDO 3.3</option>
+                    <option value="RÁDIO INOPERANTE">RÁDIO INOPERANTE</option>
+                    <option value="NÃO TEM RÁDIO">NÃO TEM RÁDIO</option>
+                    <option value="RÁDIO NÃO FOI TESTADO">RÁDIO NÃO FOI TESTADO</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            {/* Seção 4: Financeiro & Documentação */}
+            <section className="bg-white border border-outline-variant rounded-xl p-5 md:p-8 shadow-sm space-y-6 md:space-y-8">
+              <div className="flex items-center gap-4 border-b border-outline-variant/30 pb-4">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-lg md:text-xl font-bold text-on-surface">Financeiro e Documentos</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <DollarSign className="w-3 h-3 text-primary" /> Valor Contábil da Viatura (R$)
+                  </label>
+                  <input 
+                    type="number" 
+                    placeholder="0" 
+                    value={formData.vehicleValue}
+                    onChange={(e) => setFormData({ ...formData, vehicleValue: parseFloat(e.target.value) || 0 })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <DollarSign className="w-3 h-3 text-primary" /> Valor Venal (Estimativa FIPE/Mercado) (R$)
+                  </label>
+                  <input 
+                    type="number" 
+                    placeholder="0" 
+                    value={formData.marketValue}
+                    onChange={(e) => setFormData({ ...formData, marketValue: parseFloat(e.target.value) || 0 })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <FileText className="w-3 h-3 text-primary" /> Link do Documento (CRLV/CRV)
+                  </label>
+                  <input 
+                    type="url" 
+                    placeholder="Ex: https://drive.google.com/file/d/..." 
+                    value={formData.documentLink}
+                    onChange={(e) => setFormData({ ...formData, documentLink: e.target.value })}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Seção 5: Registro Visual */}
             <section className="bg-white border border-outline-variant rounded-xl p-5 md:p-8 shadow-sm space-y-6">
               <div className="flex items-center gap-4 border-b border-outline-variant/30 pb-4">
                 <div className="w-10 h-10 bg-secondary-container/30 rounded-lg flex items-center justify-center shrink-0">
                   <Camera className="w-5 h-5 text-secondary" />
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-on-surface">Registro Visual</h3>
+                <h3 className="text-lg md:text-xl font-bold text-on-surface">Registro Visual (Fotografia)</h3>
               </div>
               <div className="space-y-4">
                 <label className="flex flex-col items-center justify-center border-2 border-dashed border-outline-variant rounded-xl p-8 bg-surface-container-lowest group hover:border-primary/50 transition-all cursor-pointer relative overflow-hidden h-48">
@@ -272,27 +483,23 @@ export default function AddVehicleForm() {
         </div>
 
         {/* Action Buttons */}
-          <div className="flex justify-end gap-3 md:gap-4 p-1 flex-1">
-            <button 
-              type="button"
-              onClick={() => navigate('/viaturas')}
-              className="flex-1 sm:flex-none px-6 md:px-8 py-3 border border-outline text-on-surface-variant font-bold rounded-lg hover:bg-surface-container transition-all text-[10px] md:text-xs uppercase tracking-widest"
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit"
-              className="flex-[2] sm:flex-none px-6 md:px-10 py-3 bg-primary text-white font-black rounded-lg hover:bg-primary-container shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 md:gap-3 text-[10px] md:text-xs uppercase tracking-widest"
-            >
-              <Save className="w-4 h-4 shrink-0" />
-              <span className="truncate">Salvar Viatura</span>
-            </button>
+        <div className="flex justify-end gap-3 md:gap-4 p-1 flex-1">
+          <button 
+            type="button"
+            onClick={() => navigate('/viaturas')}
+            className="flex-1 sm:flex-none px-6 md:px-8 py-3 border border-outline text-on-surface-variant font-bold rounded-lg hover:bg-surface-container transition-all text-[10px] md:text-xs uppercase tracking-widest"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit"
+            className="flex-[2] sm:flex-none px-6 md:px-10 py-3 bg-primary text-white font-black rounded-lg hover:bg-primary-container shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 md:gap-3 text-[10px] md:text-xs uppercase tracking-widest"
+          >
+            <Save className="w-4 h-4 shrink-0" />
+            <span className="truncate">Salvar Viatura</span>
+          </button>
         </div>
       </form>
     </div>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }
