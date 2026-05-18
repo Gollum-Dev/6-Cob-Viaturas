@@ -133,22 +133,22 @@ export default function RevisionsControl() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
       <AnimatePresence>
         {showAddForm && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white border border-outline-variant rounded-2xl p-6 md:p-8 shadow-xl mb-8"
+            className="bg-white border border-outline-variant rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl mb-8"
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-on-surface uppercase tracking-tight">Agendar Revisão / O.S. Preventiva</h2>
-              <button onClick={() => setShowAddForm(false)} className="text-on-surface-variant hover:text-primary font-bold text-sm uppercase">Cancelar</button>
+            <div className="flex justify-between items-center mb-6 gap-2">
+              <h2 className="text-sm sm:text-base md:text-xl font-black text-on-surface uppercase tracking-tight">Agendar Revisão / O.S. Preventiva</h2>
+              <button onClick={() => setShowAddForm(false)} className="text-on-surface-variant hover:text-primary font-bold text-xs sm:text-sm uppercase shrink-0">Cancelar</button>
             </div>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Viatura</label>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Viatura</label>
                 <select 
                   required
                   value={selectedVehicleId}
@@ -157,7 +157,7 @@ export default function RevisionsControl() {
                     setSelectedVehicleId(e.target.value);
                     if (vehicle) setOdometer(String(vehicle.odometer));
                   }}
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
+                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
                 >
                   <option value="">Selecione...</option>
                   {vehicles.map(v => (
@@ -165,58 +165,58 @@ export default function RevisionsControl() {
                   ))}
                 </select>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Tipo de Revisão</label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Tipo de Revisão</label>
                 <select 
                   required
                   value={maintenanceType}
                   onChange={(e) => setMaintenanceType(e.target.value as MaintenanceType)}
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
+                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
                 >
                   {Object.values(MaintenanceType).map(t => (
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Oficina / Fornecedor</label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Oficina / Fornecedor</label>
                 <input 
                   required
                   type="text"
                   value={workshop}
                   onChange={(e) => setWorkshop(e.target.value)}
                   placeholder="Nome do local"
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
+                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Odômetro Atual</label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Odômetro Atual</label>
                 <input 
                   required
                   type="number"
                   value={odometer}
                   onChange={(e) => setOdometer(e.target.value)}
                   placeholder="KM"
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
+                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Custo Estimado (R$)</label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Custo Estimado (R$)</label>
                 <input 
                   required
                   type="number"
                   value={cost}
                   onChange={(e) => setCost(e.target.value)}
                   placeholder="0.00"
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
+                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Status Inicial</label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Status Inicial</label>
                 <select 
                   value={maintenanceStatus}
                   onChange={(e) => setMaintenanceStatus(e.target.value as MaintenanceStatus)}
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
+                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
                 >
                   {Object.values(MaintenanceStatus).map(s => (
                     <option key={s} value={s}>{s}</option>
@@ -224,7 +224,7 @@ export default function RevisionsControl() {
                 </select>
               </div>
               <div className="md:col-span-3 flex justify-end">
-                <button type="submit" className="bg-primary text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-lg">
+                <button type="submit" className="w-full md:w-auto bg-primary text-white px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs hover:bg-black transition-all shadow-lg">
                   Salvar Ordem de Serviço
                 </button>
               </div>
@@ -233,9 +233,9 @@ export default function RevisionsControl() {
         )}
       </AnimatePresence>
 
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-black text-on-surface uppercase tracking-tight flex items-center gap-3">
-          <Calendar className="w-6 h-6 text-primary" />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-lg sm:text-xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2 sm:gap-3">
+          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
           Revisões Preventivas
         </h1>
         <button 
@@ -244,26 +244,28 @@ export default function RevisionsControl() {
             setWorkshop('Oficina Credenciada');
             setShowAddForm(true);
           }}
-          className="bg-primary text-white px-6 py-3 rounded-xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg text-xs uppercase tracking-widest group"
+          className="w-full sm:w-auto bg-primary text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg text-[10px] sm:text-xs uppercase tracking-widest group"
         >
-          <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+          <Plus className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
           Agendar Revisão
         </button>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* Alerta de Validade de Pneus Section */}
         <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
-            <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
-              <Disc className="w-5 h-5 text-primary" />
+          <div className="p-4 sm:p-6 border-b border-outline-variant bg-surface-container-low flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <h3 className="font-bold text-on-surface uppercase tracking-widest text-xs sm:text-sm flex items-center gap-2">
+              <Disc className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               Alerta de Validade de Pneus
             </h3>
-            <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full uppercase">
+            <span className="text-[8px] sm:text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-2 py-0.5 sm:px-3 sm:py-1 rounded-full uppercase">
               {tireValidityAlerts.length} Monitorados
             </span>
           </div>
-          <div className="overflow-x-auto">
+          
+          {/* Desktop View: Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-surface-container/30 border-b border-outline-variant">
@@ -317,7 +319,7 @@ export default function RevisionsControl() {
                             setOdometer(String(alert.odometer));
                             setShowAddForm(true);
                           }}
-                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap"
+                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap animate-pulse hover:animate-none"
                         >
                           Agendar Troca
                         </button>
@@ -328,9 +330,70 @@ export default function RevisionsControl() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile View: Card List */}
+          <div className="block md:hidden divide-y divide-outline-variant/30">
+            {tireValidityAlerts.length === 0 ? (
+              <div className="px-4 py-8 text-center text-xs text-on-surface-variant italic opacity-50">
+                Nenhuma data de validade de pneus cadastrada.
+              </div>
+            ) : (
+              paginatedTireAlerts.map((alert) => (
+                <div key={alert.id} className="p-4 space-y-3 hover:bg-surface-container-low/30 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
+                      <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                    </div>
+                    <div>
+                      {alert.daysRemaining < 0 ? (
+                        <span className="bg-error/10 text-error px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-error/20">Vencido</span>
+                      ) : alert.daysRemaining <= 30 ? (
+                        <span className="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-amber-200">Próx. Venc.</span>
+                      ) : (
+                        <span className="bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-green-200">Regular</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[10px] text-on-surface-variant font-bold">
+                    <div>
+                      <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Validade</span>
+                      <span className="font-data-mono text-on-surface text-xs">{new Date(alert.tireValidityDate!).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Prazo</span>
+                      <span className={cn(
+                        "font-data-mono text-xs",
+                        alert.daysRemaining < 0 ? "text-error" : alert.daysRemaining <= 30 ? "text-amber-600" : "text-on-surface"
+                      )}>
+                        {alert.daysRemaining < 0 ? `${Math.abs(alert.daysRemaining)} dias atrás` : `${alert.daysRemaining} dias`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1">
+                    <button 
+                      onClick={() => {
+                        setSelectedVehicleId(alert.id);
+                        setMaintenanceType(MaintenanceType.TIRE_REPLACEMENT);
+                        setWorkshop('Borracharia Credenciada');
+                        setOdometer(String(alert.odometer));
+                        setShowAddForm(true);
+                      }}
+                      className="w-full bg-primary/5 hover:bg-primary text-primary hover:text-white py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all text-center border border-primary/10"
+                    >
+                      Agendar Troca
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
           {totalTirePages > 1 && (
-            <div className="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+            <div className="px-4 py-3 sm:px-6 sm:py-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+              <span className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
                 Página {currentTirePage} de {totalTirePages}
               </span>
               <div className="flex gap-2">
@@ -339,7 +402,7 @@ export default function RevisionsControl() {
                   disabled={currentTirePage === 1}
                   onClick={() => setTirePage(prev => Math.max(prev - 1, 1))}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    "px-2.5 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
                     currentTirePage === 1
                       ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
                       : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
@@ -352,7 +415,7 @@ export default function RevisionsControl() {
                   disabled={currentTirePage === totalTirePages}
                   onClick={() => setTirePage(prev => Math.min(prev + 1, totalTirePages))}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    "px-2.5 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
                     currentTirePage === totalTirePages
                       ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
                       : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
@@ -367,16 +430,18 @@ export default function RevisionsControl() {
 
         {/* Alerta de Troca de Óleo (KM) Section */}
         <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
-            <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
-              <Gauge className="w-5 h-5 text-primary" />
+          <div className="p-4 sm:p-6 border-b border-outline-variant bg-surface-container-low flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <h3 className="font-bold text-on-surface uppercase tracking-widest text-xs sm:text-sm flex items-center gap-2">
+              <Gauge className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               Alerta de Troca de Óleo (KM)
             </h3>
-            <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full uppercase">
+            <span className="text-[8px] sm:text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-2 py-0.5 sm:px-3 sm:py-1 rounded-full uppercase">
               {oilChangeKmAlerts.length} Monitorados
             </span>
           </div>
-          <div className="overflow-x-auto">
+
+          {/* Desktop View: Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-surface-container/30 border-b border-outline-variant">
@@ -430,7 +495,7 @@ export default function RevisionsControl() {
                             setOdometer(String(alert.odometer));
                             setShowAddForm(true);
                           }}
-                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap"
+                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap animate-pulse hover:animate-none"
                         >
                           Agendar Troca
                         </button>
@@ -441,9 +506,70 @@ export default function RevisionsControl() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile View: Card List */}
+          <div className="block md:hidden divide-y divide-outline-variant/30">
+            {oilChangeKmAlerts.length === 0 ? (
+              <div className="px-4 py-8 text-center text-xs text-on-surface-variant italic opacity-50">
+                Nenhuma informação de quilometragem de óleo cadastrada.
+              </div>
+            ) : (
+              paginatedOilKmAlerts.map((alert) => (
+                <div key={alert.id} className="p-4 space-y-3 hover:bg-surface-container-low/30 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
+                      <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                    </div>
+                    <div>
+                      {alert.kmRemaining <= 0 ? (
+                        <span className="bg-error/10 text-error px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-error/20">Limite</span>
+                      ) : alert.kmRemaining <= 1000 ? (
+                        <span className="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-amber-200">Próximo</span>
+                      ) : (
+                        <span className="bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-green-200">Regular</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[10px] text-on-surface-variant font-bold">
+                    <div>
+                      <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Próxima Troca</span>
+                      <span className="font-data-mono text-on-surface text-xs">{alert.nextChangeKm.toLocaleString()} KM</span>
+                    </div>
+                    <div>
+                      <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">KM Restante</span>
+                      <span className={cn(
+                        "font-data-mono text-xs",
+                        alert.kmRemaining <= 0 ? "text-error" : alert.kmRemaining <= 1000 ? "text-amber-600" : "text-on-surface"
+                      )}>
+                        {alert.kmRemaining <= 0 ? `Excedido em ${Math.abs(alert.kmRemaining).toLocaleString()} KM` : `${alert.kmRemaining.toLocaleString()} KM`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1">
+                    <button 
+                      onClick={() => {
+                        setSelectedVehicleId(alert.id);
+                        setMaintenanceType(MaintenanceType.OIL_CHANGE);
+                        setWorkshop('Oficina Sede');
+                        setOdometer(String(alert.odometer));
+                        setShowAddForm(true);
+                      }}
+                      className="w-full bg-primary/5 hover:bg-primary text-primary hover:text-white py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all text-center border border-primary/10"
+                    >
+                      Agendar Troca
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
           {totalOilKmPages > 1 && (
-            <div className="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+            <div className="px-4 py-3 sm:px-6 sm:py-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+              <span className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
                 Página {currentOilKmPage} de {totalOilKmPages}
               </span>
               <div className="flex gap-2">
@@ -452,7 +578,7 @@ export default function RevisionsControl() {
                   disabled={currentOilKmPage === 1}
                   onClick={() => setOilKmPage(prev => Math.max(prev - 1, 1))}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    "px-2.5 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
                     currentOilKmPage === 1
                       ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
                       : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
@@ -465,7 +591,7 @@ export default function RevisionsControl() {
                   disabled={currentOilKmPage === totalOilKmPages}
                   onClick={() => setOilKmPage(prev => Math.min(prev + 1, totalOilKmPages))}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    "px-2.5 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
                     currentOilKmPage === totalOilKmPages
                       ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
                       : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
@@ -480,16 +606,18 @@ export default function RevisionsControl() {
 
         {/* Alerta de Troca de Óleo Section */}
         <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
-            <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
-              <Droplets className="w-5 h-5 text-primary" />
+          <div className="p-4 sm:p-6 border-b border-outline-variant bg-surface-container-low flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <h3 className="font-bold text-on-surface uppercase tracking-widest text-xs sm:text-sm flex items-center gap-2">
+              <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               Alerta de Troca de Óleo (Data)
             </h3>
-            <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full uppercase">
+            <span className="text-[8px] sm:text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-2 py-0.5 sm:px-3 sm:py-1 rounded-full uppercase">
               {oilChangeAlerts.length} Monitorados
             </span>
           </div>
-          <div className="overflow-x-auto">
+
+          {/* Desktop View: Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-surface-container/30 border-b border-outline-variant">
@@ -543,7 +671,7 @@ export default function RevisionsControl() {
                             setOdometer(String(alert.odometer));
                             setShowAddForm(true);
                           }}
-                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap"
+                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap animate-pulse hover:animate-none"
                         >
                           Agendar Troca
                         </button>
@@ -554,9 +682,70 @@ export default function RevisionsControl() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile View: Card List */}
+          <div className="block md:hidden divide-y divide-outline-variant/30">
+            {oilChangeAlerts.length === 0 ? (
+              <div className="px-4 py-8 text-center text-xs text-on-surface-variant italic opacity-50">
+                Nenhuma data de próxima troca de óleo cadastrada.
+              </div>
+            ) : (
+              paginatedOilDateAlerts.map((alert) => (
+                <div key={alert.id} className="p-4 space-y-3 hover:bg-surface-container-low/30 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
+                      <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                    </div>
+                    <div>
+                      {alert.daysRemaining < 0 ? (
+                        <span className="bg-error/10 text-error px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-error/20">Vencido</span>
+                      ) : alert.daysRemaining <= 15 ? (
+                        <span className="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-amber-200">Próx. Venc.</span>
+                      ) : (
+                        <span className="bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-green-200">Regular</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[10px] text-on-surface-variant font-bold">
+                    <div>
+                      <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Próxima Troca</span>
+                      <span className="font-data-mono text-on-surface text-xs">{new Date(alert.nextOilChangeDate!).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Prazo</span>
+                      <span className={cn(
+                        "font-data-mono text-xs",
+                        alert.daysRemaining < 0 ? "text-error" : alert.daysRemaining <= 15 ? "text-amber-600" : "text-on-surface"
+                      )}>
+                        {alert.daysRemaining < 0 ? `${Math.abs(alert.daysRemaining)} dias atrás` : `${alert.daysRemaining} dias`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1">
+                    <button 
+                      onClick={() => {
+                        setSelectedVehicleId(alert.id);
+                        setMaintenanceType(MaintenanceType.OIL_CHANGE);
+                        setWorkshop('Oficina Sede');
+                        setOdometer(String(alert.odometer));
+                        setShowAddForm(true);
+                      }}
+                      className="w-full bg-primary/5 hover:bg-primary text-primary hover:text-white py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all text-center border border-primary/10"
+                    >
+                      Agendar Troca
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
           {totalOilDatePages > 1 && (
-            <div className="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+            <div className="px-4 py-3 sm:px-6 sm:py-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+              <span className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
                 Página {currentOilDatePage} de {totalOilDatePages}
               </span>
               <div className="flex gap-2">
@@ -565,7 +754,7 @@ export default function RevisionsControl() {
                   disabled={currentOilDatePage === 1}
                   onClick={() => setOilDatePage(prev => Math.max(prev - 1, 1))}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    "px-2.5 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
                     currentOilDatePage === 1
                       ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
                       : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
@@ -578,7 +767,7 @@ export default function RevisionsControl() {
                   disabled={currentOilDatePage === totalOilDatePages}
                   onClick={() => setOilDatePage(prev => Math.min(prev + 1, totalOilDatePages))}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    "px-2.5 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
                     currentOilDatePage === totalOilDatePages
                       ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed border border-outline-variant/30"
                       : "bg-surface-container-high text-on-surface hover:bg-primary hover:text-white border border-outline-variant cursor-pointer"
@@ -594,3 +783,4 @@ export default function RevisionsControl() {
     </div>
   );
 }
+
