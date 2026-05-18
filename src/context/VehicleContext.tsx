@@ -22,7 +22,7 @@ function mapVehicleFromDB(dbV: any): Vehicle {
     prefix: dbV.prefix,
     plate: dbV.plate,
     type: dbV.type,
-    unit: dbV.unit,
+    unit: dbV.unit === 'EXTREMO' ? 'EXTREMA' : dbV.unit,
     status: dbV.status as VehicleStatus,
     odometer: dbV.odometer,
     lastOilChangeDate: dbV.last_oil_change_date?.split('T')[0],
@@ -40,7 +40,7 @@ function mapVehicleToDB(v: Partial<Vehicle>): any {
   if (v.prefix !== undefined) dbV.prefix = v.prefix;
   if (v.plate !== undefined) dbV.plate = v.plate;
   if (v.type !== undefined) dbV.type = v.type;
-  if (v.unit !== undefined) dbV.unit = v.unit;
+  if (v.unit !== undefined) dbV.unit = v.unit === 'EXTREMO' ? 'EXTREMA' : v.unit;
   if (v.status !== undefined) dbV.status = v.status;
   if (v.odometer !== undefined) dbV.odometer = v.odometer;
   
