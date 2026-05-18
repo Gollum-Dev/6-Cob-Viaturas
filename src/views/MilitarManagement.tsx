@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Users, UserPlus, Shield, Trash2, Award, Briefcase, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
@@ -9,7 +9,43 @@ export default function MilitarManagement() {
   const { registeredUsers, deleteUser } = useAuth();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const filteredUsers = registeredUsers;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('Todos');
+  const [unitFilter, setUnitFilter] = useState('Todos');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  const roles = useMemo(() => {
+    const r = new Set(registeredUsers.map(u => u.role).filter(Boolean));
+    return ['Todos', ...Array.from(r)];
+  }, [registeredUsers]);
+
+  const units = useMemo(() => {
+    const u = new Set(registeredUsers.map(u => u.unit).filter(Boolean));
+    return ['Todos', ...Array.from(u)];
+  }, [registeredUsers]);
+
+  const filteredUsers = useMemo(() => {
+    return registeredUsers.filter(u => {
+      const matchQuery = 
+        (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (u.milNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (u.rank || '').toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchRole = roleFilter === 'Todos' || u.role === roleFilter;
+      const matchUnit = unitFilter === 'Todos' || u.unit === unitFilter;
+      
+      return matchQuery && matchRole && matchUnit;
+    });
+  }, [registeredUsers, searchQuery, roleFilter, unitFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
+  const activePage = Math.min(currentPage, totalPages);
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (activePage - 1) * itemsPerPage;
+    return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredUsers, activePage, itemsPerPage]);
 
   const handleDelete = (id: string) => {
     deleteUser(id);
@@ -37,6 +73,91 @@ export default function MilitarManagement() {
       </div>
 
       <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant overflow-hidden shadow-sm">
+        {/* Filtros e Pesquisa */}
+        <div className="p-6 md:p-8 border-b border-outline-variant bg-surface-container-low/30">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-4 items-end w-full">
+            {/* Campo Pesquisa */}
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[200px] w-full">
+              <label className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest pl-1">Pesquisar Militar</label>
+              <div className="relative">
+                <input 
+                  type="text"
+                  placeholder="NOME, POSTO/GRAD OU NÚMERO..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 pl-10 pr-4 rounded-xl text-xs font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest text-on-surface placeholder:text-on-surface-variant/40"
+                />
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-on-surface-variant/60 pointer-events-none">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Filtro Unidade */}
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[140px] w-full">
+              <label className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest pl-1">Unidade</label>
+              <div className="relative">
+                <select 
+                  value={unitFilter}
+                  onChange={(e) => {
+                    setUnitFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 pr-10 rounded-xl text-xs font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest cursor-pointer appearance-none text-on-surface"
+                >
+                  {units.map(unit => (
+                    <option key={unit} value={unit}>{unit === 'Todos' ? 'TODAS' : (unit || '').toUpperCase()}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant/60">
+                  <Briefcase className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Filtro Nível de Acesso */}
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[140px] w-full">
+              <label className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest pl-1">Nível de Acesso</label>
+              <div className="relative">
+                <select 
+                  value={roleFilter}
+                  onChange={(e) => {
+                    setRoleFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 pr-10 rounded-xl text-xs font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest cursor-pointer appearance-none text-on-surface"
+                >
+                  {roles.map(role => (
+                    <option key={role} value={role}>{role === 'Todos' ? 'TODOS' : (role || '').toUpperCase()}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant/60">
+                  <Shield className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+            
+            {/* Limpar Filtros */}
+            <button 
+              onClick={() => {
+                setSearchQuery('');
+                setRoleFilter('Todos');
+                setUnitFilter('Todos');
+                setCurrentPage(1);
+              }}
+              className="flex items-center justify-center gap-2 h-[42px] px-6 border border-outline hover:bg-surface-container rounded-xl text-on-surface-variant hover:text-primary font-black transition-all uppercase tracking-widest text-[10px] w-full lg:w-auto shrink-0 mt-2 lg:mt-0 cursor-pointer"
+            >
+              <Users className="w-3 h-3" />
+              Limpar Filtros
+            </button>
+          </div>
+        </div>
+
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full border-collapse">
@@ -50,7 +171,7 @@ export default function MilitarManagement() {
             </thead>
             <tbody className="divide-y divide-outline-variant/30">
               {filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
+                paginatedUsers.map((user) => (
                   <motion.tr 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -138,7 +259,7 @@ export default function MilitarManagement() {
         {/* Mobile Card View */}
         <div className="md:hidden divide-y divide-outline-variant/30 px-6">
           {filteredUsers.length > 0 ? (
-            filteredUsers.map((user) => (
+            paginatedUsers.map((user) => (
               <div key={user.id} className="py-6 space-y-4">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-4">
@@ -208,16 +329,30 @@ export default function MilitarManagement() {
         </div>
 
         <div className="p-6 bg-surface-container-low/30 border-t border-outline-variant flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant opacity-60">Exibindo {filteredUsers.length} de {registeredUsers.length} militares</p>
-          <div className="flex items-center gap-2">
-            <button className="p-2 border border-outline-variant rounded-xl hover:bg-surface-container-low text-on-surface-variant disabled:opacity-50 transition-all">
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button className="w-10 h-10 rounded-xl text-xs font-black bg-primary text-white shadow-lg shadow-primary/20">1</button>
-            <button className="p-2 border border-outline-variant rounded-xl hover:bg-surface-container-low text-on-surface-variant disabled:opacity-50 transition-all">
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+          <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant opacity-60">
+            Exibindo {paginatedUsers.length} de {filteredUsers.length} militares {filteredUsers.length !== registeredUsers.length && `(filtrados de ${registeredUsers.length})`}
+          </p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={activePage === 1}
+                className="p-2 border border-outline-variant rounded-xl hover:bg-surface-container-low text-on-surface-variant disabled:opacity-50 transition-all cursor-pointer"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="text-xs font-black text-on-surface uppercase tracking-widest px-2">
+                Pág. {activePage} de {totalPages}
+              </span>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={activePage === totalPages}
+                className="p-2 border border-outline-variant rounded-xl hover:bg-surface-container-low text-on-surface-variant disabled:opacity-50 transition-all cursor-pointer"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
