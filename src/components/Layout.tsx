@@ -7,7 +7,7 @@ export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background overflow-hidden">
+    <div className="flex min-h-screen bg-background overflow-x-hidden">
       {/* Overlay para fechar o sidebar */}
       {isSidebarOpen && (
         <div 
