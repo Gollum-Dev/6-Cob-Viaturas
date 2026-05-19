@@ -102,6 +102,10 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
     title = "Relatório Viatura";
     subtitle = "Lançamentos de checklists e ações do sistema";
     IconComponent = FileSpreadsheet;
+  } else if (path === '/relatorios-carga') {
+    title = "Relatório Carga";
+    subtitle = "Lançamentos de checklists e inspeções de carga";
+    IconComponent = FileSpreadsheet;
   } else if (path === '/chat') {
     title = "Central de Mensagens";
     subtitle = "Comunicação interna direta em tempo real";

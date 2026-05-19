@@ -23,6 +23,8 @@ import { UserRole } from './types';
 import LoadMaps from './views/LoadMaps';
 import ChecklistCargaForm from './views/ChecklistCargaForm';
 import { LoadChecklistProvider } from './context/LoadChecklistContext';
+import LoadReports from './views/LoadReports';
+
 
 function AppContent() {
   const { isAuthenticated, user, isLoading } = useAuth();
@@ -85,6 +87,7 @@ function AppContent() {
                 </>
               )}
               <Route path="relatorios" element={<AuditLogs />} />
+              <Route path="relatorios-carga" element={<LoadReports />} />
               <Route path="configuracoes" element={<SettingsView />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
