@@ -15,7 +15,8 @@ import {
   CalendarRange,
   FileSpreadsheet,
   MessageSquare,
-  Settings
+  Settings,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
@@ -52,7 +53,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   } else if (path === '/militares') {
     title = "Efetivo Militar";
     subtitle = "Cadastro, permissões e gerenciamento do efetivo";
-    IconComponent = Shield;
+    IconComponent = Users;
   } else if (path.startsWith('/militares/novo')) {
     title = "Novo Cadastro";
     subtitle = "Registrar novo acesso militar no sistema";
