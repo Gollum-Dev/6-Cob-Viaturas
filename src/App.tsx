@@ -70,19 +70,24 @@ function AppContent() {
             <>
               {/* O Painel Analítico / Dashboard foi movido de / para /painel */}
               <Route path="painel" element={<Dashboard />} />
-              <Route path="viaturas" element={<VehicleInventory />} />
+              
               {!isCBU && (
                 <>
+                  <Route path="viaturas" element={<VehicleInventory />} />
                   <Route path="viaturas/novo" element={<AddVehicleForm />} />
                   <Route path="viaturas/editar/:id" element={<EditVehicleForm />} />
                 </>
               )}
+              
               <Route path="militares" element={<MilitarManagement />} />
               <Route path="militares/novo" element={<AddMilitarForm />} />
               <Route path="militares/editar/:id" element={<EditMilitarForm />} />
               <Route path="checklist" element={<ChecklistForm />} />
               <Route path="checklist-carga" element={<ChecklistCargaForm />} />
-              <Route path="mapacarga" element={<LoadMaps />} />
+              
+              {!isCBU && (
+                <Route path="mapacarga" element={<LoadMaps />} />
+              )}
               <Route path="chat" element={<ChatView />} />
               {canAccessMaintenanceAndRevisions && (
                 <>

@@ -14,11 +14,11 @@ function cn(...inputs: ClassValue[]) {
 const navItems = [
   { icon: Home, label: 'Início', href: '/', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
   { icon: LayoutDashboard, label: 'Painel', href: '/painel', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
-  { icon: Car, label: 'Viaturas', href: '/viaturas', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
+  { icon: Car, label: 'Viaturas', href: '/viaturas', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP] },
   { icon: Users, label: 'Militares', href: '/militares', roles: [UserRole.ADMINISTRADOR] },
   { icon: ClipboardCheck, label: 'Checklist Viatura', href: '/checklist', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
   { icon: ClipboardList, label: 'Checklist Carga', href: '/checklist-carga', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
-  { icon: Package, label: 'Mapa Carga', href: '/mapacarga', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: Package, label: 'Mapa Carga', href: '/mapacarga', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.OPERACIONAL] },
   { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP] },
   { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP] },
   { icon: FileText, label: 'Relatório Viatura', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
