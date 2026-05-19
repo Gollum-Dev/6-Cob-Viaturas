@@ -162,7 +162,22 @@ export default function Dashboard() {
                   <div key={type} className="space-y-1">
                     <div className="flex justify-between items-center text-[8px] sm:text-[9px] font-black uppercase tracking-widest">
                       <span className="text-on-surface-variant opacity-60 truncate pr-2">{type}</span>
-                      <span className="text-on-surface shrink-0">{count}</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            setSelectedModal({
+                              title: `${stat.label} - ${type}`,
+                              vehicles: stat.vehiclesList.filter(v => v.type.toUpperCase() === type.toUpperCase())
+                            });
+                            setSearchQuery('');
+                          }}
+                          className="p-0.5 rounded hover:bg-slate-900 text-on-surface-variant/50 hover:text-white transition-all cursor-pointer flex items-center justify-center border border-outline-variant/10 bg-surface-container-low shadow-sm"
+                          title={`Visualizar viaturas de ${type} em ${stat.label}`}
+                        >
+                          <Eye className="w-2.5 h-2.5 sm:w-3 h-3" />
+                        </button>
+                        <span className="text-on-surface shrink-0">{count}</span>
+                      </div>
                     </div>
                     <div className="h-1 bg-surface-container rounded-full overflow-hidden">
                       <motion.div 
@@ -234,7 +249,23 @@ export default function Dashboard() {
                           <div key={type} className="space-y-1">
                             <div className="flex justify-between items-center text-[8px] sm:text-[10px] font-black uppercase tracking-widest">
                               <span className="text-on-surface-variant opacity-75 truncate pr-2">{type}</span>
-                              <span className="text-on-surface shrink-0">{count}</span>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => {
+                                    const unitVehicles = vehicles.filter(v => v.unit === unit || (!v.unit && unit === 'S/ UNIDADE'));
+                                    setSelectedModal({
+                                      title: `${unit} - ${type}`,
+                                      vehicles: unitVehicles.filter(v => v.type.toUpperCase() === type.toUpperCase())
+                                    });
+                                    setSearchQuery('');
+                                  }}
+                                  className="p-0.5 rounded hover:bg-slate-900 text-on-surface-variant/50 hover:text-white transition-all cursor-pointer flex items-center justify-center border border-outline-variant/10 bg-surface-container-low shadow-sm"
+                                  title={`Visualizar viaturas de ${type} em ${unit}`}
+                                >
+                                  <Eye className="w-2.5 h-2.5 sm:w-3 h-3" />
+                                </button>
+                                <span className="text-on-surface shrink-0">{count}</span>
+                              </div>
                             </div>
                             <div className="h-1 sm:h-1.5 bg-surface-container rounded-full overflow-hidden">
                               <motion.div 
