@@ -198,9 +198,9 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Banner / Cabeçalho de Boas-Vindas */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-secondary via-secondary-dim to-secondary-dim/95 text-white p-6 sm:p-8 md:p-10 shadow-lg border border-white/5">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1e252b] via-[#2d3a43] to-[#1a2025] text-white p-6 sm:p-8 md:p-10 shadow-lg border border-white/5">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-primary-container/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-primary-container/5 rounded-full blur-2xl pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="space-y-3">
@@ -211,21 +211,21 @@ export default function Home() {
               </span>
             </div>
             
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black uppercase tracking-tight leading-none">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black uppercase tracking-tight leading-none text-white drop-shadow-sm">
               {getGreeting()}, {user?.rank} {user?.name}
             </h2>
-            <p className="text-xs sm:text-sm text-secondary-fixed-dim/90 max-w-2xl font-medium tracking-wide">
+            <p className="text-xs sm:text-sm text-slate-200 max-w-2xl font-medium tracking-wide leading-relaxed">
               Seja bem-vindo à Central Operacional da 7ª Cia Ind. Selecione um dos atalhos rápidos abaixo para acessar e gerenciar as funções administrativas e operacionais disponíveis para o seu perfil.
             </p>
           </div>
           
           <div className="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 border-white/10 pt-4 md:pt-0 gap-2 shrink-0">
-            <div className="flex items-center gap-2 text-white/70">
+            <div className="flex items-center gap-2 text-slate-300">
               <CalendarDays className="w-4 h-4 text-primary-container shrink-0" />
               <span className="text-[10px] font-bold uppercase tracking-wider">{formattedDate}</span>
             </div>
-            <div className="flex items-center gap-2 text-white/50 text-[9px] font-black uppercase tracking-widest md:mt-1 bg-white/5 px-2.5 py-1 rounded-lg">
-              <Clock className="w-3.5 h-3.5 text-white/40 shrink-0" />
+            <div className="flex items-center gap-2 text-slate-300 text-[9px] font-black uppercase tracking-widest md:mt-1 bg-white/5 px-2.5 py-1 rounded-lg border border-white/5">
+              <Clock className="w-3.5 h-3.5 text-primary-container shrink-0" />
               <span>Prontidão Operacional</span>
             </div>
           </div>
