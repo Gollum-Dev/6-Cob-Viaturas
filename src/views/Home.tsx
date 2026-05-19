@@ -94,7 +94,7 @@ export default function Home() {
     },
     {
       id: 'checklist',
-      label: 'Checklist Diário',
+      label: 'Checklist Viatura',
       description: 'Formulário de vistoria mecânica e de conservação para início e troca de turno.',
       href: '/checklist',
       icon: ClipboardCheck,
