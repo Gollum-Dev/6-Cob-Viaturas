@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Shield, Download, User, FileText, AlertTriangle, ChevronDown, Package, ClipboardCheck } from 'lucide-react';
+import { Shield, Download, User, FileText, AlertTriangle, ChevronDown, Package, ClipboardCheck, Eye, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLoadChecklists } from '../context/LoadChecklistContext';
 import { cn } from '../lib/utils';
@@ -7,6 +7,7 @@ import { cn } from '../lib/utils';
 export default function LoadReports() {
   const { loadSubmissions } = useLoadChecklists();
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'OK' | 'ISSUE'>('ALL');
+  const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
 
   const today = new Date().toLocaleDateString('pt-BR');
 
@@ -234,6 +235,13 @@ export default function LoadReports() {
                       <span className="text-[8px] font-bold text-error/80 opacity-90 uppercase tracking-widest">
                         {sub.anomaliesCount} {sub.anomaliesCount === 1 ? 'Material Irregular' : 'Materiais Irregulares'}
                       </span>
+                      <button
+                        onClick={() => setSelectedSubmission(sub)}
+                        className="mt-1.5 self-start bg-error/10 hover:bg-error text-error hover:text-white px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        <Eye className="w-2.5 h-2.5" />
+                        Ver Alterações
+                      </button>
                     </div>
                     <div className="text-right flex flex-col shrink-0">
                       <span className="font-bold text-[11px] text-on-surface uppercase tracking-tight">{sub.userRank} {sub.userName}</span>
@@ -328,13 +336,24 @@ export default function LoadReports() {
                         )}
                       </td>
                       <td className="px-8 py-6 text-center">
-                        <span className={cn(
-                          "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight inline-flex items-center gap-1.5",
-                          hasIssues ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
-                        )}>
-                          {hasIssues ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
-                          {hasIssues ? 'Com Ressalva' : 'Sem Alteração'}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={cn(
+                            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight inline-flex items-center gap-1.5",
+                            hasIssues ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                          )}>
+                            {hasIssues ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
+                            {hasIssues ? 'Com Ressalva' : 'Sem Alteração'}
+                          </span>
+                          {hasIssues && (
+                            <button
+                              onClick={() => setSelectedSubmission(sub)}
+                              className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline cursor-pointer flex items-center gap-1 mt-1 shrink-0"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Ver Alterações
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-8 py-6 text-center">
                         <div className="flex flex-col items-center">
@@ -379,13 +398,24 @@ export default function LoadReports() {
                         <span className="opacity-50 text-[9px] uppercase tracking-wider font-semibold">{sub.userRank} | {sub.userMilNumber}</span>
                       </div>
                     </div>
-                    <span className={cn(
-                      "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tight inline-flex items-center gap-1",
-                      hasIssues ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
-                    )}>
-                      {hasIssues ? <AlertTriangle className="w-2.5 h-2.5" /> : <Shield className="w-2.5 h-2.5" />}
-                      {hasIssues ? 'Com Ressalva' : 'Sem Alt.'}
-                    </span>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className={cn(
+                        "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tight inline-flex items-center gap-1",
+                        hasIssues ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                      )}>
+                        {hasIssues ? <AlertTriangle className="w-2.5 h-2.5" /> : <Shield className="w-2.5 h-2.5" />}
+                        {hasIssues ? 'Com Ressalva' : 'Sem Alt.'}
+                      </span>
+                      {hasIssues && (
+                        <button
+                          onClick={() => setSelectedSubmission(sub)}
+                          className="text-[8px] font-black text-primary uppercase tracking-widest hover:underline cursor-pointer flex items-center gap-0.5 mt-0.5"
+                        >
+                          <Eye className="w-2 h-2 shrink-0" />
+                          Alterações
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 text-xs">
@@ -428,6 +458,110 @@ export default function LoadReports() {
           <button className="text-[11px] font-black text-primary uppercase tracking-[0.2em] hover:underline">Ver Histórico de Cargas</button>
         </div>
       </div>
+
+      {/* Modal de Detalhes das Anomalias */}
+      {selectedSubmission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <motion.div 
+            initial={{ scale: 0.95, y: 10, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            className="bg-white border border-outline-variant w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+          >
+            {/* Modal Header */}
+            <div className="p-6 bg-error-container/10 border-b border-outline-variant flex justify-between items-start">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-error shrink-0" />
+                  <h3 className="font-black text-on-surface text-base uppercase tracking-wider">
+                    Alterações e Ressalvas de Carga
+                  </h3>
+                </div>
+                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
+                  {selectedSubmission.loadMapName} • {selectedSubmission.timestamp}
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedSubmission(null)}
+                className="p-1.5 rounded-lg hover:bg-surface-container transition-colors text-outline hover:text-on-surface cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
+              {/* Info militar e viatura */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant/30">
+                <div className="space-y-1">
+                  <span className="block text-[8px] font-black text-on-surface-variant/60 uppercase tracking-widest">Militar Vistoriador</span>
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-on-surface-variant" />
+                    <span className="font-bold text-xs uppercase text-on-surface">
+                      {selectedSubmission.userRank} {selectedSubmission.userName} ({selectedSubmission.userMilNumber})
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="block text-[8px] font-black text-on-surface-variant/60 uppercase tracking-widest">Lotação / Viatura</span>
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-primary" />
+                    <span className="font-bold text-xs uppercase text-on-surface">
+                      {selectedSubmission.vehiclePrefix ? `Viatura ${selectedSubmission.vehiclePrefix}` : 'Mapa Avulso'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista de anomalias */}
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+                  <Package className="w-3.5 h-3.5 text-error" />
+                  Materiais com Alteração
+                </h4>
+                
+                <div className="space-y-2.5">
+                  {selectedSubmission.items.filter((item: any) => !item.status).map((item: any) => (
+                    <div key={item.itemId} className="border border-error/10 bg-error-container/5 rounded-xl p-4 space-y-3 hover:bg-error-container/10 transition-colors">
+                      <div className="flex justify-between items-start flex-wrap gap-2">
+                        <div className="space-y-0.5">
+                          <span className="text-[9px] font-black text-error/80 uppercase tracking-widest bg-error-container/20 px-2 py-0.5 rounded text-xs">
+                            {item.sectorName}
+                          </span>
+                          <h5 className="font-bold text-sm text-on-surface mt-1">
+                            {item.name}
+                          </h5>
+                        </div>
+                        <span className="text-xs font-black text-on-surface bg-surface-container px-2.5 py-1 rounded-lg">
+                          Qtd: {item.quantity}
+                        </span>
+                      </div>
+                      
+                      <div className="bg-white border border-error/20 rounded-lg p-3 space-y-1">
+                        <span className="block text-[8px] font-black text-error uppercase tracking-widest">
+                          Ressalva Registrada:
+                        </span>
+                        <p className="text-xs text-on-surface-variant leading-relaxed">
+                          {item.observation || 'Nenhuma observação descrita.'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-surface-container-low border-t border-outline-variant flex justify-end">
+              <button 
+                onClick={() => setSelectedSubmission(null)}
+                className="bg-on-surface text-white hover:bg-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
