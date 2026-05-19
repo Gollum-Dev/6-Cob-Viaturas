@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { 
   Bell, 
   HelpCircle, 
@@ -16,19 +17,36 @@ import {
   FileSpreadsheet,
   MessageSquare,
   Settings,
-  Users
+  Users,
+  LogOut,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 
 interface TopBarProps {
   onMenuClick: () => void;
 }
 
 export default function TopBar({ onMenuClick }: TopBarProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const path = location.pathname;
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   let title = "Sistema";
   let subtitle = "Gestão de Frotas";
@@ -115,14 +133,56 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
       </div>
 
       <div className="flex items-center gap-4 md:gap-8 flex-shrink-0">
-        <div className="flex items-center gap-4 border-l border-outline-variant pl-4 md:pl-8">
-          <div className="hidden lg:flex flex-col items-end">
-            <span className="text-[10px] font-black text-on-surface leading-none uppercase tracking-tight">{user?.rank} {user?.name}</span>
-            <span className="text-[8px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest mt-1">{user?.role}</span>
-          </div>
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-surface-container-high rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant">
-            <UserIcon className="w-4 h-4 md:w-5 md:h-5 opacity-40" />
-          </div>
+        {/* Profile Avatar e Dropdown Interativo */}
+        <div className="relative" ref={dropdownRef}>
+          <button 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center gap-2 sm:gap-3 border-l border-outline-variant pl-4 md:pl-8 hover:bg-surface-container/60 rounded-xl py-1.5 px-2 transition-all duration-200 select-none cursor-pointer active:scale-98"
+          >
+            <div className="hidden lg:flex flex-col items-end">
+              <span className="text-[10px] font-black text-on-surface leading-none uppercase tracking-tight">{user?.rank} {user?.name}</span>
+              <span className="text-[8px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest mt-1">{user?.role}</span>
+            </div>
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-surface-container-high rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant transition-all hover:border-primary/40 relative overflow-hidden group">
+              <UserIcon className="w-4 h-4 md:w-5 md:h-5 opacity-50 group-hover:scale-110 transition-transform text-primary" />
+            </div>
+            <ChevronDown className={`w-3.5 h-3.5 text-on-surface-variant/60 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-64 bg-white/95 border border-outline-variant shadow-2xl rounded-2xl p-2 z-50 backdrop-blur-md transition-all duration-200 transform origin-top-right animate-in fade-in slide-in-from-top-2">
+              <div className="px-4 py-3 border-b border-outline-variant/60 flex flex-col">
+                <span className="text-xs font-black text-on-surface uppercase tracking-tight truncate">
+                  {user?.rank} {user?.name}
+                </span>
+                <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mt-1 opacity-70">
+                  {user?.role}
+                </span>
+              </div>
+              
+              <div className="mt-1 space-y-1">
+                <Link 
+                  to="/configuracoes"
+                  onClick={() => setIsDropdownOpen(false)}
+                  className="flex items-center gap-3 w-full px-4 py-3 hover:bg-surface-container rounded-xl text-on-surface transition-colors group text-left"
+                >
+                  <Settings className="w-4 h-4 text-on-surface-variant group-hover:rotate-45 transition-transform" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Configurações</span>
+                </Link>
+                
+                <button 
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    logout();
+                  }}
+                  className="flex items-center gap-3 w-full px-4 py-3 hover:bg-error/10 hover:text-error rounded-xl text-error transition-colors group text-left border-t border-outline-variant/30 mt-1"
+                >
+                  <LogOut className="w-4 h-4 text-error/80 group-hover:-translate-x-1 transition-transform" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Sair do Sistema</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

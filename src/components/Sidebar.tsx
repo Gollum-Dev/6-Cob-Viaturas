@@ -74,31 +74,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </NavLink>
         ))}
       </nav>
-
-      <div className="px-6 mt-auto border-t border-white/5 pt-8 space-y-2">
-        <NavLink 
-          to="/configuracoes"
-          onClick={() => {
-            if (window.innerWidth < 1024) onClose();
-          }}
-          className={({ isActive }) =>
-            cn(
-              "flex items-center w-full text-secondary-fixed-dim hover:text-white transition-colors py-2 px-2 group rounded-xl",
-              isActive && "bg-white/10 text-white font-bold"
-            )
-          }
-        >
-          <Settings className="mr-4 w-5 h-5 group-hover:rotate-45 transition-transform opacity-70" />
-          <span className="text-[10px] uppercase font-black tracking-widest">Configurações</span>
-        </NavLink>
-        <button 
-          onClick={logout}
-          className="flex items-center w-full text-error/80 hover:text-error transition-colors py-2 px-2 group mt-4"
-        >
-          <LogOut className="mr-4 w-5 h-5 group-hover:-translate-x-1 transition-transform opacity-70" />
-          <span className="text-[10px] uppercase font-black tracking-widest">Sair do Sistema</span>
-        </button>
-      </div>
     </aside>
   );
 }
