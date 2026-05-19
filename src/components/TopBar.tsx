@@ -21,7 +21,8 @@ import {
   Users,
   LogOut,
   ChevronDown,
-  Package
+  Package,
+  Home
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
@@ -72,6 +73,10 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   let IconComponent = Shield;
 
   if (path === '/') {
+    title = "Página Inicial";
+    subtitle = "Central de atalhos e acessos rápidos";
+    IconComponent = Home;
+  } else if (path === '/painel') {
     title = "Painel de Controle";
     subtitle = "Indicadores em tempo real e status da frota";
     IconComponent = LayoutDashboard;

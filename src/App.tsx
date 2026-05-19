@@ -24,6 +24,7 @@ import LoadMaps from './views/LoadMaps';
 import ChecklistCargaForm from './views/ChecklistCargaForm';
 import { LoadChecklistProvider } from './context/LoadChecklistContext';
 import LoadReports from './views/LoadReports';
+import Home from './views/Home';
 
 
 function AppContent() {
@@ -53,19 +54,22 @@ function AppContent() {
     <Router>
       <Routes>
         <Route path="/" element={<Layout />}>
+          {/* Página Inicial comum a todos os perfis pós-login */}
+          <Route index element={<Home />} />
+
           {isOperacional ? (
             <>
-              <Route index element={<Navigate to="/checklist" replace />} />
               <Route path="checklist" element={<ChecklistForm />} />
               <Route path="checklist-carga" element={<ChecklistCargaForm />} />
               <Route path="mapacarga" element={<LoadMaps />} />
               <Route path="chat" element={<ChatView />} />
               <Route path="configuracoes" element={<SettingsView />} />
-              <Route path="*" element={<Navigate to="/checklist" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </>
           ) : (
             <>
-              <Route index element={<Dashboard />} />
+              {/* O Painel Analítico / Dashboard foi movido de / para /painel */}
+              <Route path="painel" element={<Dashboard />} />
               <Route path="viaturas" element={<VehicleInventory />} />
               {!isCBU && (
                 <>

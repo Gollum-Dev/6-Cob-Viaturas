@@ -1,4 +1,4 @@
-import { LayoutDashboard, Car, ClipboardCheck, ClipboardList, Wrench, FileText, FileSpreadsheet, User as UserIcon, Settings, LogOut, Users, Calendar, MessageSquare, Package } from 'lucide-react';
+import { LayoutDashboard, Car, ClipboardCheck, ClipboardList, Wrench, FileText, FileSpreadsheet, User as UserIcon, Settings, LogOut, Users, Calendar, MessageSquare, Package, Home } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
@@ -11,7 +11,8 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Painel', href: '/', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
+  { icon: Home, label: 'Início', href: '/', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: LayoutDashboard, label: 'Painel', href: '/painel', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: Car, label: 'Viaturas', href: '/viaturas', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: Users, label: 'Militares', href: '/militares', roles: [UserRole.ADMINISTRADOR] },
   { icon: ClipboardCheck, label: 'Checklist Viatura', href: '/checklist', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
