@@ -42,16 +42,18 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <aside 
       className={cn(
-        "fixed left-0 top-0 h-full w-[280px] bg-gradient-to-br from-[#1e252b] via-[#2d3a43] to-[#1a2025] border-r border-white/5 flex flex-col py-8 z-50 shadow-2xl transition-transform duration-300 ease-in-out",
+        "notranslate fixed left-0 top-0 h-full w-[280px] bg-gradient-to-br from-[#1e252b] via-[#2d3a43] to-[#1a2025] border-r border-white/5 flex flex-col py-8 z-50 shadow-2xl transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
       <div className="px-6 mb-10 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-sm uppercase">7ª Cia Ind</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-black text-white tracking-tight drop-shadow-sm uppercase truncate">
+            {user?.unit || '7ª Cia Ind'}
+          </h1>
           <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mt-1">Gestão de Frota e Carga</p>
         </div>
-        <button onClick={onClose} className="p-2 text-white/50 hover:text-white cursor-pointer">
+        <button onClick={onClose} className="p-2 text-white/50 hover:text-white cursor-pointer flex-shrink-0 ml-2">
           <LogOut className="w-6 h-6 rotate-180" />
         </button>
       </div>
@@ -70,7 +72,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             }
           >
             <item.icon className="mr-4 w-5 h-5 opacity-75 group-hover:opacity-100 transition-opacity" />
-            <span className="text-sm uppercase font-black tracking-widest text-[11px] flex-1 group-hover:translate-x-0.5 transition-transform">{item.label}</span>
+            <span className="uppercase font-black tracking-widest text-[11px] flex-1 group-hover:translate-x-0.5 transition-transform">{item.label}</span>
             {item.label === 'Mensagens' && unreadCount > 0 && (
               <span className="bg-error text-white font-black text-[9px] px-2 py-0.5 rounded-full mr-4 animate-pulse">
                 {unreadCount}
@@ -79,6 +81,29 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </NavLink>
         ))}
       </nav>
+
+      {/* Perfil do Usuário no rodapé da Sidebar para dispositivos móveis */}
+      {user && (
+        <div className="px-6 pt-4 mt-auto border-t border-white/5 flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/5 rounded-full border border-white/10 flex items-center justify-center text-white shrink-0">
+            <UserIcon className="w-5 h-5 opacity-75 text-primary" />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-black text-white uppercase tracking-tight truncate leading-none">
+              {user.rank} {user.name}
+            </span>
+            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 truncate">
+              {user.role === UserRole.ADMINISTRADOR ? 'Administrador' :
+               user.role === UserRole.CIA_OP ? 'Cia OP - Gestão' :
+               user.role === UserRole.CBU ? 'CBU - Coordenador' :
+               user.role === UserRole.OPERACIONAL ? 'Operacional' : user.role}
+            </span>
+            <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 truncate">
+              {user.unit || '7ª CIA IND'}
+            </span>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

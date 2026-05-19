@@ -177,7 +177,12 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
           >
             <div className="hidden lg:flex flex-col items-end">
               <span className="text-[10px] font-black text-on-surface leading-none uppercase tracking-tight">{user?.rank} {user?.name}</span>
-              <span className="text-[8px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest mt-1">{user?.role}</span>
+              <span className="text-[8px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest mt-1">
+                {user?.role === 'ADMINISTRADOR' ? 'Administrador' :
+                 user?.role === 'CIA_OP' ? 'Cia OP - Gestão' :
+                 user?.role === 'CBU' ? 'CBU - Coordenador' :
+                 user?.role === 'OPERACIONAL' ? 'Operacional' : user?.role}
+              </span>
             </div>
             <div className="w-8 h-8 md:w-10 md:h-10 bg-surface-container-high rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant transition-all hover:border-primary/40 relative overflow-hidden group">
               <UserIcon className="w-4 h-4 md:w-5 md:h-5 opacity-50 group-hover:scale-110 transition-transform text-primary" />
@@ -192,7 +197,10 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
                   {user?.rank} {user?.name}
                 </span>
                 <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mt-1 opacity-70">
-                  {user?.role}
+                  {user?.role === 'ADMINISTRADOR' ? 'Administrador' :
+                   user?.role === 'CIA_OP' ? 'Cia OP - Gestão' :
+                   user?.role === 'CBU' ? 'CBU - Coordenador' :
+                   user?.role === 'OPERACIONAL' ? 'Operacional' : user?.role}
                 </span>
               </div>
               
