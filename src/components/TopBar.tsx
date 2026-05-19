@@ -24,7 +24,7 @@ import {
   Package
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -34,21 +34,38 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const path = location.pathname;
+  const navigate = useNavigate();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: Event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
     };
   }, []);
+
+  const handleConfigClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDropdownOpen(false);
+    navigate('/configuracoes');
+  };
+
+  const handleLogoutClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDropdownOpen(false);
+    logout();
+  };
 
   let title = "Sistema";
   let subtitle = "Gestão de Frotas";
@@ -175,16 +192,22 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
               </div>
               
               <div className="mt-1 space-y-1">
-                <Link 
-                  to="/configuracoes"
-                  onClick={() => setIsDropdownOpen(false)}
+                <button 
+                  onMouseDown={handleConfigClick}
+                  onTouchStart={handleConfigClick}
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    navigate('/configuracoes');
+                  }}
                   className="flex items-center gap-3 w-full px-4 py-3 hover:bg-surface-container rounded-xl text-on-surface transition-colors group text-left"
                 >
                   <Settings className="w-4 h-4 text-on-surface-variant group-hover:rotate-45 transition-transform" />
                   <span className="text-[10px] font-black uppercase tracking-widest">Configurações</span>
-                </Link>
+                </button>
                 
                 <button 
+                  onMouseDown={handleLogoutClick}
+                  onTouchStart={handleLogoutClick}
                   onClick={() => {
                     setIsDropdownOpen(false);
                     logout();
