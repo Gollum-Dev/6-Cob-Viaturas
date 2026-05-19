@@ -8,10 +8,10 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen bg-background overflow-hidden">
-      {/* Overlay para fechar o sidebar no mobile */}
+      {/* Overlay para fechar o sidebar */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-45 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 z-45 backdrop-blur-sm cursor-pointer"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}

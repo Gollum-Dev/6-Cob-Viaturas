@@ -147,7 +147,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
       <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
         <button 
           onClick={onMenuClick}
-          className="lg:hidden p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0"
+          className="p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-colors flex-shrink-0 cursor-pointer"
         >
           <Menu className="w-6 h-6" />
         </button>

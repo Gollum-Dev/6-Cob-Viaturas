@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React from 'react';
 import { LayoutDashboard, Car, ClipboardCheck, ClipboardList, Wrench, FileText, FileSpreadsheet, User as UserIcon, Settings, LogOut, Users, Calendar, MessageSquare, Package, Home } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -34,35 +34,24 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const { unreadCount } = useChat();
-  const [isHovered, setIsHovered] = useState(false);
 
   const filteredNavItems = navItems.filter(item => 
     user && item.roles.includes(user.role)
   );
 
   return (
-    <>
-      {/* Sensor de aproximação do mouse na lateral esquerda (apenas para desktop) */}
-      <div 
-        className="hidden lg:block fixed left-0 top-0 w-4 h-full z-45"
-        onMouseEnter={() => setIsHovered(true)}
-      />
-
-      <aside 
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className={cn(
-          "fixed left-0 top-0 h-full w-[280px] bg-gradient-to-br from-[#1e252b] via-[#2d3a43] to-[#1a2025] border-r border-white/5 flex flex-col py-8 z-50 shadow-2xl transition-all duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full",
-          isHovered ? "lg:translate-x-0 lg:opacity-100" : "lg:-translate-x-full lg:opacity-0 lg:pointer-events-none"
-        )}
-      >
+    <aside 
+      className={cn(
+        "fixed left-0 top-0 h-full w-[280px] bg-gradient-to-br from-[#1e252b] via-[#2d3a43] to-[#1a2025] border-r border-white/5 flex flex-col py-8 z-50 shadow-2xl transition-transform duration-300 ease-in-out",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}
+    >
       <div className="px-6 mb-10 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-sm uppercase">7ª Cia Ind</h1>
           <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mt-1">Gestão de Frota e Carga</p>
         </div>
-        <button onClick={onClose} className="lg:hidden p-2 text-white/50 hover:text-white cursor-pointer">
+        <button onClick={onClose} className="p-2 text-white/50 hover:text-white cursor-pointer">
           <LogOut className="w-6 h-6 rotate-180" />
         </button>
       </div>
@@ -72,9 +61,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <NavLink
             key={item.href}
             to={item.href}
-            onClick={() => {
-              if (window.innerWidth < 1024) onClose();
-            }}
+            onClick={onClose}
             className={({ isActive }) =>
               cn(
                 "flex items-center px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all duration-200 border-l-4 border-transparent group select-none cursor-pointer",
@@ -93,6 +80,5 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         ))}
       </nav>
     </aside>
-    </>
   );
 }
