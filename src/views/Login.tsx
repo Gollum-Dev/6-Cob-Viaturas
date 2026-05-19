@@ -70,7 +70,7 @@ export default function Login() {
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="w-full bg-white p-12 md:p-20 relative overflow-hidden flex flex-col justify-center"
+            className="w-full bg-white px-6 py-10 sm:p-12 md:p-20 relative overflow-y-auto flex flex-col justify-start md:justify-center min-h-screen lg:min-h-0"
           >
             {/* Form content */}
             <div className="flex flex-col items-center mb-10 text-center">
