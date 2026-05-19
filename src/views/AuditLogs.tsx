@@ -47,6 +47,18 @@ export default function AuditLogs() {
     return todaySubmissions.reduce((acc, s) => acc + s.items.filter(i => !i.status).length, 0);
   }, [todaySubmissions]);
 
+  const todayAnomaliesList = useMemo(() => {
+    return todaySubmissions
+      .filter(sub => sub.items.some(i => !i.status))
+      .map(sub => {
+        const anomalies = sub.items.filter(i => !i.status);
+        return {
+          ...sub,
+          anomaliesCount: anomalies.length
+        };
+      });
+  }, [todaySubmissions]);
+
   const filteredSubmissions = useMemo(() => {
     return submissions.filter(sub => {
       const itemsOk = sub.items.filter(i => i.status).length;
@@ -104,6 +116,33 @@ export default function AuditLogs() {
                 );
               })}
             </div>
+
+            <div className="mt-6 pt-6 border-t border-outline-variant/30 space-y-3">
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <Car className="w-3.5 h-3.5 text-primary" />
+                Viaturas Recebidas Hoje
+              </p>
+              {todaySubmissions.length === 0 ? (
+                <p className="text-xs text-on-surface-variant italic opacity-50 py-2">Nenhuma viatura recebida hoje.</p>
+              ) : (
+                <div className="max-h-[180px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {todaySubmissions.map((sub) => (
+                    <div key={sub.id} className="flex justify-between items-center bg-surface-container-lowest/50 hover:bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20 transition-all">
+                      <div className="flex flex-col">
+                        <span className="font-black text-primary text-xs uppercase tracking-tight">{sub.vehiclePrefix}</span>
+                        <span className="text-[8px] font-bold text-on-surface-variant opacity-50 uppercase tracking-widest">{sub.vehicleType}</span>
+                      </div>
+                      <div className="text-right flex flex-col">
+                        <span className="font-bold text-[11px] text-on-surface uppercase tracking-tight">{sub.userRank} {sub.userName}</span>
+                        <span className="text-[8px] font-black text-on-surface-variant opacity-40 font-data-mono uppercase tracking-wider">
+                          {sub.timestamp.split(' ')[1]?.substring(0, 5) || ''}h
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
         </div>
         
         <div className="bg-white border border-outline-variant p-6 rounded-xl shadow-sm">
@@ -136,6 +175,35 @@ export default function AuditLogs() {
                   </div>
                 );
               })}
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-outline-variant/30 space-y-3">
+              <p className="text-[10px] font-black text-error uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-error" />
+                Viaturas com Anomalias Recebidas Hoje
+              </p>
+              {todayAnomaliesList.length === 0 ? (
+                <p className="text-xs text-on-surface-variant italic opacity-50 py-2">Nenhuma anomalia relatada hoje.</p>
+              ) : (
+                <div className="max-h-[180px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {todayAnomaliesList.map((sub) => (
+                    <div key={sub.id} className="flex justify-between items-center bg-error-container/5 hover:bg-error-container/10 p-2.5 rounded-lg border border-error/10 transition-all">
+                      <div className="flex flex-col">
+                        <span className="font-black text-error text-xs uppercase tracking-tight">{sub.vehiclePrefix}</span>
+                        <span className="text-[8px] font-bold text-error/80 opacity-90 uppercase tracking-widest">
+                          {sub.anomaliesCount} {sub.anomaliesCount === 1 ? 'Anomalia Relatada' : 'Anomalias Relatadas'}
+                        </span>
+                      </div>
+                      <div className="text-right flex flex-col">
+                        <span className="font-bold text-[11px] text-on-surface uppercase tracking-tight">{sub.userRank} {sub.userName}</span>
+                        <span className="text-[8px] font-black text-on-surface-variant opacity-40 font-data-mono uppercase tracking-wider">
+                          {sub.timestamp.split(' ')[1]?.substring(0, 5) || ''}h
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
         </div>
       </div>

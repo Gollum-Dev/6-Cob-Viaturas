@@ -20,6 +20,9 @@ import SettingsView from './views/Settings';
 import ChatView from './views/Chat';
 import { ChatProvider } from './context/ChatContext';
 import { UserRole } from './types';
+import LoadMaps from './views/LoadMaps';
+import ChecklistCargaForm from './views/ChecklistCargaForm';
+import { LoadChecklistProvider } from './context/LoadChecklistContext';
 
 function AppContent() {
   const { isAuthenticated, user, isLoading } = useAuth();
@@ -52,6 +55,8 @@ function AppContent() {
             <>
               <Route index element={<Navigate to="/checklist" replace />} />
               <Route path="checklist" element={<ChecklistForm />} />
+              <Route path="checklist-carga" element={<ChecklistCargaForm />} />
+              <Route path="mapacarga" element={<LoadMaps />} />
               <Route path="chat" element={<ChatView />} />
               <Route path="configuracoes" element={<SettingsView />} />
               <Route path="*" element={<Navigate to="/checklist" replace />} />
@@ -70,6 +75,8 @@ function AppContent() {
               <Route path="militares/novo" element={<AddMilitarForm />} />
               <Route path="militares/editar/:id" element={<EditMilitarForm />} />
               <Route path="checklist" element={<ChecklistForm />} />
+              <Route path="checklist-carga" element={<ChecklistCargaForm />} />
+              <Route path="mapacarga" element={<LoadMaps />} />
               <Route path="chat" element={<ChatView />} />
               {canAccessMaintenanceAndRevisions && (
                 <>
@@ -93,11 +100,13 @@ export default function App() {
     <AuthProvider>
       <VehicleProvider>
         <ReportProvider>
-          <MaintenanceProvider>
-            <ChatProvider>
-              <AppContent />
-            </ChatProvider>
-          </MaintenanceProvider>
+          <LoadChecklistProvider>
+            <MaintenanceProvider>
+              <ChatProvider>
+                <AppContent />
+              </ChatProvider>
+            </MaintenanceProvider>
+          </LoadChecklistProvider>
         </ReportProvider>
       </VehicleProvider>
     </AuthProvider>

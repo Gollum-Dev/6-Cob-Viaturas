@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, Award, Shield, MapPin, Eye, EyeOff, CheckCircle2, AlertTriangle, Key } from 'lucide-react';
+import { User, Lock, Award, Shield, MapPin, Eye, EyeOff, CheckCircle2, AlertTriangle, Key, Phone, Fingerprint, Contact, Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function SettingsView() {
@@ -48,7 +48,7 @@ export default function SettingsView() {
 
       <div className="grid lg:grid-cols-12 gap-8">
         {/* Left Column - Personal Data Info Card */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-6 space-y-6">
           <div className="bg-surface-container-lowest rounded-[24px] border border-outline-variant p-6 md:p-8 shadow-xl relative overflow-hidden group">
             {/* Visual background details */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-primary/10 transition-all duration-500" />
@@ -59,60 +59,133 @@ export default function SettingsView() {
             </h2>
 
             <div className="space-y-6">
-              {/* Nome */}
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-2xl bg-surface-container-high border border-outline-variant text-on-surface-variant">
-                  <User className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-on-surface-variant tracking-wider">Nome de Guerra</p>
-                  <p className="text-lg font-bold text-on-surface mt-0.5">{user.name}</p>
+              {/* Seção Identificação Profissional */}
+              <div className="border-b border-outline-variant/30 pb-6">
+                <h3 className="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-4">Identificação Profissional</h3>
+                <div className="space-y-4">
+                  {/* Nome Completo */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant flex-shrink-0">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-wider leading-none">Nome Completo</p>
+                      <p className="text-sm font-bold text-on-surface mt-1.5 uppercase">{user.fullName || 'Não Informado'}</p>
+                    </div>
+                  </div>
+
+                  {/* Nome de Guerra */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant flex-shrink-0">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-wider leading-none">Nome de Guerra</p>
+                      <p className="text-sm font-bold text-on-surface mt-1.5">{user.name}</p>
+                    </div>
+                  </div>
+
+                  {/* Militar Number */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant flex-shrink-0">
+                      <Award className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-wider leading-none">Número de Bombeiro (RE)</p>
+                      <p className="text-sm font-bold text-on-surface mt-1.5">{user.milNumber}</p>
+                    </div>
+                  </div>
+
+                  {/* Rank */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant flex-shrink-0">
+                      <Shield className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-wider leading-none">Posto / Graduação</p>
+                      <p className="text-sm font-bold text-on-surface mt-1.5 uppercase">{user.rank}</p>
+                    </div>
+                  </div>
+
+                  {/* Unit */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant flex-shrink-0">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-wider leading-none">Unidade Lotada</p>
+                      <p className="text-sm font-bold text-on-surface mt-1.5">{user.unit}</p>
+                    </div>
+                  </div>
+
+                  {/* Role */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant flex-shrink-0">
+                      <Shield className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-wider leading-none">Nível de Permissão</p>
+                      <p className="text-xs font-black text-primary uppercase tracking-widest mt-1.5 bg-primary/10 px-3 py-1 rounded-full w-fit">
+                        {user.role}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Militar Number */}
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-2xl bg-surface-container-high border border-outline-variant text-on-surface-variant">
-                  <Award className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-on-surface-variant tracking-wider">Número de Bombeiro (RE)</p>
-                  <p className="text-lg font-bold text-on-surface mt-0.5">{user.milNumber}</p>
-                </div>
-              </div>
+              {/* Seção Informações Pessoais */}
+              <div>
+                <h3 className="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-4">Informações Pessoais</h3>
+                <div className="space-y-4">
+                  {/* Telefone */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant flex-shrink-0">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-wider leading-none">Telefone</p>
+                      <p className="text-sm font-bold text-on-surface mt-1.5">{user.phone || 'Não Informado'}</p>
+                    </div>
+                  </div>
 
-              {/* Rank */}
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-2xl bg-surface-container-high border border-outline-variant text-on-surface-variant">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-on-surface-variant tracking-wider">Posto / Graduação</p>
-                  <p className="text-lg font-bold text-on-surface mt-0.5">{user.rank}</p>
-                </div>
-              </div>
+                  {/* CPF */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant flex-shrink-0">
+                      <Fingerprint className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-wider leading-none">CPF</p>
+                      <p className="text-sm font-bold text-on-surface mt-1.5">{user.cpf || 'Não Informado'}</p>
+                    </div>
+                  </div>
 
-              {/* Unit */}
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-2xl bg-surface-container-high border border-outline-variant text-on-surface-variant">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-on-surface-variant tracking-wider">Unidade Lotada</p>
-                  <p className="text-lg font-bold text-on-surface mt-0.5">{user.unit}</p>
-                </div>
-              </div>
+                  {/* RG */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant flex-shrink-0">
+                      <Contact className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-wider leading-none">RG</p>
+                      <p className="text-sm font-bold text-on-surface mt-1.5">{user.rg || 'Não Informado'}</p>
+                    </div>
+                  </div>
 
-              {/* Role */}
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-2xl bg-surface-container-high border border-outline-variant text-on-surface-variant">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-on-surface-variant tracking-wider">Nível de Permissão</p>
-                  <p className="text-sm font-black text-primary uppercase tracking-widest mt-1 bg-primary/10 px-3 py-1 rounded-full w-fit">
-                    {user.role}
-                  </p>
+                  {/* Nascimento */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant flex-shrink-0">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-on-surface-variant tracking-wider leading-none">Data de Nascimento</p>
+                      <p className="text-sm font-bold text-on-surface mt-1.5">
+                        {user.birthDate ? (() => {
+                          const parts = user.birthDate.split('-');
+                          if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                          return new Date(user.birthDate + 'T12:00:00').toLocaleDateString('pt-BR');
+                        })() : 'Não Informado'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -120,7 +193,7 @@ export default function SettingsView() {
         </div>
 
         {/* Right Column - Password Change Card */}
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-6">
           <div className="bg-surface-container-lowest rounded-[24px] border border-outline-variant p-6 md:p-8 shadow-xl">
             <h2 className="text-lg font-black text-on-surface uppercase tracking-wider mb-6 flex items-center gap-2 border-b border-outline-variant pb-4">
               <Lock className="w-5 h-5 text-primary" />

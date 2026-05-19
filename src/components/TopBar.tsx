@@ -12,6 +12,7 @@ import {
   UserPlus,
   Award,
   ClipboardCheck,
+  ClipboardList,
   Wrench,
   CalendarRange,
   FileSpreadsheet,
@@ -19,7 +20,8 @@ import {
   Settings,
   Users,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Package
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation, Link } from 'react-router-dom';
@@ -81,9 +83,13 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
     subtitle = "Atualizar informações e permissões do militar";
     IconComponent = Award;
   } else if (path === '/checklist') {
-    title = "Checklist Diário";
-    subtitle = "Inspeção diária para saída e troca de turno";
+    title = "Checklist Viatura";
+    subtitle = "Inspeção da viatura para saída e troca de turno";
     IconComponent = ClipboardCheck;
+  } else if (path === '/checklist-carga') {
+    title = "Checklist Carga";
+    subtitle = "Conferência e vistoria dos materiais e equipamentos de carga";
+    IconComponent = ClipboardList;
   } else if (path === '/manutencao') {
     title = "Manutenção Corretiva";
     subtitle = "Controle de ordens de serviço, oficinas e custos";
@@ -93,13 +99,17 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
     subtitle = "Cronograma de trocas de óleo, pneus e preventivas";
     IconComponent = CalendarRange;
   } else if (path === '/relatorios') {
-    title = "Relatórios e Auditoria";
-    subtitle = "Lançamentos de conferências e ações do sistema";
+    title = "Relatório Viatura";
+    subtitle = "Lançamentos de checklists e ações do sistema";
     IconComponent = FileSpreadsheet;
   } else if (path === '/chat') {
     title = "Central de Mensagens";
     subtitle = "Comunicação interna direta em tempo real";
     IconComponent = MessageSquare;
+  } else if (path === '/mapacarga') {
+    title = "Mapa de Carga";
+    subtitle = "Gerenciamento e controle de carga de viaturas";
+    IconComponent = Package;
   } else if (path === '/configuracoes') {
     title = "Configurações";
     subtitle = "Dados pessoais, segurança e chave de acesso";

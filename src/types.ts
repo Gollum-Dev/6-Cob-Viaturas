@@ -24,6 +24,11 @@ export interface User {
   rank: string;
   name: string;
   unit: string;
+  phone?: string;
+  cpf?: string;
+  rg?: string;
+  birthDate?: string;
+  fullName?: string;
 }
 
 export interface Vehicle {
@@ -130,4 +135,57 @@ export interface ChatMessage {
   is_read: boolean;
   sender_name: string;
   sender_rank: string;
+}
+
+export interface LoadMap {
+  id: string;
+  vehicleId?: string | null;
+  unit: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LoadMapSector {
+  id: string;
+  loadMapId: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LoadMapItem {
+  id: string;
+  sectorId: string;
+  name: string;
+  quantity: number;
+  description?: string;
+  status: 'DISPONÍVEL' | 'AUSENTE' | 'MANUTENÇÃO';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LoadChecklistItem {
+  itemId: string;
+  name: string;
+  quantity: number;
+  sectorName: string;
+  status: boolean; // true for OK, false for not OK/Ressalva
+  observation?: string;
+}
+
+export interface LoadChecklistSubmission {
+  id: string;
+  timestamp: string;
+  loadMapId: string;
+  loadMapName: string;
+  vehiclePrefix?: string;
+  userId: string;
+  userName: string;
+  userRank: string;
+  userMilNumber: string;
+  unit: string;
+  items: LoadChecklistItem[];
 }

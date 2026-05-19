@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { UserPlus, Award, Shield, Lock, ArrowLeft, Save, AlertTriangle, User, MapPin } from 'lucide-react';
+import { UserPlus, Award, Shield, Lock, ArrowLeft, Save, AlertTriangle, User, MapPin, Phone, Calendar, Fingerprint, Contact } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function EditMilitarForm() {
@@ -12,22 +12,63 @@ export default function EditMilitarForm() {
   
   const [milNumber, setMilNumber] = useState('');
   const [name, setName] = useState('');
-  const [rank, setRank] = useState('Sd');
+  const [fullName, setFullName] = useState('');
+  const [rank, setRank] = useState('SD');
   const [role, setRole] = useState<UserRole>(UserRole.OPERACIONAL);
   const [unit, setUnit] = useState('POUSO ALEGRE');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [rg, setRg] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const formatCPF = (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    return clean
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  };
+
+  const formatPhone = (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    if (clean.length <= 10) {
+      return clean
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{4})(\d)/, '$1-$2');
+    } else {
+      return clean
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{5})(\d)/, '$1-$2');
+    }
+  };
+
+  const handleCpfChange = (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    if (clean.length <= 11) setCpf(formatCPF(val));
+  };
+
+  const handlePhoneChange = (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    if (clean.length <= 11) setPhone(formatPhone(val));
+  };
 
   useEffect(() => {
     const userToEdit = registeredUsers.find(u => u.id === id);
     if (userToEdit) {
       setMilNumber(userToEdit.milNumber || '');
       setName(userToEdit.name || '');
-      setRank(userToEdit.rank || 'Sd');
+      setFullName(userToEdit.fullName || '');
+      setRank(userToEdit.rank || 'SD');
       setRole(userToEdit.role || UserRole.OPERACIONAL);
       setUnit(userToEdit.unit || 'POUSO ALEGRE');
       setPassword(userToEdit.password || '');
+      setPhone(userToEdit.phone ? formatPhone(userToEdit.phone) : '');
+      setCpf(userToEdit.cpf ? formatCPF(userToEdit.cpf) : '');
+      setRg(userToEdit.rg || '');
+      setBirthDate(userToEdit.birthDate || '');
     } else {
       navigate('/militares');
     }
@@ -65,7 +106,12 @@ export default function EditMilitarForm() {
       milNumber,
       rank,
       name,
-      unit
+      unit,
+      phone: phone || undefined,
+      cpf: cpf || undefined,
+      rg: rg || undefined,
+      birthDate: birthDate || undefined,
+      fullName: fullName || undefined
     });
     
     navigate('/militares');
@@ -122,6 +168,21 @@ export default function EditMilitarForm() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest pl-1 flex items-center gap-2">
                     <User className="w-3 h-3" />
+                    Nome Completo
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner"
+                    placeholder="Digite o nome completo"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest pl-1 flex items-center gap-2">
+                    <User className="w-3 h-3" />
                     Nome de Guerra
                   </label>
                   <input
@@ -144,19 +205,19 @@ export default function EditMilitarForm() {
                     onChange={(e) => setRank(e.target.value)}
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner appearance-none cursor-pointer"
                   >
-                    <option value="Cel">Cel</option>
-                    <option value="Ten-Cel">Ten-Cel</option>
-                    <option value="Maj">Maj</option>
-                    <option value="Cap">Cap</option>
-                    <option value="1º Ten">1º Ten</option>
-                    <option value="2º Ten">2º Ten</option>
-                    <option value="Asp">Asp</option>
-                    <option value="Subten">Subten</option>
-                    <option value="1º Sgt">1º Sgt</option>
-                    <option value="2º Sgt">2º Sgt</option>
-                    <option value="3º Sgt">3º Sgt</option>
-                    <option value="Cb">Cb</option>
-                    <option value="Sd">Sd</option>
+                    <option value="CEL">CEL</option>
+                    <option value="TEN-CEL">TEN-CEL</option>
+                    <option value="MAJ">MAJ</option>
+                    <option value="CAP">CAP</option>
+                    <option value="1º TEN">1º TEN</option>
+                    <option value="2º TEN">2º TEN</option>
+                    <option value="ASP">ASP</option>
+                    <option value="SUBTEN">SUBTEN</option>
+                    <option value="1º SGT">1º SGT</option>
+                    <option value="2º SGT">2º SGT</option>
+                    <option value="3º SGT">3º SGT</option>
+                    <option value="CB">CB</option>
+                    <option value="SD">SD</option>
                   </select>
                 </div>
               </div>
@@ -212,6 +273,76 @@ export default function EditMilitarForm() {
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner"
                     placeholder="Defina uma senha..."
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Divisor & Informações Pessoais */}
+            <div className="border-t border-outline-variant/60 pt-8">
+              <h3 className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                <User className="w-4 h-4 text-primary" />
+                Informações Pessoais & Documentos
+              </h3>
+              
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest pl-1 flex items-center gap-2">
+                      <Phone className="w-3 h-3" />
+                      Telefone Celular
+                    </label>
+                    <input
+                      type="text"
+                      value={phone}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner"
+                      placeholder="Ex: (35) 99999-9999"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest pl-1 flex items-center gap-2">
+                      <Fingerprint className="w-3 h-3" />
+                      CPF
+                    </label>
+                    <input
+                      type="text"
+                      value={cpf}
+                      onChange={(e) => handleCpfChange(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner"
+                      placeholder="Ex: 000.000.000-00"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest pl-1 flex items-center gap-2">
+                      <Contact className="w-3 h-3" />
+                      RG
+                    </label>
+                    <input
+                      type="text"
+                      value={rg}
+                      onChange={(e) => setRg(e.target.value)}
+                      maxLength={20}
+                      className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner"
+                      placeholder="Ex: MG-12.345.678"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest pl-1 flex items-center gap-2">
+                      <Calendar className="w-3 h-3" />
+                      Data de Nascimento
+                    </label>
+                    <input
+                      type="date"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner appearance-none cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

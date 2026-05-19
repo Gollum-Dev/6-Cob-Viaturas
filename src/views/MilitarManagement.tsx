@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Users, UserPlus, Shield, Trash2, Award, Briefcase, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo, Fragment } from 'react';
+import { Users, UserPlus, Shield, Trash2, Award, Briefcase, Pencil, ChevronLeft, ChevronRight, Info, Phone, Calendar, Fingerprint, Contact } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { motion } from 'motion/react';
@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 export default function MilitarManagement() {
   const { registeredUsers, deleteUser } = useAuth();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('Todos');
@@ -29,6 +30,7 @@ export default function MilitarManagement() {
     return registeredUsers.filter(u => {
       const matchQuery = 
         (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (u.fullName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (u.milNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (u.rank || '').toLowerCase().includes(searchQuery.toLowerCase());
       
@@ -164,12 +166,12 @@ export default function MilitarManagement() {
             <tbody className="divide-y divide-outline-variant/30">
               {filteredUsers.length > 0 ? (
                 paginatedUsers.map((user) => (
-                  <motion.tr 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    key={user.id} 
-                    className="hover:bg-surface-container-low/30 transition-colors group"
-                  >
+                  <Fragment key={user.id}>
+                    <motion.tr 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="hover:bg-surface-container-low/30 transition-colors group"
+                    >
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-surface-container-high flex items-center justify-center border border-outline-variant shadow-inner group-hover:scale-105 transition-transform">
@@ -209,6 +211,14 @@ export default function MilitarManagement() {
                           </div>
                         ) : (
                           <>
+                            <button 
+                              type="button"
+                              onClick={() => setExpandedUserId(expandedUserId === user.id ? null : user.id)}
+                              className={`p-3 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center ${expandedUserId === user.id ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:text-primary hover:bg-primary/10'}`}
+                              title="Ver Detalhes"
+                            >
+                              <Info className="w-4 h-4" />
+                            </button>
                             <Link 
                               to={`/militares/editar/${user.id}`}
                               className="p-3 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
@@ -233,7 +243,75 @@ export default function MilitarManagement() {
                       </div>
                     </td>
                   </motion.tr>
-                ))
+                  {expandedUserId === user.id && (
+                    <tr className="bg-surface-container-lowest">
+                      <td colSpan={4} className="px-8 py-4 border-b border-outline-variant/30">
+                        <motion.div 
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 p-5 rounded-2xl bg-surface-container-low/40 border border-outline-variant/40"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-surface-container-high rounded-xl text-primary border border-outline-variant/60">
+                              <User className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest leading-none">Nome Completo</p>
+                              <p className="text-xs font-bold text-on-surface mt-1.5 truncate uppercase" title={user.fullName}>{user.fullName || 'Não Informado'}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-surface-container-high rounded-xl text-primary border border-outline-variant/60">
+                              <Phone className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest leading-none">Telefone</p>
+                              <p className="text-xs font-bold text-on-surface mt-1.5">{user.phone || 'Não Informado'}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-surface-container-high rounded-xl text-primary border border-outline-variant/60">
+                              <Fingerprint className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest leading-none">CPF</p>
+                              <p className="text-xs font-bold text-on-surface mt-1.5">{user.cpf || 'Não Informado'}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-surface-container-high rounded-xl text-primary border border-outline-variant/60">
+                              <Contact className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest leading-none">RG</p>
+                              <p className="text-xs font-bold text-on-surface mt-1.5">{user.rg || 'Não Informado'}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-surface-container-high rounded-xl text-primary border border-outline-variant/60">
+                              <Calendar className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest leading-none">Nascimento</p>
+                              <p className="text-xs font-bold text-on-surface mt-1.5">
+                                {user.birthDate ? (() => {
+                                  const parts = user.birthDate.split('-');
+                                  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                                  return new Date(user.birthDate + 'T12:00:00').toLocaleDateString('pt-BR');
+                                })() : 'Não Informado'}
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))
               ) : (
                 <tr>
                   <td colSpan={4} className="px-8 py-20 text-center">
@@ -306,6 +384,56 @@ export default function MilitarManagement() {
                       <p className="text-[10px] font-black text-on-surface uppercase tracking-tight truncate">{user.role}</p>
                     </div>
                   </div>
+                </div>
+
+                {/* Mobile Expandable Block */}
+                {expandedUserId === user.id && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-3 pt-3 border-t border-outline-variant/10 text-left"
+                  >
+                    <div className="space-y-1 pb-2 border-b border-outline-variant/10">
+                      <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest leading-none">Nome Completo</p>
+                      <p className="text-[10px] font-bold text-on-surface mt-1.5 uppercase">{user.fullName || 'Não Informado'}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest leading-none">Telefone</p>
+                        <p className="text-[10px] font-bold text-on-surface mt-1">{user.phone || 'Não Informado'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest leading-none">CPF</p>
+                        <p className="text-[10px] font-bold text-on-surface mt-1">{user.cpf || 'Não Informado'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest leading-none">RG</p>
+                        <p className="text-[10px] font-bold text-on-surface mt-1">{user.rg || 'Não Informado'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest leading-none">Nascimento</p>
+                        <p className="text-[10px] font-bold text-on-surface mt-1">
+                          {user.birthDate ? (() => {
+                            const parts = user.birthDate.split('-');
+                            if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                            return new Date(user.birthDate + 'T12:00:00').toLocaleDateString('pt-BR');
+                          })() : 'Não Informado'}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Mobile expand toggle button */}
+                <div className="flex justify-center pt-2">
+                  <button 
+                    onClick={() => setExpandedUserId(expandedUserId === user.id ? null : user.id)}
+                    className="text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5 py-1 px-3 bg-primary/5 hover:bg-primary/10 rounded-full transition-all cursor-pointer"
+                  >
+                    <Info className="w-3 h-3" />
+                    {expandedUserId === user.id ? 'Esconder Detalhes' : 'Ver Detalhes'}
+                  </button>
                 </div>
 
                 {/* Inline Confirmation when deleting */}

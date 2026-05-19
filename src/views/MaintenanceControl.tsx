@@ -8,7 +8,7 @@ import { MaintenanceType, MaintenanceStatus } from '../types';
 import { cn } from '../lib/utils';
 
 /**
- * Retorna uma palavra-chave simplificada para os itens de inspeção do checklist diário.
+ * Retorna uma palavra-chave simplificada para os itens de inspeção do checklist viatura.
  * Evita poluição visual na tabela de manutenção com textos excessivamente longos.
  */
 const getKeyword = (description: string): string => {
@@ -221,7 +221,7 @@ export default function MaintenanceControl() {
             <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
               <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-error" />
-                Checklist Diário com Ressalvas
+                Checklist Viatura com Ressalvas
               </h3>
               <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full uppercase">{checklistIssues.length} Ressalvas Ativas</span>
             </div>

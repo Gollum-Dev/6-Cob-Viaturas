@@ -8,7 +8,18 @@ interface AuthContextType {
   user: User | null;
   registeredUsers: User[]; // keeping this for compatibility with other views if they need it
   login: (milNumber: string, password: string) => Promise<string | null>;
-  register: (password: string, role: UserRole, milNumber: string, rank: string, name: string, unit: string) => Promise<boolean>;
+  register: (
+    password: string,
+    role: UserRole,
+    milNumber: string,
+    rank: string,
+    name: string,
+    unit: string,
+    phone?: string,
+    cpf?: string,
+    rg?: string,
+    birthDate?: string
+  ) => Promise<boolean>;
   updateUser: (id: string, updates: Partial<User>) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
   updatePassword: (password: string) => Promise<{ success: boolean; error: string | null }>;
@@ -62,9 +73,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               id: profile.id,
               role: profile.role as UserRole,
               milNumber: profile.mil_number,
-              rank: profile.rank,
+              rank: profile.rank ? profile.rank.toUpperCase() : '',
               name: profile.name,
               unit: profile.unit,
+              phone: profile.phone,
+              cpf: profile.cpf,
+              rg: profile.rg,
+              birthDate: profile.birth_date,
+              fullName: profile.full_name,
             });
           } else if (error) {
             console.error('Failed to fetch profile during initial session, but preserving session:', error);
@@ -102,9 +118,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             id: profile.id,
             role: profile.role as UserRole,
             milNumber: profile.mil_number,
-            rank: profile.rank,
+            rank: profile.rank ? profile.rank.toUpperCase() : '',
             name: profile.name,
             unit: profile.unit,
+            phone: profile.phone,
+            cpf: profile.cpf,
+            rg: profile.rg,
+            birthDate: profile.birth_date,
+            fullName: profile.full_name,
           });
         } else if (error && mounted) {
            console.error('Failed to fetch profile in onAuthStateChange:', error);
@@ -146,9 +167,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: u.id,
           role: u.role as UserRole,
           milNumber: u.mil_number,
-          rank: u.rank,
+          rank: u.rank ? u.rank.toUpperCase() : '',
           name: u.name,
           unit: u.unit,
+          phone: u.phone,
+          cpf: u.cpf,
+          rg: u.rg,
+          birthDate: u.birth_date,
+          fullName: u.full_name,
         })));
       } else if (error) {
         console.error('Error fetching users:', error);
@@ -190,9 +216,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: profile.id,
           role: profile.role as UserRole,
           milNumber: profile.mil_number,
-          rank: profile.rank,
+          rank: profile.rank ? profile.rank.toUpperCase() : '',
           name: profile.name,
           unit: profile.unit,
+          phone: profile.phone,
+          cpf: profile.cpf,
+          rg: profile.rg,
+          birthDate: profile.birth_date,
+          fullName: profile.full_name,
         });
         return null; // Null means success
       } else {
@@ -205,15 +236,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (password: string, role: UserRole, milNumber: string, rank: string, name: string, unit: string) => {
+  const register = async (
+    password: string, 
+    role: UserRole, 
+    milNumber: string, 
+    rank: string, 
+    name: string, 
+    unit: string,
+    phone?: string,
+    cpf?: string,
+    rg?: string,
+    birthDate?: string,
+    fullName?: string
+  ) => {
     try {
       const { data, error } = await supabase.rpc('create_military_user', {
         p_mil_number: milNumber,
         p_password: password,
         p_role: role,
-        p_rank: rank,
+        p_rank: rank ? rank.toUpperCase() : '',
         p_name: name,
-        p_unit: unit
+        p_unit: unit,
+        p_phone: phone || null,
+        p_cpf: cpf || null,
+        p_rg: rg || null,
+        p_birth_date: birthDate || null,
+        p_full_name: fullName || null
       });
 
       if (error) {
@@ -227,9 +275,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: data,
           role,
           milNumber,
-          rank,
+          rank: rank ? rank.toUpperCase() : '',
           name,
           unit,
+          phone,
+          cpf,
+          rg,
+          birthDate,
+          fullName,
         }]);
       }
 
@@ -244,17 +297,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const dbUpdates = {
       ...(updates.role && { role: updates.role }),
       ...(updates.milNumber && { mil_number: updates.milNumber }),
-      ...(updates.rank && { rank: updates.rank }),
+      ...(updates.rank && { rank: updates.rank.toUpperCase() }),
       ...(updates.name && { name: updates.name }),
       ...(updates.unit && { unit: updates.unit }),
+      ...('phone' in updates && { phone: updates.phone || null }),
+      ...('cpf' in updates && { cpf: updates.cpf || null }),
+      ...('rg' in updates && { rg: updates.rg || null }),
+      ...('birthDate' in updates && { birth_date: updates.birthDate || null }),
+      ...('fullName' in updates && { full_name: updates.fullName || null }),
     };
 
     const { error } = await supabase.from('users').update(dbUpdates).eq('id', id);
     if (!error) {
+      const normalizedUpdates = {
+        ...updates,
+        ...(updates.rank && { rank: updates.rank.toUpperCase() })
+      };
       // Update local state for fast UI refresh
-      setRegisteredUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
+      setRegisteredUsers(prev => prev.map(u => u.id === id ? { ...u, ...normalizedUpdates } : u));
       if (user?.id === id) {
-        setUser(prev => prev ? { ...prev, ...updates } : null);
+        setUser(prev => prev ? { ...prev, ...normalizedUpdates } : null);
       }
     } else {
       console.error('Update failed', error);

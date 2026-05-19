@@ -1,4 +1,4 @@
-import { LayoutDashboard, Car, ClipboardCheck, Wrench, FileText, User as UserIcon, Settings, LogOut, Users, Calendar, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Car, ClipboardCheck, ClipboardList, Wrench, FileText, User as UserIcon, Settings, LogOut, Users, Calendar, MessageSquare, Package } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
@@ -14,10 +14,12 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Painel', href: '/', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: Car, label: 'Viaturas', href: '/viaturas', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: Users, label: 'Militares', href: '/militares', roles: [UserRole.ADMINISTRADOR] },
-  { icon: ClipboardCheck, label: 'Checklist Diário', href: '/checklist', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: ClipboardCheck, label: 'Checklist Viatura', href: '/checklist', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: ClipboardList, label: 'Checklist Carga', href: '/checklist-carga', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: Package, label: 'Mapa Carga', href: '/mapacarga', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
   { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP] },
   { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP] },
-  { icon: FileText, label: 'Relatórios', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
+  { icon: FileText, label: 'Relatório Viatura', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: MessageSquare, label: 'Mensagens', href: '/chat', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
 ];
 
