@@ -269,7 +269,7 @@ CREATE POLICY "Allow authenticated update" ON public.messages FOR UPDATE TO auth
         {/* Right Side: Conversation Thread */}
         <div className={cn(
           "flex-1 flex flex-col bg-surface-container-lowest",
-          selectedUserId === null && "hidden md:flex",
+          isAdmin && selectedUserId === null && "hidden md:flex",
           isAdmin && !selectedUserId && "hidden md:flex justify-center items-center p-8 text-center"
         )}>
           {isAdmin && !selectedUserId ? (

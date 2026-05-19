@@ -1,4 +1,4 @@
-import { FireExtinguisher, Camera, Send, CheckCircle2, AlertCircle, Clock, User } from 'lucide-react';
+import { FireExtinguisher, Camera, Send, CheckCircle2, AlertCircle, Clock, User, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -125,64 +125,49 @@ export default function ChecklistForm() {
       </div>
 
       <form className="space-y-6 md:space-y-8 pb-12" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-          <div className="lg:col-span-7 bg-white p-6 md:p-8 border border-outline-variant rounded-xl shadow-sm space-y-6 md:space-y-8">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg md:text-xl font-bold text-on-surface">Identificação da Viatura</h3>
-                <p className="text-xs md:text-sm text-on-surface-variant font-medium">Selecione o prefixo para inspeção</p>
-              </div>
-              <FireExtinguisher className="hidden sm:block w-10 h-10 text-primary-container" />
+        {/* Bloco de Cabeçalho Unificado, Premium e Responsivo */}
+        <div className="bg-white border border-outline-variant rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+          {/* Título do Bloco */}
+          <div className="bg-surface-container-low px-6 py-4 border-b border-outline-variant flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <FireExtinguisher className="w-4 h-4" />
             </div>
-            
+            <div>
+              <h3 className="text-xs md:text-sm font-black text-on-surface uppercase tracking-widest">Identificação da Viatura</h3>
+              <p className="text-[10px] md:text-xs text-on-surface-variant font-medium">Informe a viatura e o odômetro atual antes do preenchimento</p>
+            </div>
+          </div>
+
+          <div className="p-6 md:p-8">
+            {/* Dados da Viatura */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
               <div className="space-y-2">
-                <label className="text-[9px] md:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Prefixo da Viatura</label>
-                <select 
-                  required
-                  value={selectedPrefix}
-                  onChange={(e) => setSelectedPrefix(e.target.value)}
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 md:p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none text-sm"
-                >
-                  <option value="">Selecione a viatura...</option>
-                  {vehicles.map(v => (
-                    <option key={v.id} value={v.prefix}>{v.prefix} ({v.type})</option>
-                  ))}
-                </select>
+                <label className="text-[9px] md:text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Prefixo da Viatura</label>
+                <div className="relative">
+                  <select 
+                    required
+                    value={selectedPrefix}
+                    onChange={(e) => setSelectedPrefix(e.target.value)}
+                    className="w-full bg-surface-container-low border border-outline-variant p-3 md:p-4 rounded-xl font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none text-sm cursor-pointer pr-10 hover:bg-surface-container transition-colors"
+                  >
+                    <option value="">Selecione a viatura...</option>
+                    {vehicles.map(v => (
+                      <option key={v.id} value={v.prefix}>{v.prefix} ({v.type})</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/60 pointer-events-none" />
+                </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] md:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Odômetro Atual (km)</label>
+                <label className="text-[9px] md:text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Odômetro Atual (km)</label>
                 <input 
                   required
                   type="number" 
                   value={odometer}
                   onChange={(e) => setOdometer(e.target.value)}
-                  placeholder="42.350" 
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 md:p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container text-sm"
+                  placeholder="Ex: 42350" 
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 md:p-4 rounded-xl font-bold text-on-surface focus:outline-none focus:border-primary-container text-sm hover:bg-surface-container transition-colors"
                 />
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5 bg-white p-6 md:p-8 border border-outline-variant rounded-xl shadow-sm space-y-6">
-            <h3 className="text-lg md:text-xl font-bold text-on-surface">Militar Responsável</h3>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary-container flex items-center justify-center text-white shadow-lg shadow-primary-container/20 shrink-0">
-                <User className="w-5 h-5 md:w-6 md:h-6" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs md:text-sm font-black text-on-surface uppercase tracking-tight truncate">{user?.name || 'Militar não identificado'}</p>
-                <p className="text-[10px] md:text-xs text-on-surface-variant font-semibold uppercase truncate">{user?.rank || 'Posto/Graduação'}</p>
-              </div>
-            </div>
-            <div className="space-y-3 pt-4 border-t border-outline-variant/30">
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-bold text-on-surface-variant uppercase tracking-widest">ID Funcional</span>
-                <span className="font-data-mono font-black text-on-surface">{user?.milNumber || '------'}</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-bold text-on-surface-variant uppercase tracking-widest">Unidade</span>
-                <span className="font-data-mono font-black text-on-surface">{user?.unit || 'Unidade não informada'}</span>
               </div>
             </div>
           </div>

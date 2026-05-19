@@ -1,25 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, Wrench, Plus, Disc, Gauge, Droplets, AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Calendar, Wrench, Disc, Gauge, Droplets, AlertTriangle } from 'lucide-react';
 import { useVehicles } from '../context/VehicleContext';
-import { useMaintenance } from '../context/MaintenanceContext';
-import { useReports } from '../context/ReportContext';
-import { MaintenanceType, MaintenanceStatus } from '../types';
 import { cn } from '../lib/utils';
 
 export default function RevisionsControl() {
   const { vehicles } = useVehicles();
-  const { records, addRecord } = useMaintenance();
-  const { submissions } = useReports();
   
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedVehicleId, setSelectedVehicleId] = useState('');
-  const [maintenanceType, setMaintenanceType] = useState<MaintenanceType>(MaintenanceType.PREVENTIVE_GENERAL);
-  const [workshop, setWorkshop] = useState('');
-  const [cost, setCost] = useState('');
-  const [odometer, setOdometer] = useState('');
-  const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus>(MaintenanceStatus.IN_PROGRESS);
-
   const [tirePage, setTirePage] = useState(1);
   const [oilKmPage, setOilKmPage] = useState(1);
   const [oilDatePage, setOilDatePage] = useState(1);
@@ -110,142 +96,8 @@ export default function RevisionsControl() {
     return oilChangeAlerts.slice(start, start + ITEMS_PER_PAGE);
   }, [oilChangeAlerts, currentOilDatePage]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedVehicleId) return;
-
-    addRecord({
-      vehicleId: selectedVehicleId,
-      type: maintenanceType,
-      workshop,
-      date: new Date().toISOString().split('T')[0],
-      odometerAtMaintenance: Number(odometer),
-      status: maintenanceStatus,
-      cost: Number(cost),
-      progress: maintenanceStatus === MaintenanceStatus.IN_PROGRESS ? 0 : 100,
-    });
-
-    setShowAddForm(false);
-    setSelectedVehicleId('');
-    setWorkshop('');
-    setCost('');
-    setOdometer('');
-  };
-
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
-      <AnimatePresence>
-        {showAddForm && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white border border-outline-variant rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl mb-8"
-          >
-            <div className="flex justify-between items-center mb-6 gap-2">
-              <h2 className="text-sm sm:text-base md:text-xl font-black text-on-surface uppercase tracking-tight">Agendar Revisão / O.S. Preventiva</h2>
-              <button onClick={() => setShowAddForm(false)} className="text-on-surface-variant hover:text-primary font-bold text-xs sm:text-sm uppercase shrink-0">Cancelar</button>
-            </div>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-              <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Viatura</label>
-                <select 
-                  required
-                  value={selectedVehicleId}
-                  onChange={(e) => {
-                    const vehicle = vehicles.find(v => v.id === e.target.value);
-                    setSelectedVehicleId(e.target.value);
-                    if (vehicle) setOdometer(String(vehicle.odometer));
-                  }}
-                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
-                >
-                  <option value="">Selecione...</option>
-                  {vehicles.map(v => (
-                    <option key={v.id} value={v.id}>{v.prefix} - {v.type}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Tipo de Revisão</label>
-                <select 
-                  required
-                  value={maintenanceType}
-                  onChange={(e) => setMaintenanceType(e.target.value as MaintenanceType)}
-                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
-                >
-                  {Object.values(MaintenanceType).map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Oficina / Fornecedor</label>
-                <input 
-                  required
-                  type="text"
-                  value={workshop}
-                  onChange={(e) => setWorkshop(e.target.value)}
-                  placeholder="Nome do local"
-                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
-                />
-              </div>
-              <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Odômetro Atual</label>
-                <input 
-                  required
-                  type="number"
-                  value={odometer}
-                  onChange={(e) => setOdometer(e.target.value)}
-                  placeholder="KM"
-                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
-                />
-              </div>
-              <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Custo Estimado (R$)</label>
-                <input 
-                  required
-                  type="number"
-                  value={cost}
-                  onChange={(e) => setCost(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
-                />
-              </div>
-              <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-[9px] sm:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Status Inicial</label>
-                <select 
-                  value={maintenanceStatus}
-                  onChange={(e) => setMaintenanceStatus(e.target.value as MaintenanceStatus)}
-                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 sm:p-3 rounded-lg font-bold text-on-surface text-xs sm:text-sm"
-                >
-                  {Object.values(MaintenanceStatus).map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="md:col-span-3 flex justify-end">
-                <button type="submit" className="w-full md:w-auto bg-primary text-white px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs hover:bg-black transition-all shadow-lg">
-                  Salvar Ordem de Serviço
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="flex justify-end mb-6">
-        <button 
-          onClick={() => {
-            setMaintenanceType(MaintenanceType.PREVENTIVE_GENERAL);
-            setWorkshop('Oficina Credenciada');
-            setShowAddForm(true);
-          }}
-          className="w-full sm:w-auto bg-primary text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg text-[10px] sm:text-xs uppercase tracking-widest group"
-        >
-          <Plus className="w-3.5 h-3.5 group-hover:scale-110 transition-transform shrink-0" />
-          Agendar Revisão
-        </button>
-      </div>
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pt-6">
 
       <div className="space-y-6 sm:space-y-8">
         {/* Alerta de Validade de Pneus Section */}
@@ -260,7 +112,6 @@ export default function RevisionsControl() {
             </span>
           </div>
           
-          {/* Desktop View: Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -269,13 +120,12 @@ export default function RevisionsControl() {
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Validade</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Dias Restantes</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
                 {tireValidityAlerts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                    <td colSpan={4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                       Nenhuma data de validade de pneus cadastrada.
                     </td>
                   </tr>
@@ -305,20 +155,6 @@ export default function RevisionsControl() {
                          )}>
                            {alert.daysRemaining < 0 ? `${Math.abs(alert.daysRemaining)} dias atrás` : `${alert.daysRemaining} dias`}
                          </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button 
-                          onClick={() => {
-                            setSelectedVehicleId(alert.id);
-                            setMaintenanceType(MaintenanceType.TIRE_REPLACEMENT);
-                            setWorkshop('Borracharia Credenciada');
-                            setOdometer(String(alert.odometer));
-                            setShowAddForm(true);
-                          }}
-                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap animate-pulse hover:animate-none"
-                        >
-                          Agendar Troca
-                        </button>
                       </td>
                     </tr>
                   ))
@@ -366,21 +202,6 @@ export default function RevisionsControl() {
                         {alert.daysRemaining < 0 ? `${Math.abs(alert.daysRemaining)} dias atrás` : `${alert.daysRemaining} dias`}
                       </span>
                     </div>
-                  </div>
-
-                  <div className="pt-1">
-                    <button 
-                      onClick={() => {
-                        setSelectedVehicleId(alert.id);
-                        setMaintenanceType(MaintenanceType.TIRE_REPLACEMENT);
-                        setWorkshop('Borracharia Credenciada');
-                        setOdometer(String(alert.odometer));
-                        setShowAddForm(true);
-                      }}
-                      className="w-full bg-primary/5 hover:bg-primary text-primary hover:text-white py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all text-center border border-primary/10"
-                    >
-                      Agendar Troca
-                    </button>
                   </div>
                 </div>
               ))
@@ -445,13 +266,12 @@ export default function RevisionsControl() {
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Próxima Troca</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">KM Restante</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
                 {oilChangeKmAlerts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                    <td colSpan={4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                       Nenhuma informação de quilometragem de óleo cadastrada.
                     </td>
                   </tr>
@@ -481,20 +301,6 @@ export default function RevisionsControl() {
                          )}>
                            {alert.kmRemaining <= 0 ? `Excedido em ${Math.abs(alert.kmRemaining).toLocaleString()} KM` : `${alert.kmRemaining.toLocaleString()} KM rest`}
                          </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button 
-                          onClick={() => {
-                            setSelectedVehicleId(alert.id);
-                            setMaintenanceType(MaintenanceType.OIL_CHANGE);
-                            setWorkshop('Oficina Sede');
-                            setOdometer(String(alert.odometer));
-                            setShowAddForm(true);
-                          }}
-                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap animate-pulse hover:animate-none"
-                        >
-                          Agendar Troca
-                        </button>
                       </td>
                     </tr>
                   ))
@@ -542,21 +348,6 @@ export default function RevisionsControl() {
                         {alert.kmRemaining <= 0 ? `Excedido em ${Math.abs(alert.kmRemaining).toLocaleString()} KM` : `${alert.kmRemaining.toLocaleString()} KM`}
                       </span>
                     </div>
-                  </div>
-
-                  <div className="pt-1">
-                    <button 
-                      onClick={() => {
-                        setSelectedVehicleId(alert.id);
-                        setMaintenanceType(MaintenanceType.OIL_CHANGE);
-                        setWorkshop('Oficina Sede');
-                        setOdometer(String(alert.odometer));
-                        setShowAddForm(true);
-                      }}
-                      className="w-full bg-primary/5 hover:bg-primary text-primary hover:text-white py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all text-center border border-primary/10"
-                    >
-                      Agendar Troca
-                    </button>
                   </div>
                 </div>
               ))
@@ -621,13 +412,12 @@ export default function RevisionsControl() {
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Próxima Troca</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Dias Restantes</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
                 {oilChangeAlerts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                    <td colSpan={4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                       Nenhuma data de próxima troca de óleo cadastrada.
                     </td>
                   </tr>
@@ -657,20 +447,6 @@ export default function RevisionsControl() {
                          )}>
                            {alert.daysRemaining < 0 ? `${Math.abs(alert.daysRemaining)} dias atrás` : `${alert.daysRemaining} dias`}
                          </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button 
-                          onClick={() => {
-                            setSelectedVehicleId(alert.id);
-                            setMaintenanceType(MaintenanceType.OIL_CHANGE);
-                            setWorkshop('Oficina Sede');
-                            setOdometer(String(alert.odometer));
-                            setShowAddForm(true);
-                          }}
-                          className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap animate-pulse hover:animate-none"
-                        >
-                          Agendar Troca
-                        </button>
                       </td>
                     </tr>
                   ))
@@ -718,21 +494,6 @@ export default function RevisionsControl() {
                         {alert.daysRemaining < 0 ? `${Math.abs(alert.daysRemaining)} dias atrás` : `${alert.daysRemaining} dias`}
                       </span>
                     </div>
-                  </div>
-
-                  <div className="pt-1">
-                    <button 
-                      onClick={() => {
-                        setSelectedVehicleId(alert.id);
-                        setMaintenanceType(MaintenanceType.OIL_CHANGE);
-                        setWorkshop('Oficina Sede');
-                        setOdometer(String(alert.odometer));
-                        setShowAddForm(true);
-                      }}
-                      className="w-full bg-primary/5 hover:bg-primary text-primary hover:text-white py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all text-center border border-primary/10"
-                    >
-                      Agendar Troca
-                    </button>
                   </div>
                 </div>
               ))

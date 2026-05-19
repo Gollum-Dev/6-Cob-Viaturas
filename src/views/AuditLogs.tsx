@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Shield, Download, Terminal, User, FileText, AlertTriangle, Car, ChevronDown } from 'lucide-react';
+import { Shield, Terminal, User, FileText, AlertTriangle, Car, ChevronDown, Eye, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useReports } from '../context/ReportContext';
 import { cn } from '../lib/utils';
@@ -7,6 +7,10 @@ import { cn } from '../lib/utils';
 export default function AuditLogs() {
   const { submissions } = useReports();
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'OK' | 'ISSUE' | 'MAINTENANCE'>('ALL');
+  const [vehicleFilter, setVehicleFilter] = useState('');
+  const [militarFilter, setMilitarFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
 
   const today = new Date().toLocaleDateString('pt-BR');
 
@@ -71,18 +75,28 @@ export default function AuditLogs() {
         (statusFilter === 'ISSUE' && hasIssues) ||
         (statusFilter === 'MAINTENANCE'); // For now, just show non-maintenance in this table or expand table.
 
-      return matchesStatus;
+      const matchesVehicle = !vehicleFilter || 
+        sub.vehiclePrefix.toLowerCase().includes(vehicleFilter.toLowerCase()) ||
+        (sub.vehicleType && sub.vehicleType.toLowerCase().includes(vehicleFilter.toLowerCase()));
+
+      const matchesMilitar = !militarFilter ||
+        sub.userName.toLowerCase().includes(militarFilter.toLowerCase()) ||
+        (sub.userRank && sub.userRank.toLowerCase().includes(militarFilter.toLowerCase()));
+
+      let matchesDate = true;
+      if (dateFilter) {
+        const [year, month, day] = dateFilter.split('-');
+        const formattedDate = `${day}/${month}/${year}`;
+        matchesDate = sub.timestamp.startsWith(formattedDate);
+      }
+
+      return matchesStatus && matchesVehicle && matchesMilitar && matchesDate;
     });
-  }, [submissions, statusFilter]);
+  }, [submissions, statusFilter, vehicleFilter, militarFilter, dateFilter]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex justify-end">
-        <button className="bg-primary text-white px-4 py-3 sm:px-6 sm:py-4 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-black transition-all shadow-lg hover:shadow-primary/20 flex items-center justify-center gap-2 group w-full md:w-auto">
-          <Download className="w-4 h-4 group-hover:scale-110 transition-transform shrink-0" />
-          Exportar Relatório (CSV)
-        </button>
-      </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white border border-outline-variant p-6 rounded-xl shadow-sm">
@@ -193,6 +207,13 @@ export default function AuditLogs() {
                         <span className="text-[8px] font-bold text-error/80 opacity-90 uppercase tracking-widest">
                           {sub.anomaliesCount} {sub.anomaliesCount === 1 ? 'Anomalia Relatada' : 'Anomalias Relatadas'}
                         </span>
+                        <button
+                          onClick={() => setSelectedSubmission(sub)}
+                          className="mt-1.5 self-start bg-error/10 hover:bg-error text-error hover:text-white px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          <Eye className="w-2.5 h-2.5" />
+                          Ver Alterações
+                        </button>
                       </div>
                       <div className="text-right flex flex-col">
                         <span className="font-bold text-[11px] text-on-surface uppercase tracking-tight">{sub.userRank} {sub.userName}</span>
@@ -209,21 +230,66 @@ export default function AuditLogs() {
       </div>
 
       <div className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-outline-variant bg-surface-container-low flex flex-wrap gap-4 items-center">
-            <div className="flex gap-2">
-                <div className="relative group">
-                  <select 
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as any)}
-                    className="appearance-none flex items-center gap-2 px-6 py-3 border border-outline text-on-surface-variant font-bold rounded-lg hover:bg-surface-container transition-all text-sm uppercase tracking-widest cursor-pointer pr-10"
-                  >
-                    <option value="ALL">Todos os Status</option>
-                    <option value="OK">Sem Alteração</option>
-                    <option value="ISSUE">Com Ressalva</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline pointer-events-none" />
-                </div>
+        <div className="p-6 border-b border-outline-variant bg-surface-container-low grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          {/* Status Filter */}
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Status</label>
+            <div className="relative w-full">
+              <select 
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="w-full appearance-none flex items-center gap-2 px-4 py-3 bg-white border border-outline-variant text-on-surface-variant font-bold rounded-lg hover:bg-surface-container transition-all text-xs uppercase tracking-widest cursor-pointer pr-10 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              >
+                <option value="ALL">Todos os Status</option>
+                <option value="OK">Sem Alteração</option>
+                <option value="ISSUE">Com Ressalva</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline pointer-events-none" />
             </div>
+          </div>
+
+          {/* Vehicle Filter */}
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Viatura</label>
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={vehicleFilter}
+                onChange={(e) => setVehicleFilter(e.target.value)}
+                placeholder="Ex: ABS-01, UR-02..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-outline-variant text-on-surface font-bold rounded-lg text-xs uppercase tracking-wider placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              />
+              <Car className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
+            </div>
+          </div>
+
+          {/* Militar Filter */}
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Militar Responsável</label>
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={militarFilter}
+                onChange={(e) => setMilitarFilter(e.target.value)}
+                placeholder="Nome ou Graduação..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-outline-variant text-on-surface font-bold rounded-lg text-xs uppercase tracking-wider placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
+            </div>
+          </div>
+
+          {/* Date Filter */}
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Dia / Data</label>
+            <div className="relative w-full">
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-outline-variant text-on-surface font-bold rounded-lg text-xs uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all cursor-pointer"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Desktop View: Table */}
@@ -279,13 +345,24 @@ export default function AuditLogs() {
                         {sub.odometer.toLocaleString('pt-BR')} KM
                       </td>
                       <td className="px-8 py-6 text-center">
-                        <span className={cn(
-                          "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight inline-flex items-center gap-1.5",
-                          hasIssues ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
-                        )}>
-                            {hasIssues ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
-                            {hasIssues ? 'Com Ressalva' : 'Sem Alteração'}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={cn(
+                            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight inline-flex items-center gap-1.5",
+                            hasIssues ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                          )}>
+                              {hasIssues ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
+                              {hasIssues ? 'Com Ressalva' : 'Sem Alteração'}
+                          </span>
+                          {hasIssues && (
+                            <button
+                              onClick={() => setSelectedSubmission(sub)}
+                              className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline cursor-pointer flex items-center gap-1 mt-1 shrink-0"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Ver Alterações
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-8 py-6 text-center">
                         <div className="flex flex-col items-center">
@@ -330,13 +407,24 @@ export default function AuditLogs() {
                         <span className="opacity-50 text-[9px] uppercase tracking-wider font-semibold">{sub.userRank} | {sub.userMilNumber}</span>
                       </div>
                     </div>
-                    <span className={cn(
-                      "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tight inline-flex items-center gap-1",
-                      hasIssues ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
-                    )}>
-                      {hasIssues ? <AlertTriangle className="w-2.5 h-2.5" /> : <Shield className="w-2.5 h-2.5" />}
-                      {hasIssues ? 'Com Ressalva' : 'Sem Alt.'}
-                    </span>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className={cn(
+                        "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tight inline-flex items-center gap-1",
+                        hasIssues ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                      )}>
+                        {hasIssues ? <AlertTriangle className="w-2.5 h-2.5" /> : <Shield className="w-2.5 h-2.5" />}
+                        {hasIssues ? 'Com Ressalva' : 'Sem Alt.'}
+                      </span>
+                      {hasIssues && (
+                        <button
+                          onClick={() => setSelectedSubmission(sub)}
+                          className="text-[8px] font-black text-primary uppercase tracking-widest hover:underline cursor-pointer flex items-center gap-0.5 mt-0.5"
+                        >
+                          <Eye className="w-2.5 h-2.5 shrink-0" />
+                          Alterações
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 text-xs">
@@ -378,6 +466,102 @@ export default function AuditLogs() {
             <button className="text-[11px] font-black text-primary uppercase tracking-[0.2em] hover:underline">Ver Histórico Completo</button>
         </div>
       </div>
+
+      {/* Modal de Detalhes das Anomalias */}
+      {selectedSubmission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <motion.div 
+            initial={{ scale: 0.95, y: 10, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            className="bg-white border border-outline-variant w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+          >
+            {/* Modal Header */}
+            <div className="p-6 bg-error-container/10 border-b border-outline-variant flex justify-between items-start">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-error shrink-0" />
+                  <h3 className="font-black text-on-surface text-base uppercase tracking-wider">
+                    Alterações e Ressalvas da Viatura
+                  </h3>
+                </div>
+                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
+                  {selectedSubmission.vehiclePrefix} • {selectedSubmission.timestamp}
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedSubmission(null)}
+                className="p-1.5 rounded-lg hover:bg-surface-container transition-colors text-outline hover:text-on-surface cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
+              {/* Info militar e viatura */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant/30">
+                <div className="space-y-1">
+                  <span className="block text-[8px] font-black text-on-surface-variant/60 uppercase tracking-widest">Militar Vistoriador</span>
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-on-surface-variant" />
+                    <span className="font-bold text-xs uppercase text-on-surface">
+                      {selectedSubmission.userRank} {selectedSubmission.userName} ({selectedSubmission.userMilNumber})
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="block text-[8px] font-black text-on-surface-variant/60 uppercase tracking-widest">Viatura / Odômetro</span>
+                  <div className="flex items-center gap-2">
+                    <Car className="w-4 h-4 text-primary" />
+                    <span className="font-bold text-xs uppercase text-on-surface">
+                      {selectedSubmission.vehiclePrefix} ({selectedSubmission.vehicleType}) • {selectedSubmission.odometer?.toLocaleString('pt-BR')} KM
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista de anomalias */}
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-error" />
+                  Itens com Alteração
+                </h4>
+                
+                <div className="space-y-2.5">
+                  {selectedSubmission.items.filter((item: any) => !item.status).map((item: any, idx: number) => (
+                    <div key={idx} className="border border-error/10 bg-error-container/5 rounded-xl p-4 space-y-3 hover:bg-error-container/10 transition-colors">
+                      <div className="flex justify-between items-start flex-wrap gap-2">
+                        <h5 className="font-bold text-sm text-on-surface mt-1">
+                          {item.description}
+                        </h5>
+                      </div>
+                      
+                      <div className="bg-white border border-error/20 rounded-lg p-3 space-y-1">
+                        <span className="block text-[8px] font-black text-error uppercase tracking-widest">
+                          Ressalva Registrada:
+                        </span>
+                        <p className="text-xs text-on-surface-variant leading-relaxed">
+                          {item.observation || 'Nenhuma observação descrita.'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-surface-container-low border-t border-outline-variant flex justify-end">
+              <button 
+                onClick={() => setSelectedSubmission(null)}
+                className="bg-on-surface text-white hover:bg-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

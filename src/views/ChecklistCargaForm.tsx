@@ -1,4 +1,4 @@
-import { ClipboardList, Camera, Send, CheckCircle2, AlertCircle, Clock, User, Package, Layers, Info } from 'lucide-react';
+import { ClipboardList, Camera, Send, CheckCircle2, AlertCircle, Clock, User, Package, Layers, Info, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -221,26 +221,29 @@ export default function ChecklistCargaForm() {
       </div>
 
       <form className="space-y-6 md:space-y-8 pb-12" onSubmit={handleSubmit}>
-        {/* Row Header Identification / User Profile */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-          {/* Load Map Selector Card */}
-          <div className="lg:col-span-7 bg-white p-6 md:p-8 border border-outline-variant rounded-xl shadow-sm space-y-6 transition-all duration-300 hover:shadow-md">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg md:text-xl font-bold text-on-surface">Identificação da Carga</h3>
-                <p className="text-xs md:text-sm text-on-surface-variant font-medium">Selecione o mapa de carga para vistoria</p>
-              </div>
-              <Package className="hidden sm:block w-10 h-10 text-primary-container shrink-0" />
+        {/* Bloco de Cabeçalho Unificado, Premium e Responsivo */}
+        <div className="bg-white border border-outline-variant rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+          {/* Título do Bloco */}
+          <div className="bg-surface-container-low px-6 py-4 border-b border-outline-variant flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <Package className="w-4 h-4" />
             </div>
+            <div>
+              <h3 className="text-xs md:text-sm font-black text-on-surface uppercase tracking-widest">Identificação da Carga</h3>
+              <p className="text-[10px] md:text-xs text-on-surface-variant font-medium">Selecione o mapa de carga antes do preenchimento</p>
+            </div>
+          </div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[9px] md:text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mapa de Carga</label>
-                <select
+          <div className="p-6 md:p-8">
+            {/* Dados da Carga */}
+            <div className="space-y-2">
+              <label className="text-[9px] md:text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Mapa de Carga</label>
+              <div className="relative">
+                <select 
                   required
                   value={selectedMapId}
                   onChange={(e) => setSelectedMapId(e.target.value)}
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 md:p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none text-sm cursor-pointer"
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 md:p-4 rounded-xl font-bold text-on-surface focus:outline-none focus:border-primary-container appearance-none text-sm cursor-pointer pr-10 hover:bg-surface-container transition-colors"
                 >
                   <option value="">Selecione o mapa...</option>
                   {loadMaps.map(m => (
@@ -249,45 +252,7 @@ export default function ChecklistCargaForm() {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              {selectedMap && (
-                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-start gap-3">
-                  <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <div className="text-xs space-y-1">
-                    <p className="font-semibold text-on-surface">Descrição do Mapa: <span className="font-bold text-primary">{selectedMap.description || 'Sem descrição cadastrada.'}</span></p>
-                    <p className="text-on-surface-variant">Unidade Militar: <strong>{selectedMap.unit}</strong></p>
-                    {selectedMap.vehicles ? (
-                      <p className="text-green-700 font-medium">Vinculado ativamente à viatura {selectedMap.vehicles.prefix}.</p>
-                    ) : (
-                      <p className="text-amber-700 font-medium">Este mapa não está vinculado a nenhuma viatura (Mapa Avulso).</p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Militar details Card */}
-          <div className="lg:col-span-5 bg-white p-6 md:p-8 border border-outline-variant rounded-xl shadow-sm space-y-6 transition-all duration-300 hover:shadow-md">
-            <h3 className="text-lg md:text-xl font-bold text-on-surface">Militar Responsável</h3>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary-container flex items-center justify-center text-white shadow-lg shadow-primary-container/20 shrink-0">
-                <User className="w-5 h-5 md:w-6 md:h-6" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs md:text-sm font-black text-on-surface uppercase tracking-tight truncate">{user?.name || 'Militar não identificado'}</p>
-                <p className="text-[10px] md:text-xs text-on-surface-variant font-semibold uppercase truncate">{user?.rank || 'Posto/Graduação'}</p>
-              </div>
-            </div>
-            <div className="space-y-3 pt-4 border-t border-outline-variant/30">
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-bold text-on-surface-variant uppercase tracking-widest">Nº Militar</span>
-                <span className="font-data-mono font-black text-on-surface">{user?.milNumber || '------'}</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-bold text-on-surface-variant uppercase tracking-widest">Unidade</span>
-                <span className="font-data-mono font-black text-on-surface">{user?.unit || 'Unidade não informada'}</span>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/60 pointer-events-none" />
               </div>
             </div>
           </div>
