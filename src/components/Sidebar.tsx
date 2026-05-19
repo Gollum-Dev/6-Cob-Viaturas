@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { LayoutDashboard, Car, ClipboardCheck, ClipboardList, Wrench, FileText, FileSpreadsheet, User as UserIcon, Settings, LogOut, Users, Calendar, MessageSquare, Package, Home } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -33,16 +34,29 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const { unreadCount } = useChat();
+  const [isHovered, setIsHovered] = useState(false);
 
   const filteredNavItems = navItems.filter(item => 
     user && item.roles.includes(user.role)
   );
 
   return (
-    <aside className={cn(
-      "fixed left-0 top-0 h-full w-[280px] bg-gradient-to-br from-[#1e252b] via-[#2d3a43] to-[#1a2025] border-r border-white/5 flex flex-col py-8 z-50 shadow-xl transition-transform duration-300 ease-in-out lg:translate-x-0",
-      isOpen ? "translate-x-0" : "-translate-x-full"
-    )}>
+    <>
+      {/* Sensor de aproximação do mouse na lateral esquerda (apenas para desktop) */}
+      <div 
+        className="hidden lg:block fixed left-0 top-0 w-4 h-full z-45"
+        onMouseEnter={() => setIsHovered(true)}
+      />
+
+      <aside 
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={cn(
+          "fixed left-0 top-0 h-full w-[280px] bg-gradient-to-br from-[#1e252b] via-[#2d3a43] to-[#1a2025] border-r border-white/5 flex flex-col py-8 z-50 shadow-2xl transition-all duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          isHovered ? "lg:translate-x-0 lg:opacity-100" : "lg:-translate-x-full lg:opacity-0 lg:pointer-events-none"
+        )}
+      >
       <div className="px-6 mb-10 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-sm uppercase">7ª Cia Ind</h1>
@@ -79,5 +93,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         ))}
       </nav>
     </aside>
+    </>
   );
 }

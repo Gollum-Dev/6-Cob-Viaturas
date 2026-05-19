@@ -18,7 +18,7 @@ export default function Layout() {
 
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       
-      <div className="flex flex-col min-h-screen pt-20 lg:pt-0 lg:pl-[280px] w-full transition-all duration-300">
+      <div className="flex flex-col min-h-screen pt-20 lg:pt-0 lg:pl-0 w-full transition-all duration-300">
         <TopBar onMenuClick={() => setIsSidebarOpen(true)} />
         <main className="flex-1 p-4 md:p-8 w-full max-w-full overflow-x-hidden">
           <Outlet />
