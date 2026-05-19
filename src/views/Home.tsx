@@ -233,16 +233,7 @@ export default function Home() {
       </div>
 
       {/* Grid de Atalhos */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-outline-variant/40 pb-3">
-          <h3 className="text-xs sm:text-sm font-black text-on-surface uppercase tracking-widest">
-            Módulos Autorizados ({allowedShortcuts.length})
-          </h3>
-          <span className="text-[9px] font-bold text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-full uppercase tracking-wider">
-            Acesso Responsivo
-          </span>
-        </div>
-        
+      <div className="pt-2">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
           {allowedShortcuts.map((shortcut, index) => {
             const Icon = shortcut.icon;
