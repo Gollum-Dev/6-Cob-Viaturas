@@ -38,7 +38,7 @@ export default function Home() {
       case UserRole.CIA_OP:
         return 'Cia OP - Gestão Operacional';
       case UserRole.CBU:
-        return 'CBU - Controle de Serviço';
+        return 'CBU - Coordenador de Bombeiros da Unidade';
       case UserRole.OPERACIONAL:
         return 'Operacional - Acesso de Turno';
       default:
@@ -80,7 +80,7 @@ export default function Home() {
       icon: Car,
       color: 'from-indigo-500/20 to-indigo-600/5 hover:border-indigo-500/50 text-indigo-600 dark:text-indigo-400',
       iconColor: 'bg-indigo-500/10 text-indigo-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP]
+      roles: [UserRole.ADMINISTRADOR]
     },
     {
       id: 'militares',
@@ -100,7 +100,7 @@ export default function Home() {
       icon: ClipboardCheck,
       color: 'from-amber-500/20 to-amber-600/5 hover:border-amber-500/50 text-amber-600 dark:text-amber-400',
       iconColor: 'bg-amber-500/10 text-amber-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL]
+      roles: [UserRole.ADMINISTRADOR, UserRole.CBU, UserRole.OPERACIONAL]
     },
     {
       id: 'checklist-carga',
@@ -110,7 +110,7 @@ export default function Home() {
       icon: ClipboardList,
       color: 'from-purple-500/20 to-purple-600/5 hover:border-purple-500/50 text-purple-600 dark:text-purple-400',
       iconColor: 'bg-purple-500/10 text-purple-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL]
+      roles: [UserRole.ADMINISTRADOR, UserRole.CBU, UserRole.OPERACIONAL]
     },
     {
       id: 'mapacarga',
@@ -130,7 +130,7 @@ export default function Home() {
       icon: Wrench,
       color: 'from-red-500/20 to-red-600/5 hover:border-red-500/50 text-red-600 dark:text-red-400',
       iconColor: 'bg-red-500/10 text-red-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP]
+      roles: [UserRole.ADMINISTRADOR]
     },
     {
       id: 'revisoes',
@@ -140,7 +140,7 @@ export default function Home() {
       icon: Calendar,
       color: 'from-teal-500/20 to-teal-600/5 hover:border-teal-500/50 text-teal-600 dark:text-teal-400',
       iconColor: 'bg-teal-500/10 text-teal-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP]
+      roles: [UserRole.ADMINISTRADOR]
     },
     {
       id: 'relatorios',

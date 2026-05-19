@@ -48,7 +48,8 @@ function AppContent() {
 
   const isOperacional = user?.role === UserRole.OPERACIONAL;
   const isCBU = user?.role === UserRole.CBU;
-  const canAccessMaintenanceAndRevisions = user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.CIA_OP;
+  const isCiaOP = user?.role === UserRole.CIA_OP;
+  const canAccessMaintenanceAndRevisions = user?.role === UserRole.ADMINISTRADOR;
 
   return (
     <Router>
@@ -71,7 +72,7 @@ function AppContent() {
               {/* O Painel Analítico / Dashboard foi movido de / para /painel */}
               <Route path="painel" element={<Dashboard />} />
               
-              {!isCBU && (
+              {!isCBU && !isCiaOP && (
                 <>
                   <Route path="viaturas" element={<VehicleInventory />} />
                   <Route path="viaturas/novo" element={<AddVehicleForm />} />
@@ -79,11 +80,20 @@ function AppContent() {
                 </>
               )}
               
-              <Route path="militares" element={<MilitarManagement />} />
-              <Route path="militares/novo" element={<AddMilitarForm />} />
-              <Route path="militares/editar/:id" element={<EditMilitarForm />} />
-              <Route path="checklist" element={<ChecklistForm />} />
-              <Route path="checklist-carga" element={<ChecklistCargaForm />} />
+              {user?.role === UserRole.ADMINISTRADOR && (
+                <>
+                  <Route path="militares" element={<MilitarManagement />} />
+                  <Route path="militares/novo" element={<AddMilitarForm />} />
+                  <Route path="militares/editar/:id" element={<EditMilitarForm />} />
+                </>
+              )}
+              
+              {!isCiaOP && (
+                <>
+                  <Route path="checklist" element={<ChecklistForm />} />
+                  <Route path="checklist-carga" element={<ChecklistCargaForm />} />
+                </>
+              )}
               
               {!isCBU && (
                 <Route path="mapacarga" element={<LoadMaps />} />
