@@ -267,10 +267,6 @@ export default function Home() {
                   </p>
                 </div>
 
-                {/* Rodapé do Card com ID identificador */}
-                <div className="absolute bottom-2 right-4 text-[7px] font-bold text-on-surface-variant/25 uppercase tracking-widest pointer-events-none">
-                  7cia.bm.{shortcut.id}
-                </div>
               </button>
             );
           })}
