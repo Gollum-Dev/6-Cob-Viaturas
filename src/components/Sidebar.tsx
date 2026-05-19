@@ -60,7 +60,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="px-6 mb-10 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-sm uppercase">7ª Cia Ind</h1>
-          <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mt-1">Gestão de Frotas</p>
+          <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mt-1">Gestão de Frota e Carga</p>
         </div>
         <button onClick={onClose} className="lg:hidden p-2 text-white/50 hover:text-white cursor-pointer">
           <LogOut className="w-6 h-6 rotate-180" />
