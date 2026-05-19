@@ -120,7 +120,7 @@ export default function Home() {
       icon: Package,
       color: 'from-orange-500/20 to-orange-600/5 hover:border-orange-500/50 text-orange-600 dark:text-orange-400',
       iconColor: 'bg-orange-500/10 text-orange-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.OPERACIONAL]
+      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP]
     },
     {
       id: 'manutencao',

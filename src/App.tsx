@@ -62,7 +62,6 @@ function AppContent() {
             <>
               <Route path="checklist" element={<ChecklistForm />} />
               <Route path="checklist-carga" element={<ChecklistCargaForm />} />
-              <Route path="mapacarga" element={<LoadMaps />} />
               <Route path="chat" element={<ChatView />} />
               <Route path="configuracoes" element={<SettingsView />} />
               <Route path="*" element={<Navigate to="/" replace />} />
