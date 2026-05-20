@@ -1,5 +1,5 @@
 import React, { useState, useMemo, Fragment } from 'react';
-import { Users, UserPlus, Shield, Trash2, Award, Briefcase, Pencil, ChevronLeft, ChevronRight, Info, Phone, Calendar, Fingerprint, Contact } from 'lucide-react';
+import { Users, UserPlus, Shield, Trash2, Award, Briefcase, Pencil, ChevronLeft, ChevronRight, Info, Phone, Calendar, Fingerprint, Contact, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { motion } from 'motion/react';

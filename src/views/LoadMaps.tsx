@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Filter, Plus, Edit, Eye, Trash2, X, Package, Folder, Tag, 
   ChevronRight, Grid, Shield, MapPin, Layers, Settings, 
@@ -43,7 +43,7 @@ export default function LoadMaps() {
 
   // Extract units list dynamically if user is Admin
   const availableUnits = useMemo(() => {
-    if (user?.role !== UserRole.ADMINISTRADOR) return [user?.unit || ''];
+    if (user?.role !== UserRole.ADMINISTRADOR && user?.role !== UserRole.DESENVOLVEDOR) return [user?.unit || ''];
     const unitsSet = new Set(vehicles.map(v => v.unit).filter(Boolean));
     return ['Todos', ...Array.from(unitsSet)];
   }, [vehicles, user]);
@@ -55,7 +55,7 @@ export default function LoadMaps() {
       let query = supabase.from('load_maps').select('*');
       
       // Filter by unit if not an administrator
-      if (user && user.role !== UserRole.ADMINISTRADOR) {
+      if (user && user.role !== UserRole.ADMINISTRADOR && user.role !== UserRole.DESENVOLVEDOR) {
         query = query.eq('unit', user.unit);
       }
       
@@ -395,7 +395,7 @@ export default function LoadMaps() {
       {!selectedMap && (
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-in fade-in duration-300">
           <div>
-            {user?.role !== UserRole.ADMINISTRADOR && (
+            {(user?.role !== UserRole.ADMINISTRADOR && user?.role !== UserRole.DESENVOLVEDOR) && (
               <span className="bg-primary/10 text-primary font-black text-[10px] px-3.5 py-2.5 rounded-xl uppercase tracking-widest flex items-center gap-1.5 border border-primary/20">
                 <MapPin className="w-3.5 h-3.5" />
                 UNIDADE DE SERVIÇO: {(user?.unit || '').toUpperCase()}
@@ -699,8 +699,8 @@ export default function LoadMaps() {
                 </div>
               </div>
 
-              {/* Unit Filter (ADMIN ONLY) */}
-              {user?.role === UserRole.ADMINISTRADOR && (
+              {/* Unit Filter (ADMIN/DEVELOPER ONLY) */}
+              {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
                 <div className="flex flex-col gap-1.5 flex-1 min-w-[150px] w-full">
                   <label className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest pl-1">Unidade</label>
                   <div className="relative">

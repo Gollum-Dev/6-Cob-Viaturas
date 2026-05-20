@@ -35,6 +35,8 @@ export default function Home() {
     switch (role) {
       case UserRole.ADMINISTRADOR:
         return 'Administrador - Acesso Geral';
+      case UserRole.DESENVOLVEDOR:
+        return 'Desenvolvedor - Acesso Total';
       case UserRole.CIA_OP:
         return 'Cia OP - Gestão Operacional';
       case UserRole.CBU:
@@ -50,6 +52,8 @@ export default function Home() {
     switch (role) {
       case UserRole.ADMINISTRADOR:
         return 'bg-error/10 text-error border-error/20';
+      case UserRole.DESENVOLVEDOR:
+        return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
       case UserRole.CIA_OP:
         return 'bg-primary/10 text-primary border-primary/20';
       case UserRole.CBU:
@@ -70,7 +74,7 @@ export default function Home() {
       icon: LayoutDashboard,
       color: 'from-blue-500/20 to-blue-600/5 hover:border-blue-500/50 text-blue-600 dark:text-blue-400',
       iconColor: 'bg-blue-500/10 text-blue-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU]
+      roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU]
     },
     {
       id: 'viaturas',
@@ -80,7 +84,7 @@ export default function Home() {
       icon: Car,
       color: 'from-indigo-500/20 to-indigo-600/5 hover:border-indigo-500/50 text-indigo-600 dark:text-indigo-400',
       iconColor: 'bg-indigo-500/10 text-indigo-600',
-      roles: [UserRole.ADMINISTRADOR]
+      roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR]
     },
     {
       id: 'militares',
@@ -90,7 +94,7 @@ export default function Home() {
       icon: Users,
       color: 'from-emerald-500/20 to-emerald-600/5 hover:border-emerald-500/50 text-emerald-600 dark:text-emerald-400',
       iconColor: 'bg-emerald-500/10 text-emerald-600',
-      roles: [UserRole.ADMINISTRADOR]
+      roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR]
     },
     {
       id: 'checklist',
@@ -100,7 +104,7 @@ export default function Home() {
       icon: ClipboardCheck,
       color: 'from-amber-500/20 to-amber-600/5 hover:border-amber-500/50 text-amber-600 dark:text-amber-400',
       iconColor: 'bg-amber-500/10 text-amber-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CBU, UserRole.OPERACIONAL]
+      roles: [UserRole.CBU, UserRole.OPERACIONAL]
     },
     {
       id: 'checklist-carga',
@@ -110,7 +114,7 @@ export default function Home() {
       icon: ClipboardList,
       color: 'from-purple-500/20 to-purple-600/5 hover:border-purple-500/50 text-purple-600 dark:text-purple-400',
       iconColor: 'bg-purple-500/10 text-purple-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CBU, UserRole.OPERACIONAL]
+      roles: [UserRole.CBU, UserRole.OPERACIONAL]
     },
     {
       id: 'mapacarga',
@@ -120,7 +124,7 @@ export default function Home() {
       icon: Package,
       color: 'from-orange-500/20 to-orange-600/5 hover:border-orange-500/50 text-orange-600 dark:text-orange-400',
       iconColor: 'bg-orange-500/10 text-orange-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP]
+      roles: [UserRole.CIA_OP]
     },
     {
       id: 'manutencao',
@@ -130,7 +134,7 @@ export default function Home() {
       icon: Wrench,
       color: 'from-red-500/20 to-red-600/5 hover:border-red-500/50 text-red-600 dark:text-red-400',
       iconColor: 'bg-red-500/10 text-red-600',
-      roles: [UserRole.ADMINISTRADOR]
+      roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR]
     },
     {
       id: 'revisoes',
@@ -140,7 +144,7 @@ export default function Home() {
       icon: Calendar,
       color: 'from-teal-500/20 to-teal-600/5 hover:border-teal-500/50 text-teal-600 dark:text-teal-400',
       iconColor: 'bg-teal-500/10 text-teal-600',
-      roles: [UserRole.ADMINISTRADOR]
+      roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR]
     },
     {
       id: 'relatorios',
@@ -150,7 +154,7 @@ export default function Home() {
       icon: FileText,
       color: 'from-cyan-500/20 to-cyan-600/5 hover:border-cyan-500/50 text-cyan-600 dark:text-cyan-400',
       iconColor: 'bg-cyan-500/10 text-cyan-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU]
+      roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU]
     },
     {
       id: 'relatorios-carga',
@@ -160,7 +164,7 @@ export default function Home() {
       icon: FileSpreadsheet,
       color: 'from-violet-500/20 to-violet-600/5 hover:border-violet-500/50 text-violet-600 dark:text-violet-400',
       iconColor: 'bg-violet-500/10 text-violet-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU]
+      roles: [UserRole.CIA_OP, UserRole.CBU]
     },
     {
       id: 'chat',
@@ -170,7 +174,7 @@ export default function Home() {
       icon: MessageSquare,
       color: 'from-pink-500/20 to-pink-600/5 hover:border-pink-500/50 text-pink-600 dark:text-pink-400',
       iconColor: 'bg-pink-500/10 text-pink-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL]
+      roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL]
     },
     {
       id: 'configuracoes',
@@ -180,7 +184,7 @@ export default function Home() {
       icon: Settings,
       color: 'from-slate-500/20 to-slate-600/5 hover:border-slate-500/50 text-slate-600 dark:text-slate-400',
       iconColor: 'bg-slate-500/10 text-slate-600',
-      roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL]
+      roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL]
     }
   ];
 

@@ -49,7 +49,9 @@ function AppContent() {
   const isOperacional = user?.role === UserRole.OPERACIONAL;
   const isCBU = user?.role === UserRole.CBU;
   const isCiaOP = user?.role === UserRole.CIA_OP;
-  const canAccessMaintenanceAndRevisions = user?.role === UserRole.ADMINISTRADOR;
+  const isAdmin = user?.role === UserRole.ADMINISTRADOR;
+  const isDeveloper = user?.role === UserRole.DESENVOLVEDOR;
+  const canAccessMaintenanceAndRevisions = isAdmin || isDeveloper;
 
   return (
     <Router>
@@ -79,7 +81,7 @@ function AppContent() {
                 </>
               )}
               
-              {user?.role === UserRole.ADMINISTRADOR && (
+              {(isAdmin || isDeveloper) && (
                 <>
                   <Route path="militares" element={<MilitarManagement />} />
                   <Route path="militares/novo" element={<AddMilitarForm />} />
@@ -87,14 +89,14 @@ function AppContent() {
                 </>
               )}
               
-              {!isCiaOP && (
+              {!isCiaOP && !isAdmin && !isDeveloper && (
                 <>
                   <Route path="checklist" element={<ChecklistForm />} />
                   <Route path="checklist-carga" element={<ChecklistCargaForm />} />
                 </>
               )}
               
-              {!isCBU && (
+              {!isCBU && !isAdmin && !isDeveloper && (
                 <Route path="mapacarga" element={<LoadMaps />} />
               )}
               <Route path="chat" element={<ChatView />} />
@@ -105,7 +107,9 @@ function AppContent() {
                 </>
               )}
               <Route path="relatorios" element={<AuditLogs />} />
-              <Route path="relatorios-carga" element={<LoadReports />} />
+              {!isAdmin && !isDeveloper && (
+                <Route path="relatorios-carga" element={<LoadReports />} />
+              )}
               <Route path="configuracoes" element={<SettingsView />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>

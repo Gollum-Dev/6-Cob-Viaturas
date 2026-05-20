@@ -233,8 +233,11 @@ export default function EditMilitarForm() {
                     onChange={(e) => setRole(e.target.value as UserRole)}
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner appearance-none cursor-pointer"
                   >
-                    {currentUser?.role === UserRole.ADMINISTRADOR && (
-                      <option value={UserRole.ADMINISTRADOR}>ADMINISTRADOR</option>
+                    {(currentUser?.role === UserRole.ADMINISTRADOR || currentUser?.role === UserRole.DESENVOLVEDOR) && (
+                      <>
+                        <option value={UserRole.ADMINISTRADOR}>ADMINISTRADOR</option>
+                        <option value={UserRole.DESENVOLVEDOR}>DESENVOLVEDOR</option>
+                      </>
                     )}
                     <option value={UserRole.CIA_OP}>CIA OP</option>
                     <option value={UserRole.CBU}>CBU</option>
@@ -250,7 +253,7 @@ export default function EditMilitarForm() {
                   <select
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
-                    disabled={currentUser?.role !== UserRole.ADMINISTRADOR}
+                    disabled={currentUser?.role !== UserRole.ADMINISTRADOR && currentUser?.role !== UserRole.DESENVOLVEDOR}
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner appearance-none cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
                   >
                     <option value="POUSO ALEGRE">POUSO ALEGRE</option>

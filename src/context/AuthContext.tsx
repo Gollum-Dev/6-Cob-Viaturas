@@ -156,8 +156,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fetchUsers = async () => {
       let query = supabase.from('users').select('*');
       
-      // If not ADMINISTRADOR, filter by their own unit
-      if (user.role !== UserRole.ADMINISTRADOR) {
+      // If not ADMINISTRADOR and not DESENVOLVEDOR, filter by their own unit
+      if (user.role !== UserRole.ADMINISTRADOR && user.role !== UserRole.DESENVOLVEDOR) {
         query = query.eq('unit', user.unit);
       }
 

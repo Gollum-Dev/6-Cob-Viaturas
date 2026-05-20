@@ -12,6 +12,7 @@ export enum VehicleStatus {
 
 export enum UserRole {
   ADMINISTRADOR = 'ADMINISTRADOR',
+  DESENVOLVEDOR = 'DESENVOLVEDOR',
   CIA_OP = 'CIA OP',
   CBU = 'CBU',
   OPERACIONAL = 'OPERACIONAL',

@@ -14,7 +14,7 @@ export default function AddMilitarForm() {
   const [fullName, setFullName] = useState('');
   const [rank, setRank] = useState('SD');
   const [role, setRole] = useState<UserRole>(UserRole.OPERACIONAL);
-  const [unit, setUnit] = useState(currentUser?.role === UserRole.ADMINISTRADOR ? 'POUSO ALEGRE' : currentUser?.unit || 'POUSO ALEGRE');
+  const [unit, setUnit] = useState(currentUser?.role === UserRole.ADMINISTRADOR || currentUser?.role === UserRole.DESENVOLVEDOR ? 'POUSO ALEGRE' : currentUser?.unit || 'POUSO ALEGRE');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [cpf, setCpf] = useState('');
@@ -188,8 +188,11 @@ export default function AddMilitarForm() {
                     onChange={(e) => setRole(e.target.value as UserRole)}
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner appearance-none cursor-pointer"
                   >
-                    {currentUser?.role === UserRole.ADMINISTRADOR && (
-                      <option value={UserRole.ADMINISTRADOR}>ADMINISTRADOR</option>
+                    {(currentUser?.role === UserRole.ADMINISTRADOR || currentUser?.role === UserRole.DESENVOLVEDOR) && (
+                      <>
+                        <option value={UserRole.ADMINISTRADOR}>ADMINISTRADOR</option>
+                        <option value={UserRole.DESENVOLVEDOR}>DESENVOLVEDOR</option>
+                      </>
                     )}
                     <option value={UserRole.CIA_OP}>CIA OP</option>
                     <option value={UserRole.CBU}>CBU</option>
@@ -205,7 +208,7 @@ export default function AddMilitarForm() {
                   <select
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
-                    disabled={currentUser?.role !== UserRole.ADMINISTRADOR}
+                    disabled={currentUser?.role !== UserRole.ADMINISTRADOR && currentUser?.role !== UserRole.DESENVOLVEDOR}
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner appearance-none cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
                   >
                     <option value="POUSO ALEGRE">POUSO ALEGRE</option>

@@ -12,18 +12,18 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const navItems = [
-  { icon: Home, label: 'Início', href: '/', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
-  { icon: LayoutDashboard, label: 'Painel', href: '/painel', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
-  { icon: Car, label: 'Viaturas', href: '/viaturas', roles: [UserRole.ADMINISTRADOR] },
-  { icon: Users, label: 'Militares', href: '/militares', roles: [UserRole.ADMINISTRADOR] },
-  { icon: ClipboardCheck, label: 'Checklist Viatura', href: '/checklist', roles: [UserRole.ADMINISTRADOR, UserRole.CBU, UserRole.OPERACIONAL] },
-  { icon: ClipboardList, label: 'Checklist Carga', href: '/checklist-carga', roles: [UserRole.ADMINISTRADOR, UserRole.CBU, UserRole.OPERACIONAL] },
-  { icon: Package, label: 'Mapa Carga', href: '/mapacarga', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP] },
-  { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR] },
-  { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR] },
-  { icon: FileText, label: 'Relatório Viatura', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
-  { icon: FileSpreadsheet, label: 'Relatório Carga', href: '/relatorios-carga', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU] },
-  { icon: MessageSquare, label: 'Mensagens', href: '/chat', roles: [UserRole.ADMINISTRADOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: Home, label: 'Início', href: '/', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: LayoutDashboard, label: 'Painel', href: '/painel', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU] },
+  { icon: Car, label: 'Viaturas', href: '/viaturas', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
+  { icon: Users, label: 'Militares', href: '/militares', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
+  { icon: ClipboardCheck, label: 'Checklist Viatura', href: '/checklist', roles: [UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: ClipboardList, label: 'Checklist Carga', href: '/checklist-carga', roles: [UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: Package, label: 'Mapa Carga', href: '/mapacarga', roles: [UserRole.CIA_OP] },
+  { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
+  { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
+  { icon: FileText, label: 'Relatório Viatura', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU] },
+  { icon: FileSpreadsheet, label: 'Relatório Carga', href: '/relatorios-carga', roles: [UserRole.CIA_OP, UserRole.CBU] },
+  { icon: MessageSquare, label: 'Mensagens', href: '/chat', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
 ];
 
 interface SidebarProps {
@@ -94,6 +94,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </span>
             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 truncate">
               {user.role === UserRole.ADMINISTRADOR ? 'Administrador' :
+               user.role === UserRole.DESENVOLVEDOR ? 'Desenvolvedor' :
                user.role === UserRole.CIA_OP ? 'Cia OP - Gestão' :
                user.role === UserRole.CBU ? 'CBU - Coordenador' :
                user.role === UserRole.OPERACIONAL ? 'Operacional' : user.role}
