@@ -104,7 +104,7 @@ export default function Home() {
       icon: ClipboardCheck,
       color: 'from-amber-500/20 to-amber-600/5 hover:border-amber-500/50 text-amber-600 dark:text-amber-400',
       iconColor: 'bg-amber-500/10 text-amber-600',
-      roles: [UserRole.CBU, UserRole.OPERACIONAL]
+      roles: [UserRole.DESENVOLVEDOR, UserRole.CBU, UserRole.OPERACIONAL]
     },
     {
       id: 'checklist-carga',
@@ -114,7 +114,7 @@ export default function Home() {
       icon: ClipboardList,
       color: 'from-purple-500/20 to-purple-600/5 hover:border-purple-500/50 text-purple-600 dark:text-purple-400',
       iconColor: 'bg-purple-500/10 text-purple-600',
-      roles: [UserRole.CBU, UserRole.OPERACIONAL]
+      roles: [UserRole.DESENVOLVEDOR, UserRole.CBU, UserRole.OPERACIONAL]
     },
     {
       id: 'mapacarga',
@@ -124,7 +124,7 @@ export default function Home() {
       icon: Package,
       color: 'from-orange-500/20 to-orange-600/5 hover:border-orange-500/50 text-orange-600 dark:text-orange-400',
       iconColor: 'bg-orange-500/10 text-orange-600',
-      roles: [UserRole.CIA_OP]
+      roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP]
     },
     {
       id: 'manutencao',
@@ -164,7 +164,7 @@ export default function Home() {
       icon: FileSpreadsheet,
       color: 'from-violet-500/20 to-violet-600/5 hover:border-violet-500/50 text-violet-600 dark:text-violet-400',
       iconColor: 'bg-violet-500/10 text-violet-600',
-      roles: [UserRole.CIA_OP, UserRole.CBU]
+      roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU]
     },
     {
       id: 'chat',

@@ -89,14 +89,14 @@ function AppContent() {
                 </>
               )}
               
-              {!isCiaOP && !isAdmin && !isDeveloper && (
+              {!isCiaOP && !isAdmin && (
                 <>
                   <Route path="checklist" element={<ChecklistForm />} />
                   <Route path="checklist-carga" element={<ChecklistCargaForm />} />
                 </>
               )}
               
-              {!isCBU && !isAdmin && !isDeveloper && (
+              {!isCBU && !isAdmin && (
                 <Route path="mapacarga" element={<LoadMaps />} />
               )}
               <Route path="chat" element={<ChatView />} />
@@ -107,7 +107,7 @@ function AppContent() {
                 </>
               )}
               <Route path="relatorios" element={<AuditLogs />} />
-              {!isAdmin && !isDeveloper && (
+              {!isAdmin && (
                 <Route path="relatorios-carga" element={<LoadReports />} />
               )}
               <Route path="configuracoes" element={<SettingsView />} />

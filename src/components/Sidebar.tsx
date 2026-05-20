@@ -16,13 +16,13 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Painel', href: '/painel', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: Car, label: 'Viaturas', href: '/viaturas', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
   { icon: Users, label: 'Militares', href: '/militares', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
-  { icon: ClipboardCheck, label: 'Checklist Viatura', href: '/checklist', roles: [UserRole.CBU, UserRole.OPERACIONAL] },
-  { icon: ClipboardList, label: 'Checklist Carga', href: '/checklist-carga', roles: [UserRole.CBU, UserRole.OPERACIONAL] },
-  { icon: Package, label: 'Mapa Carga', href: '/mapacarga', roles: [UserRole.CIA_OP] },
+  { icon: ClipboardCheck, label: 'Checklist Viatura', href: '/checklist', roles: [UserRole.DESENVOLVEDOR, UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: ClipboardList, label: 'Checklist Carga', href: '/checklist-carga', roles: [UserRole.DESENVOLVEDOR, UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: Package, label: 'Mapa Carga', href: '/mapacarga', roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP] },
   { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
   { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
   { icon: FileText, label: 'Relatório Viatura', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU] },
-  { icon: FileSpreadsheet, label: 'Relatório Carga', href: '/relatorios-carga', roles: [UserRole.CIA_OP, UserRole.CBU] },
+  { icon: FileSpreadsheet, label: 'Relatório Carga', href: '/relatorios-carga', roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: MessageSquare, label: 'Mensagens', href: '/chat', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
 ];
 
