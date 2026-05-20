@@ -70,10 +70,41 @@ export interface ChecklistItem {
   observation?: string;
 }
 
+export enum CommitmentStatus {
+  VIGENTE = 'vigente',
+  FINALIZADO = 'finalizado',
+}
+
+export enum CommitmentCategory {
+  LEVE = 'leve',
+  PESADO = 'pesado',
+}
+
+export interface Commitment {
+  id: string;
+  unit: string;
+  sei: string;
+  status: CommitmentStatus;
+  category: CommitmentCategory;
+  city: string;
+  supplier: string;
+  number: string;
+  year: number;
+  initialValue: number;
+  reinforcementValue: number;
+  cancellationValue: number;
+  budgetedToPay: number;
+  liquidatedValue: number;
+  balance: number;
+  createdAt: string;
+}
+
 export enum MaintenanceStatus {
-  COMPLETED = 'CONCLUÍDO',
-  IN_PROGRESS = 'EM ANDAMENTO',
-  SCHEDULED = 'AGENDADO',
+  CONCLUIDO = 'CONCLUIDO',
+  MANUTENCAO = 'MANUTENÇÃO',
+  ORCAMENTO = 'ORÇAMENTO',
+  NOTA_FISCAL = 'NOTA FISCAL',
+  SEI = 'SEI',
 }
 
 export enum MaintenanceType {
@@ -100,6 +131,13 @@ export interface MaintenanceRecord {
   notes?: string;
   progress?: number;
   estimatedDelivery?: string;
+  servicesPerformed?: string;
+  budgetDocument?: string;
+  commitmentDocument?: string;
+  invoiceDocument?: string;
+  seiDocument?: string;
+  invoiceValue?: number;
+  commitmentId?: string;
 }
 
 export interface ChecklistSubmission {

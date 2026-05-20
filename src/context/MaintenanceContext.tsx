@@ -1,16 +1,23 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { MaintenanceRecord, MaintenanceStatus, MaintenanceType, UserRole } from '../types';
+import { MaintenanceRecord, MaintenanceStatus, MaintenanceType, UserRole, Commitment, CommitmentStatus, CommitmentCategory } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useVehicles } from './VehicleContext';
 
 interface MaintenanceContextType {
   records: MaintenanceRecord[];
+  commitments: Commitment[];
   isLoading: boolean;
   addRecord: (record: Omit<MaintenanceRecord, 'id'>) => Promise<void>;
   updateRecord: (id: string, updates: Partial<MaintenanceRecord>) => Promise<void>;
   deleteRecord: (id: string) => Promise<void>;
   refreshRecords: () => Promise<void>;
+  
+  // Ações de Empenho
+  addCommitment: (commitment: Omit<Commitment, 'id' | 'balance' | 'createdAt'>) => Promise<void>;
+  updateCommitment: (id: string, updates: Partial<Commitment>) => Promise<void>;
+  deleteCommitment: (id: string) => Promise<void>;
+  refreshCommitments: () => Promise<void>;
 }
 
 const MaintenanceContext = createContext<MaintenanceContextType | undefined>(undefined);
@@ -28,6 +35,13 @@ function mapRecordFromDB(dbR: any): MaintenanceRecord {
     notes: dbR.notes,
     progress: dbR.progress,
     estimatedDelivery: dbR.estimated_delivery?.split('T')[0],
+    servicesPerformed: dbR.services_performed,
+    budgetDocument: dbR.budget_document,
+    commitmentDocument: dbR.commitment_document,
+    invoiceDocument: dbR.invoice_document,
+    seiDocument: dbR.sei_document,
+    invoiceValue: Number(dbR.invoice_value || 0),
+    commitmentId: dbR.commitment_id,
   };
 }
 
@@ -43,23 +57,69 @@ function mapRecordToDB(r: Partial<MaintenanceRecord>): any {
   if (r.notes !== undefined) dbR.notes = r.notes;
   if (r.progress !== undefined) dbR.progress = r.progress;
   if (r.estimatedDelivery !== undefined) dbR.estimated_delivery = r.estimatedDelivery ? new Date(r.estimatedDelivery).toISOString() : null;
+  if (r.servicesPerformed !== undefined) dbR.services_performed = r.servicesPerformed;
+  if (r.budgetDocument !== undefined) dbR.budget_document = r.budgetDocument;
+  if (r.commitmentDocument !== undefined) dbR.commitment_document = r.commitmentDocument;
+  if (r.invoiceDocument !== undefined) dbR.invoice_document = r.invoiceDocument;
+  if (r.seiDocument !== undefined) dbR.sei_document = r.seiDocument;
+  if (r.invoiceValue !== undefined) dbR.invoice_value = r.invoiceValue;
+  if (r.commitmentId !== undefined) dbR.commitment_id = r.commitmentId;
   return dbR;
+}
+
+function mapCommitmentFromDB(dbC: any): Commitment {
+  return {
+    id: dbC.id,
+    unit: dbC.unit,
+    sei: dbC.sei,
+    status: dbC.status as CommitmentStatus,
+    category: dbC.category as CommitmentCategory,
+    city: dbC.city,
+    supplier: dbC.supplier,
+    number: dbC.number,
+    year: Number(dbC.year || new Date().getFullYear()),
+    initialValue: Number(dbC.initial_value || 0),
+    reinforcementValue: Number(dbC.reinforcement_value || 0),
+    cancellationValue: Number(dbC.cancellation_value || 0),
+    budgetedToPay: Number(dbC.budgeted_to_pay || 0),
+    liquidatedValue: Number(dbC.liquidated_value || 0),
+    balance: Number(dbC.balance || 0),
+    createdAt: dbC.created_at,
+  };
+}
+
+function mapCommitmentToDB(c: Partial<Commitment>): any {
+  const dbC: any = {};
+  if (c.unit !== undefined) dbC.unit = c.unit;
+  if (c.sei !== undefined) dbC.sei = c.sei;
+  if (c.status !== undefined) dbC.status = c.status;
+  if (c.category !== undefined) dbC.category = c.category;
+  if (c.city !== undefined) dbC.city = c.city;
+  if (c.supplier !== undefined) dbC.supplier = c.supplier;
+  if (c.number !== undefined) dbC.number = c.number;
+  if (c.year !== undefined) dbC.year = c.year;
+  if (c.initialValue !== undefined) dbC.initial_value = c.initialValue;
+  if (c.reinforcementValue !== undefined) dbC.reinforcement_value = c.reinforcementValue;
+  if (c.cancellationValue !== undefined) dbC.cancellation_value = c.cancellationValue;
+  if (c.budgetedToPay !== undefined) dbC.budgeted_to_pay = c.budgetedToPay;
+  if (c.liquidatedValue !== undefined) dbC.liquidated_value = c.liquidatedValue;
+  return dbC;
 }
 
 export function MaintenanceProvider({ children }: { children: ReactNode }) {
   const [records, setRecords] = useState<MaintenanceRecord[]>([]);
+  const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isAuthenticated, user } = useAuth();
   const { vehicles } = useVehicles();
 
   const fetchRecords = async () => {
     if (!user) return;
-    setIsLoading(true);
     const { data, error } = await supabase.from('maintenance_records').select('*').order('created_at', { ascending: false });
     if (!error && data) {
       let mapped = data.map(mapRecordFromDB);
       
-      // If not ADMINISTRADOR, filter by allowed vehicles of this unit
+      // Filtrar registros se não for ADMINISTRADOR
       if (user.role !== UserRole.ADMINISTRADOR) {
         const allowedVehicleIds = new Set(vehicles.map(v => v.id));
         mapped = mapped.filter(rec => allowedVehicleIds.has(rec.vehicleId));
@@ -69,14 +129,38 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
     } else {
       console.error('Error fetching maintenance records:', error);
     }
+  };
+
+  const fetchCommitments = async () => {
+    if (!user) return;
+    const { data, error } = await supabase.from('commitments').select('*').order('created_at', { ascending: false });
+    if (!error && data) {
+      let mapped = data.map(mapCommitmentFromDB);
+      
+      // Filtrar empenhos pela unidade do usuário se não for Admin ou Dev
+      if (user.role !== UserRole.ADMINISTRADOR && user.role !== UserRole.DESENVOLVEDOR) {
+        mapped = mapped.filter(c => c.unit === user.unit);
+      }
+      setCommitments(mapped);
+    } else {
+      console.error('Error fetching commitments:', error);
+    }
+  };
+
+  const loadAll = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    await Promise.all([fetchRecords(), fetchCommitments()]);
     setIsLoading(false);
   };
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      fetchRecords();
+      loadAll();
     } else {
       setRecords([]);
+      setCommitments([]);
+      setIsLoading(false);
     }
   }, [isAuthenticated, user, vehicles]);
 
@@ -112,8 +196,52 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addCommitment = async (data: Omit<Commitment, 'id' | 'balance' | 'createdAt'>) => {
+    const dbPayload = mapCommitmentToDB(data);
+    const { data: inserted, error } = await supabase.from('commitments').insert([dbPayload]).select().single();
+    if (!error && inserted) {
+      setCommitments((prev) => [mapCommitmentFromDB(inserted), ...prev]);
+    } else {
+      console.error('Error adding commitment:', error);
+      throw error;
+    }
+  };
+
+  const updateCommitment = async (id: string, updates: Partial<Commitment>) => {
+    const dbPayload = mapCommitmentToDB(updates);
+    const { data: updated, error } = await supabase.from('commitments').update(dbPayload).eq('id', id).select().single();
+    if (!error && updated) {
+      setCommitments((prev) => prev.map((c) => (c.id === id ? mapCommitmentFromDB(updated) : c)));
+    } else {
+      console.error('Error updating commitment:', error);
+      throw error;
+    }
+  };
+
+  const deleteCommitment = async (id: string) => {
+    const { error } = await supabase.from('commitments').delete().eq('id', id);
+    if (!error) {
+      setCommitments((prev) => prev.filter((c) => c.id !== id));
+    } else {
+      console.error('Error deleting commitment:', error);
+      throw error;
+    }
+  };
+
   return (
-    <MaintenanceContext.Provider value={{ records, isLoading, addRecord, updateRecord, deleteRecord, refreshRecords: fetchRecords }}>
+    <MaintenanceContext.Provider value={{ 
+      records, 
+      commitments, 
+      isLoading, 
+      addRecord, 
+      updateRecord, 
+      deleteRecord, 
+      refreshRecords: loadAll,
+      addCommitment,
+      updateCommitment,
+      deleteCommitment,
+      refreshCommitments: fetchCommitments
+    }}>
       {children}
     </MaintenanceContext.Provider>
   );

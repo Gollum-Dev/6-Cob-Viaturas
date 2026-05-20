@@ -1,47 +1,77 @@
 import React, { useState, useMemo } from 'react';
-import { Wrench, AlertTriangle, Plus, Trash2, Filter, DollarSign, CheckCircle2, FileSpreadsheet } from 'lucide-react';
+import { Wrench, Plus, Trash2, Filter, DollarSign, CheckCircle2, FileSpreadsheet, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useVehicles } from '../context/VehicleContext';
 import { useMaintenance } from '../context/MaintenanceContext';
-import { useReports } from '../context/ReportContext';
-import { MaintenanceType, MaintenanceStatus } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { MaintenanceType, MaintenanceStatus, Commitment, CommitmentStatus, CommitmentCategory } from '../types';
 import { cn } from '../lib/utils';
-
-/**
- * Retorna uma palavra-chave simplificada para os itens de inspeção do checklist viatura.
- * Evita poluição visual na tabela de manutenção com textos excessivamente longos.
- */
-const getKeyword = (description: string): string => {
-  const desc = description.toUpperCase();
-  if (desc.includes("LUZES INTERIORES")) return "Luzes";
-  if (desc.includes("BUZINA")) return "Buzina";
-  if (desc.includes("SIRENE") || desc.includes("FÁDÓ") || desc.includes("FADO")) return "Sirene/Fádó";
-  if (desc.includes("PAINEL")) return "Painel";
-  if (desc.includes("PALHETA")) return "Palhetas";
-  if (desc.includes("PARA-BRISA") || desc.includes("PARABRISA")) return "Para-brisa";
-  if (desc.includes("SISTEMA DE LIMPADOR")) return "Limpadores";
-  if (desc.includes("PNEUS")) return "Pneus";
-  if (desc.includes("ARREFECIMENTO") || desc.includes("RADIADOR")) return "Arrefecimento";
-  if (desc.includes("ÓLEO DO MOTOR") || desc.includes("OLEO DO MOTOR")) return "Óleo do Motor";
-  if (desc.includes("COMBUSTÍVEL") || desc.includes("COMBUSTIVEL")) return "Combustível";
-  return description.length > 20 ? description.substring(0, 17) + "..." : description;
-};
 
 export default function MaintenanceControl() {
   const { vehicles } = useVehicles();
-  const { records, addRecord, updateRecord, deleteRecord } = useMaintenance();
-  const { submissions } = useReports();
+  const { 
+    records, 
+    commitments, 
+    addRecord, 
+    updateRecord, 
+    deleteRecord,
+    addCommitment,
+    updateCommitment,
+    deleteCommitment
+  } = useMaintenance();
+  const { user } = useAuth();
   
+  const [activeTab, setActiveTab] = useState<'manutencoes' | 'empenhos'>('manutencoes');
   const [showAddForm, setShowAddForm] = useState(false);
+  
+  // State da Manutenção
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
   const [maintenanceType, setMaintenanceType] = useState<MaintenanceType>(MaintenanceType.PREVENTIVE_GENERAL);
   const [workshop, setWorkshop] = useState('');
   const [cost, setCost] = useState('');
   const [odometer, setOdometer] = useState('');
-  const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus>(MaintenanceStatus.IN_PROGRESS);
+  const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus>(MaintenanceStatus.MANUTENCAO);
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [servicesPerformed, setServicesPerformed] = useState('');
+  const [budgetDocument, setBudgetDocument] = useState('');
+  const [commitmentDocument, setCommitmentDocument] = useState('');
+  const [invoiceDocument, setInvoiceDocument] = useState('');
+  const [seiDocument, setSeiDocument] = useState('');
+  const [invoiceValue, setInvoiceValue] = useState('');
+  const [selectedCommitmentId, setSelectedCommitmentId] = useState('');
 
+  // Filtros de O.S.
   const [filterVehicle, setFilterVehicle] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+
+  // State e Filtros de Empenho
+  const [filterCommitmentQuery, setFilterCommitmentQuery] = useState('');
+  const [showCommitmentModal, setShowCommitmentModal] = useState(false);
+  const [editingCommitmentId, setEditingCommitmentId] = useState<string | null>(null);
+
+  // Campos do Formulário de Empenho
+  const [compUnit, setCompUnit] = useState('');
+  const [compSei, setCompSei] = useState('');
+  const [compStatus, setCompStatus] = useState<CommitmentStatus>(CommitmentStatus.VIGENTE);
+  const [compCategory, setCompCategory] = useState<CommitmentCategory>(CommitmentCategory.LEVE);
+  const [compCity, setCompCity] = useState('');
+  const [compSupplier, setCompSupplier] = useState('');
+  const [compNumber, setCompNumber] = useState('');
+  const [compYear, setCompYear] = useState(new Date().getFullYear().toString());
+  const [compInitialValue, setCompInitialValue] = useState('');
+  const [compReinforcementValue, setCompReinforcementValue] = useState('0');
+  const [compCancellationValue, setCompCancellationValue] = useState('0');
+  const [compBudgetedToPay, setCompBudgetedToPay] = useState('0');
+  const [compLiquidatedValue, setCompLiquidatedValue] = useState('0');
+
+  // Cálculos dinâmicos em tela do Empenho
+  const compBalance = useMemo(() => {
+    const initial = Number(compInitialValue || 0);
+    const reinforcement = Number(compReinforcementValue || 0);
+    const cancellation = Number(compCancellationValue || 0);
+    const liquidated = Number(compLiquidatedValue || 0);
+    return initial + reinforcement - cancellation - liquidated;
+  }, [compInitialValue, compReinforcementValue, compCancellationValue, compLiquidatedValue]);
 
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
@@ -51,39 +81,27 @@ export default function MaintenanceControl() {
     });
   }, [records, filterVehicle, filterStatus]);
 
+  const filteredCommitments = useMemo(() => {
+    return commitments.filter(c => {
+      const query = filterCommitmentQuery.toLowerCase();
+      return c.number.toLowerCase().includes(query) || 
+             c.supplier.toLowerCase().includes(query) ||
+             c.sei.toLowerCase().includes(query) ||
+             c.city.toLowerCase().includes(query);
+    });
+  }, [commitments, filterCommitmentQuery]);
+
   const totalFilteredCost = useMemo(() => {
-    return filteredRecords.reduce((sum, r) => sum + r.cost, 0);
+    return filteredRecords.reduce((sum, r) => sum + (r.invoiceValue && r.invoiceValue > 0 ? r.invoiceValue : r.cost), 0);
   }, [filteredRecords]);
 
   const activeOrdersCount = useMemo(() => {
-    return records.filter(r => r.status === MaintenanceStatus.IN_PROGRESS).length;
+    return records.filter(r => r.status !== MaintenanceStatus.CONCLUIDO).length;
   }, [records]);
 
   const completedOrdersCount = useMemo(() => {
-    return records.filter(r => r.status === MaintenanceStatus.COMPLETED).length;
+    return records.filter(r => r.status === MaintenanceStatus.CONCLUIDO).length;
   }, [records]);
-
-  const checklistIssues = useMemo(() => {
-    const issues: { submissionId: string; vehiclePrefix: string; vehicleType: string; userName: string; item: string; observation: string; date: string }[] = [];
-    
-    submissions.forEach(sub => {
-      sub.items.forEach(item => {
-        if (!item.status) {
-          issues.push({
-            submissionId: sub.id,
-            vehiclePrefix: sub.vehiclePrefix,
-            vehicleType: sub.vehicleType,
-            userName: `${sub.userRank} ${sub.userName}`,
-            item: item.description,
-            observation: item.observation || 'Sem observação detalhada',
-            date: sub.timestamp.split(' ')[0]
-          });
-        }
-      });
-    });
-    
-    return issues.reverse(); // Newest first
-  }, [submissions]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,11 +111,18 @@ export default function MaintenanceControl() {
       vehicleId: selectedVehicleId,
       type: maintenanceType,
       workshop,
-      date: new Date().toISOString().split('T')[0],
+      date: startDate,
       odometerAtMaintenance: Number(odometer),
       status: maintenanceStatus,
-      cost: Number(cost),
-      progress: maintenanceStatus === MaintenanceStatus.IN_PROGRESS ? 0 : 100,
+      cost: Number(cost || 0),
+      progress: maintenanceStatus === MaintenanceStatus.CONCLUIDO ? 100 : 50,
+      servicesPerformed,
+      budgetDocument,
+      commitmentDocument,
+      invoiceDocument,
+      seiDocument,
+      invoiceValue: Number(invoiceValue || 0),
+      commitmentId: selectedCommitmentId || undefined,
     });
 
     setShowAddForm(false);
@@ -105,12 +130,47 @@ export default function MaintenanceControl() {
     setWorkshop('');
     setCost('');
     setOdometer('');
+    setStartDate(new Date().toISOString().split('T')[0]);
+    setServicesPerformed('');
+    setBudgetDocument('');
+    setCommitmentDocument('');
+    setInvoiceDocument('');
+    setSeiDocument('');
+    setInvoiceValue('');
+    setSelectedCommitmentId('');
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      
+      {/* Sub-Navegação superior */}
+      <div className="flex border-b border-outline-variant pb-1.5 gap-6">
+        <button
+          onClick={() => setActiveTab('manutencoes')}
+          className={cn(
+            "text-xs font-black uppercase tracking-widest pb-3 px-1 transition-all border-b-2",
+            activeTab === 'manutencoes' 
+              ? "border-primary text-primary" 
+              : "border-transparent text-on-surface-variant hover:text-on-surface"
+          )}
+        >
+          Ordens de Serviço
+        </button>
+        <button
+          onClick={() => setActiveTab('empenhos')}
+          className={cn(
+            "text-xs font-black uppercase tracking-widest pb-3 px-1 transition-all border-b-2",
+            activeTab === 'empenhos' 
+              ? "border-primary text-primary" 
+              : "border-transparent text-on-surface-variant hover:text-on-surface"
+          )}
+        >
+          Gerenciador de Empenhos
+        </button>
+      </div>
+
       <AnimatePresence>
-        {showAddForm && (
+        {showAddForm && activeTab === 'manutencoes' && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -121,80 +181,195 @@ export default function MaintenanceControl() {
               <h2 className="text-xl font-black text-on-surface uppercase tracking-tight">Nova Ordem de Serviço</h2>
               <button onClick={() => setShowAddForm(false)} className="text-on-surface-variant hover:text-primary font-bold text-sm uppercase">Cancelar</button>
             </div>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Viatura</label>
-                <select 
-                  required
-                  value={selectedVehicleId}
-                  onChange={(e) => setSelectedVehicleId(e.target.value)}
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
-                >
-                  <option value="">Selecione...</option>
-                  {vehicles.map(v => (
-                    <option key={v.id} value={v.id}>{v.prefix} - {v.type}</option>
-                  ))}
-                </select>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="border-b border-outline-variant pb-4">
+                <h3 className="text-[11px] font-black text-primary uppercase tracking-widest mb-4">1. Detalhamento Administrativo</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Campo de Empenho Cadastrado */}
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Selecione o Empenho *</label>
+                    <div className="flex gap-2">
+                      <select 
+                        required
+                        value={selectedCommitmentId}
+                        onChange={(e) => {
+                          const id = e.target.value;
+                          setSelectedCommitmentId(id);
+                          const chosen = commitments.find(c => c.id === id);
+                          if (chosen) {
+                            setCommitmentDocument(chosen.number);
+                            setSeiDocument(chosen.sei);
+                            if (chosen.supplier) {
+                              setWorkshop(chosen.supplier);
+                            }
+                          } else {
+                            setCommitmentDocument('');
+                            setSeiDocument('');
+                            setWorkshop('');
+                          }
+                        }}
+                        className="flex-1 bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none animate-none"
+                      >
+                        <option value="">-- Escolha um empenho cadastrado --</option>
+                        {commitments.filter(c => c.status === CommitmentStatus.VIGENTE).map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.number} - {c.supplier} (Saldo: R$ {c.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                          </option>
+                        ))}
+                      </select>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setEditingCommitmentId(null);
+                          setCompUnit(user?.unit || '');
+                          setCompSei('');
+                          setCompStatus(CommitmentStatus.VIGENTE);
+                          setCompCategory(CommitmentCategory.LEVE);
+                          setCompCity('');
+                          setCompSupplier('');
+                          setCompNumber('');
+                          setCompYear(new Date().getFullYear().toString());
+                          setCompInitialValue('');
+                          setCompReinforcementValue('0');
+                          setCompCancellationValue('0');
+                          setCompBudgetedToPay('0');
+                          setCompLiquidatedValue('0');
+                          setShowCommitmentModal(true);
+                        }}
+                        className="bg-primary/5 hover:bg-primary border border-primary/20 hover:border-primary text-primary hover:text-white px-4 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1 flex-shrink-0"
+                      >
+                        + Novo Empenho
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Oficina Credenciada (Preenchido Automaticamente) */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Oficina Credenciada</label>
+                    <input 
+                      disabled
+                      type="text"
+                      value={workshop}
+                      placeholder="Definido pelo Empenho"
+                      className="w-full bg-surface-container/50 border border-outline-variant p-3 rounded-lg font-bold text-on-surface-variant cursor-not-allowed focus:outline-none"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Tipo de Serviço</label>
-                <select 
-                  required
-                  value={maintenanceType}
-                  onChange={(e) => setMaintenanceType(e.target.value as MaintenanceType)}
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
-                >
-                  {Object.values(MaintenanceType).map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+
+              <div className="border-b border-outline-variant pb-4">
+                <h3 className="text-[11px] font-black text-primary uppercase tracking-widest mb-4">2. Dados Operacionais da Manutenção</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Viatura (Prefixo)</label>
+                    <select 
+                      required
+                      value={selectedVehicleId}
+                      onChange={(e) => setSelectedVehicleId(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    >
+                      <option value="">Selecione...</option>
+                      {vehicles.map(v => (
+                        <option key={v.id} value={v.id}>{v.prefix} - {v.type}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Data do Início</label>
+                    <input 
+                      required
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">KM da Manutenção</label>
+                    <input 
+                      required
+                      type="number"
+                      value={odometer}
+                      onChange={(e) => setOdometer(e.target.value)}
+                      placeholder="Quilometragem atual"
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Categoria de Serviço</label>
+                    <select 
+                      required
+                      value={maintenanceType}
+                      onChange={(e) => setMaintenanceType(e.target.value as MaintenanceType)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    >
+                      {Object.values(MaintenanceType).map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Situação</label>
+                    <select 
+                      value={maintenanceStatus}
+                      onChange={(e) => setMaintenanceStatus(e.target.value as MaintenanceStatus)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    >
+                      {Object.values(MaintenanceStatus).map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2 md:col-span-3">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Serviços Realizados</label>
+                    <textarea 
+                      value={servicesPerformed}
+                      onChange={(e) => setServicesPerformed(e.target.value)}
+                      placeholder="Descreva detalhadamente os serviços corretivos/preventivos realizados na viatura..."
+                      rows={3}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none resize-y"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Oficina / Fornecedor</label>
-                <input 
-                  required
-                  type="text"
-                  value={workshop}
-                  onChange={(e) => setWorkshop(e.target.value)}
-                  placeholder="Nome da oficina"
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
-                />
+
+              <div>
+                <h3 className="text-[11px] font-black text-primary uppercase tracking-widest mb-4">3. Detalhamento Financeiro</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Valor Pago / Nota Fiscal (R$)</label>
+                    <input 
+                      type="number"
+                      value={invoiceValue}
+                      onChange={(e) => setInvoiceValue(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Doc. Orçamento (Ref.)</label>
+                    <input 
+                      type="text"
+                      value={budgetDocument}
+                      onChange={(e) => setBudgetDocument(e.target.value)}
+                      placeholder="Nº Orçamento"
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Doc. Nota Fiscal</label>
+                    <input 
+                      type="text"
+                      value={invoiceDocument}
+                      onChange={(e) => setInvoiceDocument(e.target.value)}
+                      placeholder="Nº Nota Fiscal"
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Odômetro Atual</label>
-                <input 
-                  required
-                  type="number"
-                  value={odometer}
-                  onChange={(e) => setOdometer(e.target.value)}
-                  placeholder="KM"
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Custo Estimado (R$)</label>
-                <input 
-                  required
-                  type="number"
-                  value={cost}
-                  onChange={(e) => setCost(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Status Inicial</label>
-                <select 
-                  value={maintenanceStatus}
-                  onChange={(e) => setMaintenanceStatus(e.target.value as MaintenanceStatus)}
-                  className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface"
-                >
-                  {Object.values(MaintenanceStatus).map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="md:col-span-3 flex justify-end">
+
+              <div className="flex justify-end pt-4 border-t border-outline-variant">
                 <button type="submit" className="bg-primary text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-lg">
                   Salvar Ordem de Serviço
                 </button>
@@ -204,75 +379,543 @@ export default function MaintenanceControl() {
         )}
       </AnimatePresence>
 
-      <div className="flex justify-end mb-6">
-        <button 
-          onClick={() => setShowAddForm(true)}
-          className="bg-primary text-white px-4 py-3 sm:px-6 sm:py-3.5 rounded-xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg text-[10px] sm:text-xs uppercase tracking-widest group w-full sm:w-auto"
-        >
-          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform flex-shrink-0" />
-          Lançar Manutenção
-        </button>
-      </div>
+      {/* RENDERIZAR TAB DE MANUTENÇÃO */}
+      {activeTab === 'manutencoes' ? (
+        <>
+          <div className="flex justify-end mb-6">
+            <button 
+              onClick={() => setShowAddForm(true)}
+              className="bg-primary text-white px-4 py-3 sm:px-6 sm:py-3.5 rounded-xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg text-[10px] sm:text-xs uppercase tracking-widest group w-full sm:w-auto"
+            >
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform flex-shrink-0" />
+              Lançar Manutenção
+            </button>
+          </div>
 
+          <div className="space-y-8">
+            {/* Resumo Financeiro e Contadores de O.S. */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Investimento Total</p>
+                  <p className="text-xl font-black text-on-surface mt-1">
+                    R$ {totalFilteredCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  {filterVehicle || filterStatus ? (
+                    <p className="text-[9px] font-bold text-primary uppercase mt-0.5">Filtrado</p>
+                  ) : (
+                    <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Geral da Frota</p>
+                  )}
+                </div>
+              </div>
 
-      <div className="space-y-8">
-          {/* Checklist Issues Planilha */}
-          <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
-              <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-error" />
-                Checklist Viatura com Ressalvas
-              </h3>
-              <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full uppercase">{checklistIssues.length} Ressalvas Ativas</span>
+              <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center border border-amber-100">
+                  <Wrench className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-black">O.S. Em Andamento</p>
+                  <p className="text-xl font-black text-on-surface mt-1">{activeOrdersCount}</p>
+                  <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Ativas no momento</p>
+                </div>
+              </div>
+
+              <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
+                  <CheckCircle2 className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-black">O.S. Concluídas</p>
+                  <p className="text-xl font-black text-on-surface mt-1">{completedOrdersCount}</p>
+                  <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Total concluído</p>
+                </div>
+              </div>
             </div>
 
-            {/* Desktop View: Table */}
-            <div className="hidden md:block overflow-x-auto">
+            {/* Planilha de Ordens de Serviço (Salvo em Banco) */}
+            <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+              <div className="p-6 border-b border-outline-variant bg-surface-container-low flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
+                  <FileSpreadsheet className="w-5 h-5 text-primary" />
+                  Planilha de Lançamentos de Manutenção
+                </h3>
+                
+                {/* Barra de Filtros */}
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                  <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg w-full sm:w-auto">
+                    <Filter className="w-3.5 h-3.5 text-on-surface-variant" />
+                    <select 
+                      value={filterVehicle}
+                      onChange={(e) => setFilterVehicle(e.target.value)}
+                      className="text-xs font-bold text-on-surface focus:outline-none bg-transparent w-full sm:w-auto"
+                    >
+                      <option value="">Todas as Viaturas</option>
+                      {vehicles.map(v => (
+                        <option key={v.id} value={v.id}>{v.prefix}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg w-full sm:w-auto">
+                    <select 
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="text-xs font-bold text-on-surface focus:outline-none bg-transparent w-full sm:w-auto"
+                    >
+                      <option value="">Todas as Situações</option>
+                      {Object.values(MaintenanceStatus).map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop View: Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-surface-container/30 border-b border-outline-variant">
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Data</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Viatura</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[180px]">Serviço / Detalhes</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[130px]">Oficina / Fornecedor</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px] text-right">KM</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px] text-right">Financeiro (R$)</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Documentação</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[140px]">Situação</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[80px]">Progresso</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant/30 text-xs">
+                    {filteredRecords.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                          Nenhum registro de manutenção no banco de dados.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredRecords.map((record) => {
+                        const vehicle = vehicles.find(v => v.id === record.vehicleId);
+                        return (
+                          <tr key={record.id} className="hover:bg-surface-container-low/50 transition-colors">
+                            <td className="px-6 py-4 font-bold text-on-surface-variant font-data-mono">
+                              {record.date ? new Date(record.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'S/D'}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-black text-primary text-xs uppercase block">{vehicle?.prefix || 'VIATURA'}</span>
+                              <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{vehicle?.type || 'Tipo'}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-xs font-bold text-on-surface uppercase tracking-tight">{record.type}</span>
+                              {record.servicesPerformed && (
+                                <span className="block text-[10px] text-on-surface-variant font-medium mt-0.5 leading-relaxed max-w-xs">{record.servicesPerformed}</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 font-bold text-on-surface">{record.workshop}</td>
+                            <td className="px-6 py-4 text-right font-bold text-on-surface font-data-mono">{record.odometerAtMaintenance?.toLocaleString() || '0'} KM</td>
+                            <td className="px-6 py-4 text-right font-data-mono space-y-0.5">
+                              <div className="text-[10px] text-on-surface-variant font-bold">Orçado: R$ {record.cost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</div>
+                              <div className="text-[10px] text-green-700 font-black">Nota: R$ {record.invoiceValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-wrap gap-1 max-w-[150px]">
+                                {record.budgetDocument && (
+                                  <span className="text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded shadow-sm">
+                                    ORÇ: {record.budgetDocument}
+                                  </span>
+                                )}
+                                {record.commitmentDocument && (
+                                  <span className="text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-100 px-1.5 py-0.5 rounded shadow-sm">
+                                    EMP: {record.commitmentDocument}
+                                  </span>
+                                )}
+                                {record.invoiceDocument && (
+                                  <span className="text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded shadow-sm">
+                                    NF: {record.invoiceDocument}
+                                  </span>
+                                )}
+                                {record.seiDocument && (
+                                  <span className="text-[9px] font-bold bg-slate-50 text-slate-700 border border-slate-200 px-1.5 py-0.5 rounded shadow-sm">
+                                    SEI: {record.seiDocument}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <select 
+                                value={record.status}
+                                onChange={async (e) => {
+                                  const newStatus = e.target.value as MaintenanceStatus;
+                                  const newProgress = newStatus === MaintenanceStatus.CONCLUIDO ? 100 : 50;
+                                  await updateRecord(record.id, { status: newStatus, progress: newProgress });
+                                }}
+                                className={cn(
+                                  "text-[10px] font-black uppercase tracking-wider p-2 rounded-lg border focus:ring-2 focus:ring-primary/20 focus:outline-none w-full",
+                                  record.status === MaintenanceStatus.CONCLUIDO && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                                  record.status === MaintenanceStatus.MANUTENCAO && "bg-amber-50 text-amber-700 border-amber-200",
+                                  record.status === MaintenanceStatus.ORCAMENTO && "bg-blue-50 text-blue-700 border-blue-200",
+                                  record.status === MaintenanceStatus.NOTA_FISCAL && "bg-purple-50 text-purple-700 border-purple-200",
+                                  record.status === MaintenanceStatus.SEI && "bg-slate-50 text-slate-700 border-slate-200"
+                                )}
+                              >
+                                {Object.values(MaintenanceStatus).map(s => (
+                                  <option key={s} value={s}>{s}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+                                  <div 
+                                    className={cn(
+                                      "h-full rounded-full transition-all duration-500",
+                                      record.status === MaintenanceStatus.CONCLUIDO ? "bg-emerald-600" :
+                                      record.status === MaintenanceStatus.MANUTENCAO ? "bg-amber-600" :
+                                      record.status === MaintenanceStatus.ORCAMENTO ? "bg-blue-600" :
+                                      record.status === MaintenanceStatus.NOTA_FISCAL ? "bg-purple-600" :
+                                      "bg-slate-600"
+                                    )}
+                                    style={{ width: `${record.progress ?? 0}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-black text-on-surface-variant font-data-mono w-8">
+                                  {record.progress ?? 0}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <button 
+                                onClick={async () => {
+                                  if (window.confirm("Deseja realmente excluir este registro de manutenção permanente?")) {
+                                    await deleteRecord(record.id);
+                                  }
+                                }}
+                                className="text-on-surface-variant hover:text-error transition-colors p-1"
+                                title="Excluir O.S."
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile View: Card List */}
+              <div className="block md:hidden divide-y divide-outline-variant/30">
+                {filteredRecords.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-xs text-on-surface-variant italic opacity-50">
+                    Nenhum registro de manutenção encontrado para os filtros selecionados.
+                  </div>
+                ) : (
+                  filteredRecords.map((record) => {
+                    const vehicle = vehicles.find(v => v.id === record.vehicleId);
+                    return (
+                      <div key={record.id} className="p-4 space-y-4 hover:bg-surface-container-low/30 transition-colors">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="font-black text-primary text-xs uppercase tracking-wider">{vehicle?.prefix || 'VIATURA'}</span>
+                            <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{vehicle?.type || 'Tipo'}</span>
+                          </div>
+                          <span className="text-xs font-bold text-on-surface-variant font-data-mono">
+                            {record.date ? new Date(record.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'S/D'}
+                          </span>
+                        </div>
+
+                        <div className="space-y-2 text-xs">
+                          <div>
+                            <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5 font-bold">Serviço / O.S.</span>
+                            <span className="inline-block bg-surface-container px-2 py-0.5 rounded text-[9px] font-black text-on-surface uppercase mr-2">{record.type}</span>
+                            {record.servicesPerformed && (
+                              <p className="text-xs text-on-surface font-medium mt-1 leading-relaxed">{record.servicesPerformed}</p>
+                            )}
+                          </div>
+                          <div>
+                            <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5 font-bold">Oficina</span>
+                            <span className="text-on-surface-variant font-semibold">{record.workshop}</span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 text-xs font-bold font-data-mono">
+                          <div>
+                            <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5 font-bold">Quilometragem</span>
+                            <span className="text-on-surface-variant">{record.odometerAtMaintenance?.toLocaleString() || '0'} KM</span>
+                          </div>
+                          <div>
+                            <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5 font-bold">Financeiro (R$)</span>
+                            <div className="text-[10px] text-on-surface-variant/80">
+                              Orçado: R$ {record.cost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+                            </div>
+                            <div className="text-[10px] text-green-700 font-black">
+                              Nota: R$ {record.invoiceValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Documentos no Mobile */}
+                        {(record.budgetDocument || record.commitmentDocument || record.invoiceDocument || record.seiDocument) && (
+                          <div className="space-y-1">
+                            <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest font-bold">Documentação</span>
+                            <div className="flex flex-wrap gap-1">
+                              {record.budgetDocument && (
+                                <span className="text-[8px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded">
+                                  ORÇ: {record.budgetDocument}
+                                </span>
+                              )}
+                              {record.commitmentDocument && (
+                                <span className="text-[8px] font-bold bg-amber-50 text-amber-700 border border-amber-100 px-1.5 py-0.5 rounded">
+                                  EMP: {record.commitmentDocument}
+                                </span>
+                              )}
+                              {record.invoiceDocument && (
+                                <span className="text-[8px] font-bold bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded">
+                                  NF: {record.invoiceDocument}
+                                </span>
+                              )}
+                              {record.seiDocument && (
+                                <span className="text-[8px] font-bold bg-slate-50 text-slate-700 border border-slate-200 px-1.5 py-0.5 rounded">
+                                  SEI: {record.seiDocument}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-1 font-bold">Situação</span>
+                            <select 
+                              value={record.status}
+                              onChange={async (e) => {
+                                const newStatus = e.target.value as MaintenanceStatus;
+                                const newProgress = newStatus === MaintenanceStatus.CONCLUIDO ? 100 : 50;
+                                  await updateRecord(record.id, { status: newStatus, progress: newProgress });
+                              }}
+                              className={cn(
+                                "text-[10px] font-black uppercase tracking-wider p-2.5 rounded-lg border focus:outline-none w-full",
+                                record.status === MaintenanceStatus.CONCLUIDO && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                                record.status === MaintenanceStatus.MANUTENCAO && "bg-amber-50 text-amber-700 border-amber-200",
+                                record.status === MaintenanceStatus.ORCAMENTO && "bg-blue-50 text-blue-700 border-blue-200",
+                                record.status === MaintenanceStatus.NOTA_FISCAL && "bg-purple-50 text-purple-700 border-purple-200",
+                                record.status === MaintenanceStatus.SEI && "bg-slate-50 text-slate-700 border-slate-200"
+                              )}
+                            >
+                              {Object.values(MaintenanceStatus).map(s => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="w-1/3">
+                            <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-1 font-bold">Progresso</span>
+                            <div className="flex items-center gap-1.5 mt-2">
+                              <div className="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+                                <div 
+                                  className={cn(
+                                    "h-full rounded-full transition-all duration-500",
+                                    record.status === MaintenanceStatus.CONCLUIDO ? "bg-emerald-600" :
+                                    record.status === MaintenanceStatus.MANUTENCAO ? "bg-amber-600" :
+                                    record.status === MaintenanceStatus.ORCAMENTO ? "bg-blue-600" :
+                                    record.status === MaintenanceStatus.NOTA_FISCAL ? "bg-purple-600" :
+                                    "bg-slate-600"
+                                  )}
+                                  style={{ width: `${record.progress ?? 0}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] font-black text-on-surface-variant font-data-mono">
+                                {record.progress ?? 0}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-outline-variant/30 flex justify-end">
+                          <button 
+                            onClick={async () => {
+                              if (window.confirm("Deseja realmente excluir este registro de manutenção permanente?")) {
+                                await deleteRecord(record.id);
+                              }
+                            }}
+                            className="flex items-center gap-1.5 text-[9px] font-black text-error uppercase tracking-widest hover:underline px-3 py-1 bg-error/5 hover:bg-error/10 border border-error/10 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Excluir Registro
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+          </div>
+        </>
+      ) : (
+        /* RENDERIZAR TAB DE EMPENHOS (GERENCIADOR) */
+        <div className="space-y-6">
+          <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-primary" />
+                Painel de Empenhos Cadastrados
+              </h3>
+              <p className="text-xs text-on-surface-variant mt-1">Gerencie os recursos, empenhos, reforços e saldos de manutenção.</p>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              {/* Barra de Pesquisa */}
+              <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg w-full sm:w-auto">
+                <Filter className="w-3.5 h-3.5 text-on-surface-variant" />
+                <input
+                  type="text"
+                  placeholder="Pesquisar empenho/fornecedor..."
+                  value={filterCommitmentQuery}
+                  onChange={(e) => setFilterCommitmentQuery(e.target.value)}
+                  className="text-xs font-bold text-on-surface focus:outline-none bg-transparent placeholder-on-surface-variant/40"
+                />
+              </div>
+
+              {/* Botão Cadastrar */}
+              <button
+                onClick={() => {
+                  setEditingCommitmentId(null);
+                  setCompUnit(user?.unit || '');
+                  setCompSei('');
+                  setCompStatus(CommitmentStatus.VIGENTE);
+                  setCompCategory(CommitmentCategory.LEVE);
+                  setCompCity('');
+                  setCompSupplier('');
+                  setCompNumber('');
+                  setCompYear(new Date().getFullYear().toString());
+                  setCompInitialValue('');
+                  setCompReinforcementValue('0');
+                  setCompCancellationValue('0');
+                  setCompBudgetedToPay('0');
+                  setCompLiquidatedValue('0');
+                  setShowCommitmentModal(true);
+                }}
+                className="bg-primary text-white px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-1.5 hover:bg-black transition-all shadow-md w-full sm:w-auto justify-center"
+              >
+                <Plus className="w-4 h-4" />
+                Novo Empenho
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-surface-container/30 border-b border-outline-variant">
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Data</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Viatura</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Militar</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Item / Defeito</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[200px]">Observação</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Nº Empenho</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[80px]">Unidade</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[160px]">Fornecedor</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Categoria</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[140px]">Cidade / SEI</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest text-right">Inic. + Ref. - Anul.</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest text-right">Liquidado</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest text-right">Saldo Restante</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[80px]">Situação</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant/30">
-                  {checklistIssues.length === 0 ? (
+                <tbody className="divide-y divide-outline-variant/30 text-xs">
+                  {filteredCommitments.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
-                        Nenhuma ressalva pendente nos checklists.
+                      <td colSpan={10} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                        Nenhum empenho cadastrado.
                       </td>
                     </tr>
                   ) : (
-                    checklistIssues.map((issue, idx) => (
-                      <tr key={`${issue.submissionId}-${idx}`} className="hover:bg-surface-container-low/50 transition-colors">
-                        <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">{issue.date}</td>
-                        <td className="px-6 py-4">
-                          <span className="font-black text-primary text-xs uppercase">{issue.vehiclePrefix}</span>
-                          <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{issue.vehicleType}</span>
+                    filteredCommitments.map((c) => (
+                      <tr key={c.id} className="hover:bg-surface-container-low/50 transition-colors">
+                        <td className="px-6 py-4 space-y-0.5">
+                          <span className="font-black font-data-mono text-primary uppercase block">{c.number}</span>
+                          <span className="text-[10px] text-on-surface-variant font-bold block">Ano: {c.year}</span>
                         </td>
-                        <td className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase">{issue.userName}</td>
+                        <td className="px-6 py-4 font-bold text-on-surface-variant">{c.unit}</td>
                         <td className="px-6 py-4">
-                          <span className="text-xs font-bold text-error uppercase tracking-tight">{getKeyword(issue.item)}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-xs text-on-surface-variant font-medium leading-relaxed max-w-xs">{issue.observation}</p>
+                          <span className="font-bold text-on-surface block max-w-[160px] truncate">{c.supplier}</span>
                         </td>
                         <td className="px-6 py-4">
-                          <button 
-                            onClick={() => {
-                              setSelectedVehicleId(vehicles.find(v => v.prefix === issue.vehiclePrefix)?.id || '');
-                              setMaintenanceType(MaintenanceType.CORRECTIVE);
-                              setWorkshop('Oficina Sede');
-                              setShowAddForm(true);
-                            }}
-                            className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline whitespace-nowrap"
-                          >
-                            Abrir O.S.
-                          </button>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider",
+                            c.category === CommitmentCategory.LEVE ? "bg-blue-50 text-blue-700" : "bg-orange-50 text-orange-700"
+                          )}>
+                            {c.category}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="block font-bold text-on-surface-variant">{c.city}</span>
+                          <span className="block text-[10px] text-on-surface-variant/60 font-medium font-data-mono">{c.sei}</span>
+                        </td>
+                        <td className="px-6 py-4 text-right font-semibold font-data-mono space-y-0.5">
+                          <div className="text-[10px] text-on-surface-variant">Inicial: R$ {c.initialValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                          {c.reinforcementValue > 0 && <div className="text-[9px] text-green-600">+ Ref: R$ {c.reinforcementValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>}
+                          {c.cancellationValue > 0 && <div className="text-[9px] text-error">- Anul: R$ {c.cancellationValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>}
+                        </td>
+                        <td className="px-6 py-4 text-right font-bold text-purple-700 font-data-mono">
+                          R$ {c.liquidatedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className={cn(
+                          "px-6 py-4 text-right font-black font-data-mono text-sm",
+                          c.balance > 0 ? "text-emerald-700" : "text-error"
+                        )}>
+                          R$ {c.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={cn(
+                            "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest",
+                            c.status === CommitmentStatus.VIGENTE ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-50 text-slate-600 border border-slate-200"
+                          )}>
+                            {c.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingCommitmentId(c.id);
+                                setCompUnit(c.unit);
+                                setCompSei(c.sei);
+                                setCompStatus(c.status);
+                                setCompCategory(c.category);
+                                setCompCity(c.city);
+                                setCompSupplier(c.supplier);
+                                setCompNumber(c.number);
+                                setCompYear(c.year.toString());
+                                setCompInitialValue(c.initialValue.toString());
+                                setCompReinforcementValue(c.reinforcementValue.toString());
+                                setCompCancellationValue(c.cancellationValue.toString());
+                                setCompBudgetedToPay(c.budgetedToPay.toString());
+                                setCompLiquidatedValue(c.liquidatedValue.toString());
+                                setShowCommitmentModal(true);
+                              }}
+                              className="text-on-surface-variant hover:text-primary transition-colors p-1"
+                              title="Editar Empenho"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (window.confirm(`Deseja realmente excluir permanentemente o empenho ${c.number}?`)) {
+                                  await deleteCommitment(c.id);
+                                }
+                              }}
+                              className="text-on-surface-variant hover:text-error transition-colors p-1"
+                              title="Excluir Empenho"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -280,339 +923,384 @@ export default function MaintenanceControl() {
                 </tbody>
               </table>
             </div>
-
-            {/* Mobile View: Card List */}
-            <div className="block md:hidden divide-y divide-outline-variant/30">
-              {checklistIssues.length === 0 ? (
-                <div className="px-4 py-8 text-center text-xs text-on-surface-variant italic opacity-50">
-                  Nenhuma ressalva pendente nos checklists.
-                </div>
-              ) : (
-                checklistIssues.map((issue, idx) => (
-                  <div key={`${issue.submissionId}-${idx}`} className="p-4 space-y-3 hover:bg-surface-container-low/30 transition-colors">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="font-black text-primary text-xs uppercase tracking-wider">{issue.vehiclePrefix}</span>
-                        <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{issue.vehicleType}</span>
-                      </div>
-                      <span className="text-xs font-bold text-on-surface-variant font-data-mono">{issue.date}</span>
-                    </div>
-
-                    <div className="text-xs space-y-2">
-                      <p className="font-semibold text-on-surface-variant"><span className="opacity-50 uppercase tracking-widest text-[8px] block mb-0.5 font-bold">Responsável</span>{issue.userName}</p>
-                      <p className="font-bold text-error uppercase tracking-tight"><span className="opacity-50 text-[8px] block mb-0.5 font-bold text-on-surface-variant">Item / Defeito</span>{getKeyword(issue.item)}</p>
-                      {issue.observation && (
-                        <p className="text-on-surface-variant font-medium leading-relaxed bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/30">{issue.observation}</p>
-                      )}
-                    </div>
-
-                    <div className="pt-2">
-                      <button 
-                        onClick={() => {
-                          setSelectedVehicleId(vehicles.find(v => v.prefix === issue.vehiclePrefix)?.id || '');
-                          setMaintenanceType(MaintenanceType.CORRECTIVE);
-                          setWorkshop('Oficina Sede');
-                          setShowAddForm(true);
-                        }}
-                        className="w-full bg-primary/5 hover:bg-primary text-primary hover:text-white py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-center border border-primary/10"
-                      >
-                        Abrir O.S.
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
-
-          {/* Resumo Financeiro e Contadores de O.S. */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
-                <DollarSign className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Investimento Total</p>
-                <p className="text-xl font-black text-on-surface mt-1">
-                  R$ {totalFilteredCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-                {filterVehicle || filterStatus ? (
-                  <p className="text-[9px] font-bold text-primary uppercase mt-0.5">Filtrado</p>
-                ) : (
-                  <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Geral da Frota</p>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center border border-amber-100">
-                <Wrench className="w-6 h-6 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-black">O.S. Em Andamento</p>
-                <p className="text-xl font-black text-on-surface mt-1">{activeOrdersCount}</p>
-                <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Ativas no momento</p>
-              </div>
-            </div>
-
-            <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-black">O.S. Concluídas</p>
-                <p className="text-xl font-black text-on-surface mt-1">{completedOrdersCount}</p>
-                <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Total concluído</p>
-              </div>
-            </div>
           </div>
 
-          {/* Planilha de Ordens de Serviço (Salvo em Banco) */}
-          <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-outline-variant bg-surface-container-low flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
-                <FileSpreadsheet className="w-5 h-5 text-primary" />
-                Planilha de Lançamentos de Manutenção
-              </h3>
-              
-              {/* Barra de Filtros */}
-              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg w-full sm:w-auto">
-                  <Filter className="w-3.5 h-3.5 text-on-surface-variant" />
-                  <select 
-                    value={filterVehicle}
-                    onChange={(e) => setFilterVehicle(e.target.value)}
-                    className="text-xs font-bold text-on-surface focus:outline-none bg-transparent w-full sm:w-auto"
-                  >
-                    <option value="">Todas as Viaturas</option>
-                    {vehicles.map(v => (
-                      <option key={v.id} value={v.id}>{v.prefix}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg w-full sm:w-auto">
-                  <select 
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="text-xs font-bold text-on-surface focus:outline-none bg-transparent w-full sm:w-auto"
-                  >
-                    <option value="">Todos os Status</option>
-                    {Object.values(MaintenanceStatus).map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-4">
+            {filteredCommitments.length === 0 ? (
+              <div className="bg-white border border-outline-variant rounded-xl p-6 text-center text-xs text-on-surface-variant italic opacity-50">
+                Nenhum empenho cadastrado.
               </div>
-            </div>
-            {/* Desktop View: Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-container/30 border-b border-outline-variant">
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Data</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Viatura</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Serviço / O.S.</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Oficina</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">KM</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[110px]">Custo</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Status (Banco)</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[130px]">Progresso</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/30">
-                  {filteredRecords.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
-                        Nenhum registro de manutenção encontrado para os filtros selecionados.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredRecords.map((record) => {
-                      const vehicle = vehicles.find(v => v.id === record.vehicleId);
-                      return (
-                        <tr key={record.id} className="hover:bg-surface-container-low/50 transition-colors">
-                          <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">
-                            {record.date ? new Date(record.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'S/D'}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="font-black text-primary text-xs uppercase">{vehicle?.prefix || 'VIATURA'}</span>
-                            <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{vehicle?.type || 'Tipo'}</span>
-                          </td>
-                          <td className="px-6 py-4 text-xs font-bold text-on-surface uppercase">
-                            {record.type}
-                          </td>
-                          <td className="px-6 py-4 text-xs text-on-surface font-medium">
-                            {record.workshop}
-                          </td>
-                          <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">
-                            {record.odometerAtMaintenance?.toLocaleString() || '0'} KM
-                          </td>
-                          <td className="px-6 py-4 text-xs font-bold text-green-700 font-data-mono">
-                            R$ {record.cost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
-                          </td>
-                          <td className="px-6 py-4">
-                            <select 
-                              value={record.status}
-                              onChange={async (e) => {
-                                const newStatus = e.target.value as MaintenanceStatus;
-                                const newProgress = newStatus === MaintenanceStatus.COMPLETED ? 100 : newStatus === MaintenanceStatus.SCHEDULED ? 0 : 50;
-                                  await updateRecord(record.id, { status: newStatus, progress: newProgress });
-                              }}
-                              className={cn(
-                                "text-[10px] font-black uppercase tracking-wider p-2 rounded-lg border focus:outline-none w-full",
-                                record.status === MaintenanceStatus.COMPLETED && "bg-green-50 text-green-700 border-green-200",
-                                record.status === MaintenanceStatus.IN_PROGRESS && "bg-amber-50 text-amber-700 border-amber-200",
-                                record.status === MaintenanceStatus.SCHEDULED && "bg-blue-50 text-blue-700 border-blue-200"
-                              )}
-                            >
-                              {Object.values(MaintenanceStatus).map(s => (
-                                <option key={s} value={s}>{s}</option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
-                                <div 
-                                  className={cn(
-                                    "h-full rounded-full transition-all duration-500",
-                                    record.status === MaintenanceStatus.COMPLETED ? "bg-green-600" : record.status === MaintenanceStatus.SCHEDULED ? "bg-blue-600" : "bg-primary"
-                                  )}
-                                  style={{ width: `${record.progress ?? 0}%` }}
-                                />
-                              </div>
-                              <span className="text-[10px] font-black text-on-surface-variant font-data-mono w-8">
-                                {record.progress ?? 0}%
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <button 
-                              onClick={async () => {
-                                if (window.confirm("Deseja realmente excluir este registro de manutenção permanente?")) {
-                                  await deleteRecord(record.id);
-                                }
-                              }}
-                              className="text-on-surface-variant hover:text-error transition-colors p-1"
-                              title="Excluir O.S."
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+            ) : (
+              filteredCommitments.map((c) => (
+                <div key={c.id} className="bg-white border border-outline-variant rounded-xl p-4 space-y-3 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-black text-primary text-sm uppercase tracking-wide font-data-mono block">{c.number}</span>
+                      <span className="text-[10px] text-on-surface-variant/70 font-semibold block">{c.supplier}</span>
+                      <span className="text-[10px] text-on-surface-variant/50 font-bold block">Ano: {c.year}</span>
+                    </div>
+                    <span className={cn(
+                      "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
+                      c.status === CommitmentStatus.VIGENTE ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-slate-50 text-slate-600 border border-slate-200"
+                    )}>
+                      {c.status}
+                    </span>
+                  </div>
 
-            {/* Mobile View: Card List */}
-            <div className="block md:hidden divide-y divide-outline-variant/30">
-              {filteredRecords.length === 0 ? (
-                <div className="px-4 py-8 text-center text-xs text-on-surface-variant italic opacity-50">
-                  Nenhum registro de manutenção encontrado para os filtros selecionados.
-                </div>
-              ) : (
-                filteredRecords.map((record) => {
-                  const vehicle = vehicles.find(v => v.id === record.vehicleId);
-                  return (
-                    <div key={record.id} className="p-4 space-y-4 hover:bg-surface-container-low/30 transition-colors">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="font-black text-primary text-xs uppercase tracking-wider">{vehicle?.prefix || 'VIATURA'}</span>
-                          <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{vehicle?.type || 'Tipo'}</span>
-                        </div>
-                        <span className="text-xs font-bold text-on-surface-variant font-data-mono">
-                          {record.date ? new Date(record.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'S/D'}
-                        </span>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="block text-[8px] text-on-surface-variant/60 uppercase font-bold tracking-wider">Unidade</span>
+                      <span className="font-semibold text-on-surface">{c.unit}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[8px] text-on-surface-variant/60 uppercase font-bold tracking-wider">Cidade</span>
+                      <span className="font-semibold text-on-surface">{c.city}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[8px] text-on-surface-variant/60 uppercase font-bold tracking-wider">Processo SEI</span>
+                      <span className="font-medium font-data-mono text-[10px]">{c.sei}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[8px] text-on-surface-variant/60 uppercase font-bold tracking-wider">Categoria</span>
+                      <span className={cn(
+                        "inline-block px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider",
+                        c.category === CommitmentCategory.LEVE ? "bg-blue-50 text-blue-700" : "bg-orange-50 text-orange-700"
+                      )}>
+                        {c.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-outline-variant/30 pt-3 grid grid-cols-2 gap-2 font-data-mono text-[10px]">
+                    <div className="space-y-0.5">
+                      <span className="block text-[8px] text-on-surface-variant/60 font-bold uppercase font-sans">Valores</span>
+                      <div>Inic: R$ {c.initialValue.toLocaleString('pt-BR')}</div>
+                      {c.reinforcementValue > 0 && <div className="text-green-600">+Ref: R$ {c.reinforcementValue.toLocaleString('pt-BR')}</div>}
+                      {c.cancellationValue > 0 && <div className="text-error">-Anul: R$ {c.cancellationValue.toLocaleString('pt-BR')}</div>}
+                    </div>
+                    <div className="text-right space-y-1">
+                      <div>
+                        <span className="block text-[8px] text-on-surface-variant/60 font-bold uppercase font-sans">Liquidado</span>
+                        <span className="font-bold text-purple-700">R$ {c.liquidatedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-3 text-xs font-bold">
-                        <div>
-                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Serviço / O.S.</span>
-                          <span className="text-on-surface uppercase text-xs">{record.type}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Oficina</span>
-                          <span className="text-on-surface-variant font-semibold">{record.workshop}</span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 text-xs font-bold">
-                        <div>
-                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Quilometragem</span>
-                          <span className="text-on-surface-variant font-data-mono">{record.odometerAtMaintenance?.toLocaleString() || '0'} KM</span>
-                        </div>
-                        <div>
-                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-0.5">Custo</span>
-                          <span className="text-green-700 font-data-mono">R$ {record.cost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-1">Status</span>
-                          <select 
-                            value={record.status}
-                            onChange={async (e) => {
-                              const newStatus = e.target.value as MaintenanceStatus;
-                              const newProgress = newStatus === MaintenanceStatus.COMPLETED ? 100 : newStatus === MaintenanceStatus.SCHEDULED ? 0 : 50;
-                              await updateRecord(record.id, { status: newStatus, progress: newProgress });
-                            }}
-                            className={cn(
-                              "text-[10px] font-black uppercase tracking-wider p-2.5 rounded-lg border focus:outline-none w-full",
-                              record.status === MaintenanceStatus.COMPLETED && "bg-green-50 text-green-700 border-green-200",
-                              record.status === MaintenanceStatus.IN_PROGRESS && "bg-amber-50 text-amber-700 border-amber-200",
-                              record.status === MaintenanceStatus.SCHEDULED && "bg-blue-50 text-blue-700 border-blue-200"
-                            )}
-                          >
-                            {Object.values(MaintenanceStatus).map(s => (
-                              <option key={s} value={s}>{s}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="w-1/3">
-                          <span className="block text-[8px] text-on-surface-variant/60 uppercase tracking-widest mb-1">Progresso</span>
-                          <div className="flex items-center gap-1.5 mt-2">
-                            <div className="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
-                              <div 
-                                className={cn(
-                                  "h-full rounded-full transition-all duration-500",
-                                  record.status === MaintenanceStatus.COMPLETED ? "bg-green-600" : record.status === MaintenanceStatus.SCHEDULED ? "bg-blue-600" : "bg-primary"
-                                )}
-                                style={{ width: `${record.progress ?? 0}%` }}
-                              />
-                            </div>
-                            <span className="text-[10px] font-black text-on-surface-variant font-data-mono">
-                              {record.progress ?? 0}%
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-2 border-t border-outline-variant/30 flex justify-end">
-                        <button 
-                          onClick={async () => {
-                            if (window.confirm("Deseja realmente excluir este registro de manutenção permanente?")) {
-                              await deleteRecord(record.id);
-                            }
-                          }}
-                          className="flex items-center gap-1.5 text-[9px] font-black text-error uppercase tracking-widest hover:underline px-3 py-1 bg-error/5 hover:bg-error/10 border border-error/10 rounded-lg transition-all"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Excluir Registro
-                        </button>
+                      <div>
+                        <span className="block text-[8px] text-on-surface-variant/60 font-bold uppercase font-sans">Saldo Restante</span>
+                        <span className={cn(
+                          "font-black text-xs",
+                          c.balance > 0 ? "text-emerald-700" : "text-error"
+                        )}>R$ {c.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </section>
-      </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-outline-variant/30 flex justify-end gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingCommitmentId(c.id);
+                        setCompUnit(c.unit);
+                        setCompSei(c.sei);
+                        setCompStatus(c.status);
+                        setCompCategory(c.category);
+                        setCompCity(c.city);
+                        setCompSupplier(c.supplier);
+                        setCompNumber(c.number);
+                        setCompYear(c.year.toString());
+                        setCompInitialValue(c.initialValue.toString());
+                        setCompReinforcementValue(c.reinforcementValue.toString());
+                        setCompCancellationValue(c.cancellationValue.toString());
+                        setCompBudgetedToPay(c.budgetedToPay.toString());
+                        setCompLiquidatedValue(c.liquidatedValue.toString());
+                        setShowCommitmentModal(true);
+                      }}
+                      className="px-2.5 py-1.5 bg-primary/5 hover:bg-primary/10 text-primary border border-primary/10 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (window.confirm(`Deseja realmente excluir permanentemente o empenho ${c.number}?`)) {
+                          await deleteCommitment(c.id);
+                        }
+                      }}
+                      className="px-2.5 py-1.5 bg-error/5 hover:bg-error/10 text-error border border-error/10 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CADASTRO/EDIÇÃO DE EMPENHOS */}
+      <AnimatePresence>
+        {showCommitmentModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-outline-variant rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+            >
+              {/* Modal Header */}
+              <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+                <h3 className="text-base font-black text-on-surface uppercase tracking-wider">
+                  {editingCommitmentId ? 'Editar Empenho' : 'Cadastrar Novo Empenho'}
+                </h3>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowCommitmentModal(false);
+                    setEditingCommitmentId(null);
+                  }} 
+                  className="text-on-surface-variant hover:text-error font-bold text-sm uppercase"
+                >
+                  Fechar
+                </button>
+              </div>
+
+              {/* Modal Body (Scrollable) */}
+              <div className="p-6 md:p-8 overflow-y-auto space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Processo SEI */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Processo SEI</label>
+                    <input 
+                      required
+                      type="text"
+                      value={compSei}
+                      onChange={(e) => setCompSei(e.target.value)}
+                      placeholder="Ex: 00120-000034/2026-00"
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Número Empenho */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Número do Empenho</label>
+                    <input 
+                      required
+                      type="text"
+                      value={compNumber}
+                      onChange={(e) => setCompNumber(e.target.value)}
+                      placeholder="Ex: 2026NE00123"
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Ano */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Ano</label>
+                    <input 
+                      required
+                      type="number"
+                      min="2000"
+                      max="2100"
+                      value={compYear}
+                      onChange={(e) => setCompYear(e.target.value)}
+                      placeholder="Ex: 2026"
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Fornecedor */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Fornecedor</label>
+                    <input 
+                      required
+                      type="text"
+                      value={compSupplier}
+                      onChange={(e) => setCompSupplier(e.target.value)}
+                      placeholder="Ex: Auto Peças Silva Ltda"
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Categoria */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Categoria da Frota</label>
+                    <select 
+                      value={compCategory}
+                      onChange={(e) => setCompCategory(e.target.value as CommitmentCategory)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    >
+                      <option value={CommitmentCategory.LEVE}>Leve</option>
+                      <option value={CommitmentCategory.PESADO}>Pesado</option>
+                    </select>
+                  </div>
+
+                  {/* Cidade */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Cidade</label>
+                    <select 
+                      required
+                      value={compCity}
+                      onChange={(e) => setCompCity(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="ITAJUBA">ITAJUBA</option>
+                      <option value="EXTREMA">EXTREMA</option>
+                      <option value="POUSO ALEGRE">POUSO ALEGRE</option>
+                    </select>
+                  </div>
+
+                  {/* Situação */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Situação</label>
+                    <select 
+                      value={compStatus}
+                      onChange={(e) => setCompStatus(e.target.value as CommitmentStatus)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    >
+                      <option value={CommitmentStatus.VIGENTE}>Vigente</option>
+                      <option value={CommitmentStatus.FINALIZADO}>Finalizado</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="border-t border-outline-variant pt-6">
+                  <h4 className="text-[11px] font-black text-primary uppercase tracking-widest mb-4">Detalhamento Financeiro (Valores R$)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Empenho Inicial */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Empenho Inicial</label>
+                      <input 
+                        required
+                        type="number"
+                        step="0.01"
+                        value={compInitialValue}
+                        onChange={(e) => setCompInitialValue(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Reforço de Empenho */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Reforço de Empenho</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        value={compReinforcementValue}
+                        onChange={(e) => setCompReinforcementValue(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Anulação de Empenho */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Anulação de Empenho</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        value={compCancellationValue}
+                        onChange={(e) => setCompCancellationValue(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Valor Orçado a Pagar */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Valor Orçado a Pagar</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        value={compBudgetedToPay}
+                        onChange={(e) => setCompBudgetedToPay(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Valor Liquidado */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Valor Liquidado</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        value={compLiquidatedValue}
+                        onChange={(e) => setCompLiquidatedValue(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Saldo de Empenho */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Saldo de Empenho (Calculado)</label>
+                      <div className="w-full bg-emerald-50 border border-emerald-200 p-3 rounded-lg font-black text-emerald-800 text-xs">
+                        R$ {compBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-6 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowCommitmentModal(false);
+                    setEditingCommitmentId(null);
+                  }} 
+                  className="px-5 py-3 rounded-xl font-bold text-xs uppercase border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button" 
+                  onClick={async () => {
+                    const finalUnit = compUnit || user?.unit || '1º BBM';
+                    if (!compSei || !compNumber || !compSupplier || !compCity || !compInitialValue || !compYear) {
+                      alert('Por favor, preencha todos os campos obrigatórios.');
+                      return;
+                    }
+                    
+                    const payload = {
+                      unit: finalUnit,
+                      sei: compSei,
+                      status: compStatus,
+                      category: compCategory,
+                      city: compCity,
+                      supplier: compSupplier,
+                      number: compNumber,
+                      year: Number(compYear),
+                      initialValue: Number(compInitialValue),
+                      reinforcementValue: Number(compReinforcementValue || 0),
+                      cancellationValue: Number(compCancellationValue || 0),
+                      budgetedToPay: Number(compBudgetedToPay || 0),
+                      liquidatedValue: Number(compLiquidatedValue || 0),
+                    };
+
+                    try {
+                      if (editingCommitmentId) {
+                        await updateCommitment(editingCommitmentId, payload);
+                      } else {
+                        await addCommitment(payload);
+                      }
+                      setShowCommitmentModal(false);
+                      setEditingCommitmentId(null);
+                    } catch (err: any) {
+                      alert('Erro ao salvar empenho: ' + (err.message || err));
+                    }
+                  }}
+                  className="px-6 py-3 rounded-xl font-black text-xs uppercase bg-primary text-white hover:bg-black transition-colors"
+                >
+                  {editingCommitmentId ? 'Salvar Alterações' : 'Salvar Empenho'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
