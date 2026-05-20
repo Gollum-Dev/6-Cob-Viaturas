@@ -392,50 +392,6 @@ export default function MaintenanceControl() {
             </button>
           </div>
 
-          <div className="space-y-8">
-            {/* Resumo Financeiro e Contadores de O.S. */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
-                  <DollarSign className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Investimento Total</p>
-                  <p className="text-xl font-black text-on-surface mt-1">
-                    R$ {totalFilteredCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                  {filterVehicle || filterStatus ? (
-                    <p className="text-[9px] font-bold text-primary uppercase mt-0.5">Filtrado</p>
-                  ) : (
-                    <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Geral da Frota</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center border border-amber-100">
-                  <Wrench className="w-6 h-6 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-black">O.S. Em Andamento</p>
-                  <p className="text-xl font-black text-on-surface mt-1">{activeOrdersCount}</p>
-                  <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Ativas no momento</p>
-                </div>
-              </div>
-
-              <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
-                  <CheckCircle2 className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-black">O.S. Concluídas</p>
-                  <p className="text-xl font-black text-on-surface mt-1">{completedOrdersCount}</p>
-                  <p className="text-[9px] font-bold text-on-surface-variant uppercase mt-0.5">Total concluído</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Planilha de Ordens de Serviço (Salvo em Banco) */}
             <section className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
               <div className="p-6 border-b border-outline-variant bg-surface-container-low flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h3 className="font-bold text-on-surface uppercase tracking-widest text-sm flex items-center gap-2">
@@ -755,7 +711,6 @@ export default function MaintenanceControl() {
                 )}
               </div>
             </section>
-          </div>
         </>
       ) : (
         /* RENDERIZAR TAB DE EMPENHOS (GERENCIADOR) */
