@@ -114,11 +114,17 @@ export default function MaintenanceControl() {
   }, [compInitialValue, compReinforcementValue, compCancellationValue, compLiquidatedValue]);
 
   const filteredRecords = useMemo(() => {
-    return records.filter(r => {
-      const matchVehicle = !filterVehicle || r.vehicleId === filterVehicle;
-      const matchStatus = !filterStatus || r.status === filterStatus;
-      return matchVehicle && matchStatus;
-    });
+    return records
+      .filter(r => {
+        const matchVehicle = !filterVehicle || r.vehicleId === filterVehicle;
+        const matchStatus = !filterStatus || r.status === filterStatus;
+        return matchVehicle && matchStatus;
+      })
+      .sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      });
   }, [records, filterVehicle, filterStatus]);
 
   const commitmentSuppliers = useMemo(() => {
