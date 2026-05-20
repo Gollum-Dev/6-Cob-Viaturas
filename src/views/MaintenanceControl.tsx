@@ -43,10 +43,12 @@ export default function MaintenanceControl() {
   // Filtros de O.S.
   const [filterVehicle, setFilterVehicle] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-
   // State e Filtros de Empenho
   const [filterCommitmentQuery, setFilterCommitmentQuery] = useState('');
-  const [showCommitmentModal, setShowCommitmentModal] = useState(false);
+  const [filterCommitmentStatus, setFilterCommitmentStatus] = useState('');
+  const [filterCommitmentCategory, setFilterCommitmentCategory] = useState('');
+  const [filterCommitmentSupplier, setFilterCommitmentSupplier] = useState('');
+  const [showCommitmentModal, setShowCommitmentModal] = useState<boolean>(false);
   const [editingCommitmentId, setEditingCommitmentId] = useState<string | null>(null);
 
   // Campos do Formulário de Empenho
@@ -81,15 +83,28 @@ export default function MaintenanceControl() {
     });
   }, [records, filterVehicle, filterStatus]);
 
+  const commitmentSuppliers = useMemo(() => {
+    const seen = new Set<string>();
+    return commitments
+      .map(c => c.supplier)
+      .filter(s => s && s.trim() !== '' && !seen.has(s) && seen.add(s));
+  }, [commitments]);
+
   const filteredCommitments = useMemo(() => {
-    return commitments.filter(c => {
-      const query = filterCommitmentQuery.toLowerCase();
-      return c.number.toLowerCase().includes(query) || 
-             c.supplier.toLowerCase().includes(query) ||
-             c.sei.toLowerCase().includes(query) ||
-             c.city.toLowerCase().includes(query);
-    });
-  }, [commitments, filterCommitmentQuery]);
+    return commitments
+      .filter(c => {
+        const query = filterCommitmentQuery.toLowerCase();
+        const matchQuery = !query || c.number.toLowerCase().includes(query) ||
+               c.supplier.toLowerCase().includes(query) ||
+               c.sei.toLowerCase().includes(query) ||
+               c.city.toLowerCase().includes(query);
+        const matchStatus = !filterCommitmentStatus || c.status === filterCommitmentStatus;
+        const matchCategory = !filterCommitmentCategory || c.category === filterCommitmentCategory;
+        const matchSupplier = !filterCommitmentSupplier || c.supplier === filterCommitmentSupplier;
+        return matchQuery && matchStatus && matchCategory && matchSupplier;
+      })
+      .sort((a, b) => (b.year || 0) - (a.year || 0));
+  }, [commitments, filterCommitmentQuery, filterCommitmentStatus, filterCommitmentCategory, filterCommitmentSupplier]);
 
   const totalFilteredCost = useMemo(() => {
     return filteredRecords.reduce((sum, r) => sum + (r.invoiceValue && r.invoiceValue > 0 ? r.invoiceValue : r.cost), 0);
@@ -724,16 +739,50 @@ export default function MaintenanceControl() {
               <p className="text-xs text-on-surface-variant mt-1">Gerencie os recursos, empenhos, reforços e saldos de manutenção.</p>
             </div>
             
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-              {/* Barra de Pesquisa */}
-              <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              {/* Filtro Situação */}
+              <select
+                value={filterCommitmentStatus}
+                onChange={(e) => setFilterCommitmentStatus(e.target.value)}
+                className="text-xs font-bold text-on-surface bg-white border border-outline-variant px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Todas Situações</option>
+                <option value="vigente">Vigente</option>
+                <option value="finalizado">Finalizado</option>
+              </select>
+
+              {/* Filtro Categoria */}
+              <select
+                value={filterCommitmentCategory}
+                onChange={(e) => setFilterCommitmentCategory(e.target.value)}
+                className="text-xs font-bold text-on-surface bg-white border border-outline-variant px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Todas Categorias</option>
+                <option value="leve">Leve</option>
+                <option value="pesado">Pesado</option>
+              </select>
+
+              {/* Filtro Fornecedor */}
+              <select
+                value={filterCommitmentSupplier}
+                onChange={(e) => setFilterCommitmentSupplier(e.target.value)}
+                className="text-xs font-bold text-on-surface bg-white border border-outline-variant px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Todos Fornecedores</option>
+                {commitmentSuppliers.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+
+              {/* Busca texto */}
+              <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg">
                 <Filter className="w-3.5 h-3.5 text-on-surface-variant" />
                 <input
                   type="text"
-                  placeholder="Pesquisar empenho/fornecedor..."
+                  placeholder="Buscar nº/SEI..."
                   value={filterCommitmentQuery}
                   onChange={(e) => setFilterCommitmentQuery(e.target.value)}
-                  className="text-xs font-bold text-on-surface focus:outline-none bg-transparent placeholder-on-surface-variant/40"
+                  className="text-xs font-bold text-on-surface focus:outline-none bg-transparent placeholder-on-surface-variant/40 w-28"
                 />
               </div>
 
@@ -771,7 +820,6 @@ export default function MaintenanceControl() {
                 <thead>
                   <tr className="bg-surface-container/30 border-b border-outline-variant">
                     <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Nº Empenho</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[80px]">Unidade</th>
                     <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[160px]">Fornecedor</th>
                     <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Categoria</th>
                     <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[140px]">Cidade / SEI</th>
@@ -785,7 +833,7 @@ export default function MaintenanceControl() {
                 <tbody className="divide-y divide-outline-variant/30 text-xs">
                   {filteredCommitments.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                      <td colSpan={9} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                         Nenhum empenho cadastrado.
                       </td>
                     </tr>
@@ -796,9 +844,8 @@ export default function MaintenanceControl() {
                           <span className="font-black font-data-mono text-primary uppercase block">{c.number}</span>
                           <span className="text-[10px] text-on-surface-variant font-bold block">Ano: {c.year}</span>
                         </td>
-                        <td className="px-6 py-4 font-bold text-on-surface-variant">{c.unit}</td>
                         <td className="px-6 py-4">
-                          <span className="font-bold text-on-surface block max-w-[160px] truncate">{c.supplier}</span>
+                          <span className="font-bold text-on-surface block max-w-[160px] truncate">{c.supplier || <span className="italic text-on-surface-variant/40">—</span>}</span>
                         </td>
                         <td className="px-6 py-4">
                           <span className={cn(
@@ -905,12 +952,8 @@ export default function MaintenanceControl() {
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="block text-[8px] text-on-surface-variant/60 uppercase font-bold tracking-wider">Unidade</span>
-                      <span className="font-semibold text-on-surface">{c.unit}</span>
-                    </div>
-                    <div>
                       <span className="block text-[8px] text-on-surface-variant/60 uppercase font-bold tracking-wider">Cidade</span>
-                      <span className="font-semibold text-on-surface">{c.city}</span>
+                      <span className="font-semibold text-on-surface">{c.city || '—'}</span>
                     </div>
                     <div>
                       <span className="block text-[8px] text-on-surface-variant/60 uppercase font-bold tracking-wider">Processo SEI</span>
@@ -920,9 +963,9 @@ export default function MaintenanceControl() {
                       <span className="block text-[8px] text-on-surface-variant/60 uppercase font-bold tracking-wider">Categoria</span>
                       <span className={cn(
                         "inline-block px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider",
-                        c.category === CommitmentCategory.LEVE ? "bg-blue-50 text-blue-700" : "bg-orange-50 text-orange-700"
+                        c.category === CommitmentCategory.LEVE ? "bg-blue-50 text-blue-700" : c.category === CommitmentCategory.PESADO ? "bg-orange-50 text-orange-700" : "bg-slate-50 text-slate-400"
                       )}>
-                        {c.category}
+                        {c.category || '—'}
                       </span>
                     </div>
                   </div>
