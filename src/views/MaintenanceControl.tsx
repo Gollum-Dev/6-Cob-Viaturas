@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useVehicles } from '../context/VehicleContext';
 import { useMaintenance } from '../context/MaintenanceContext';
 import { useAuth } from '../context/AuthContext';
-import { MaintenanceType, MaintenanceStatus, Commitment, CommitmentStatus, CommitmentCategory } from '../types';
+import { MaintenanceType, MaintenanceStatus, Commitment, CommitmentStatus, CommitmentCategory, MaintenanceRecord } from '../types';
 import { cn } from '../lib/utils';
 
 export default function MaintenanceControl() {
@@ -25,6 +25,7 @@ export default function MaintenanceControl() {
   const [showAddForm, setShowAddForm] = useState(false);
   
   // State da Manutenção
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
   const [maintenanceType, setMaintenanceType] = useState<MaintenanceType>(MaintenanceType.PREVENTIVE_GENERAL);
   const [workshop, setWorkshop] = useState('');
@@ -65,6 +66,43 @@ export default function MaintenanceControl() {
   const [compCancellationValue, setCompCancellationValue] = useState('0');
   const [compBudgetedToPay, setCompBudgetedToPay] = useState('0');
   const [compLiquidatedValue, setCompLiquidatedValue] = useState('0');
+
+  // Helpers de Manutenção
+  const handleEditClick = (record: MaintenanceRecord) => {
+    setEditingRecordId(record.id);
+    setSelectedVehicleId(record.vehicleId);
+    setMaintenanceType(record.type);
+    setWorkshop(record.workshop || '');
+    setCost(record.cost ? record.cost.toString() : '');
+    setOdometer(record.odometerAtMaintenance ? record.odometerAtMaintenance.toString() : '');
+    setMaintenanceStatus(record.status);
+    setStartDate(record.date || new Date().toISOString().split('T')[0]);
+    setServicesPerformed(record.servicesPerformed || '');
+    setBudgetDocument(record.budgetDocument || '');
+    setCommitmentDocument(record.commitmentDocument || '');
+    setInvoiceDocument(record.invoiceDocument || '');
+    setSeiDocument(record.seiDocument || '');
+    setInvoiceValue(record.invoiceValue ? record.invoiceValue.toString() : '');
+    setSelectedCommitmentId(record.commitmentId || '');
+    setShowAddForm(true);
+  };
+
+  const handleCancel = () => {
+    setShowAddForm(false);
+    setEditingRecordId(null);
+    setSelectedVehicleId('');
+    setWorkshop('');
+    setCost('');
+    setOdometer('');
+    setStartDate(new Date().toISOString().split('T')[0]);
+    setServicesPerformed('');
+    setBudgetDocument('');
+    setCommitmentDocument('');
+    setInvoiceDocument('');
+    setSeiDocument('');
+    setInvoiceValue('');
+    setSelectedCommitmentId('');
+  };
 
   // Cálculos dinâmicos em tela do Empenho
   const compBalance = useMemo(() => {
@@ -118,11 +156,11 @@ export default function MaintenanceControl() {
     return records.filter(r => r.status === MaintenanceStatus.CONCLUIDO).length;
   }, [records]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedVehicleId) return;
 
-    addRecord({
+    const recordData = {
       vehicleId: selectedVehicleId,
       type: maintenanceType,
       workshop,
@@ -138,21 +176,18 @@ export default function MaintenanceControl() {
       seiDocument,
       invoiceValue: Number(invoiceValue || 0),
       commitmentId: selectedCommitmentId || undefined,
-    });
+    };
 
-    setShowAddForm(false);
-    setSelectedVehicleId('');
-    setWorkshop('');
-    setCost('');
-    setOdometer('');
-    setStartDate(new Date().toISOString().split('T')[0]);
-    setServicesPerformed('');
-    setBudgetDocument('');
-    setCommitmentDocument('');
-    setInvoiceDocument('');
-    setSeiDocument('');
-    setInvoiceValue('');
-    setSelectedCommitmentId('');
+    try {
+      if (editingRecordId) {
+        await updateRecord(editingRecordId, recordData);
+      } else {
+        await addRecord(recordData);
+      }
+      handleCancel();
+    } catch (err: any) {
+      alert('Erro ao salvar ordem de serviço: ' + (err.message || err));
+    }
   };
 
   return (
@@ -193,8 +228,16 @@ export default function MaintenanceControl() {
             className="bg-white border border-outline-variant rounded-2xl p-6 md:p-8 shadow-xl mb-8"
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-on-surface uppercase tracking-tight">Nova Ordem de Serviço</h2>
-              <button onClick={() => setShowAddForm(false)} className="text-on-surface-variant hover:text-primary font-bold text-sm uppercase">Cancelar</button>
+              <h2 className="text-xl font-black text-on-surface uppercase tracking-tight">
+                {editingRecordId ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
+              </h2>
+              <button 
+                type="button"
+                onClick={handleCancel} 
+                className="text-on-surface-variant hover:text-primary font-bold text-sm uppercase"
+              >
+                Cancelar
+              </button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="border-b border-outline-variant pb-4">
@@ -386,7 +429,7 @@ export default function MaintenanceControl() {
 
               <div className="flex justify-end pt-4 border-t border-outline-variant">
                 <button type="submit" className="bg-primary text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-lg">
-                  Salvar Ordem de Serviço
+                  {editingRecordId ? 'Atualizar Ordem de Serviço' : 'Salvar Ordem de Serviço'}
                 </button>
               </div>
             </form>
@@ -399,7 +442,7 @@ export default function MaintenanceControl() {
         <>
           <div className="flex justify-end mb-6">
             <button 
-              onClick={() => setShowAddForm(true)}
+              onClick={() => { handleCancel(); setShowAddForm(true); }}
               className="bg-primary text-white px-4 py-3 sm:px-6 sm:py-3.5 rounded-xl font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg text-[10px] sm:text-xs uppercase tracking-widest group w-full sm:w-auto"
             >
               <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform flex-shrink-0" />
@@ -452,10 +495,11 @@ export default function MaintenanceControl() {
                       <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Data</th>
                       <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Viatura</th>
                       <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[180px]">Serviço / Detalhes</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[130px]">Oficina / Fornecedor</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px] text-right">KM</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px] text-right">Financeiro (R$)</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Documentação</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[110px] text-right">Nota Fiscal (R$)</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Orçamento</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Empenho</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Nota Fiscal</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">SEI</th>
                       <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[140px]">Situação</th>
                       <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[80px]">Progresso</th>
                       <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ação</th>
@@ -464,7 +508,7 @@ export default function MaintenanceControl() {
                   <tbody className="divide-y divide-outline-variant/30 text-xs">
                     {filteredRecords.length === 0 ? (
                       <tr>
-                        <td colSpan={10} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                        <td colSpan={11} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                           Nenhum registro de manutenção no banco de dados.
                         </td>
                       </tr>
@@ -486,35 +530,44 @@ export default function MaintenanceControl() {
                                 <span className="block text-[10px] text-on-surface-variant font-medium mt-0.5 leading-relaxed max-w-xs">{record.servicesPerformed}</span>
                               )}
                             </td>
-                            <td className="px-6 py-4 font-bold text-on-surface">{record.workshop}</td>
-                            <td className="px-6 py-4 text-right font-bold text-on-surface font-data-mono">{record.odometerAtMaintenance?.toLocaleString() || '0'} KM</td>
-                            <td className="px-6 py-4 text-right font-data-mono space-y-0.5">
-                              <div className="text-[10px] text-on-surface-variant font-bold">Orçado: R$ {record.cost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</div>
-                              <div className="text-[10px] text-green-700 font-black">Nota: R$ {record.invoiceValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</div>
+                            <td className="px-6 py-4 text-right font-bold text-green-700 font-data-mono">
+                              R$ {record.invoiceValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
                             </td>
-                            <td className="px-6 py-4">
-                              <div className="flex flex-wrap gap-1 max-w-[150px]">
-                                {record.budgetDocument && (
-                                  <span className="text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded shadow-sm">
-                                    ORÇ: {record.budgetDocument}
-                                  </span>
-                                )}
-                                {record.commitmentDocument && (
-                                  <span className="text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-100 px-1.5 py-0.5 rounded shadow-sm">
-                                    EMP: {record.commitmentDocument}
-                                  </span>
-                                )}
-                                {record.invoiceDocument && (
-                                  <span className="text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded shadow-sm">
-                                    NF: {record.invoiceDocument}
-                                  </span>
-                                )}
-                                {record.seiDocument && (
-                                  <span className="text-[9px] font-bold bg-slate-50 text-slate-700 border border-slate-200 px-1.5 py-0.5 rounded shadow-sm">
-                                    SEI: {record.seiDocument}
-                                  </span>
-                                )}
-                              </div>
+                            <td className="px-6 py-4 font-bold text-on-surface-variant font-data-mono">
+                              {record.budgetDocument ? (
+                                <span className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded shadow-sm">
+                                  {record.budgetDocument}
+                                </span>
+                              ) : (
+                                <span className="text-on-surface-variant/40">—</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 font-bold text-on-surface-variant font-data-mono">
+                              {record.commitmentDocument ? (
+                                <span className="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100 px-1.5 py-0.5 rounded shadow-sm">
+                                  {record.commitmentDocument}
+                                </span>
+                              ) : (
+                                <span className="text-on-surface-variant/40">—</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 font-bold text-on-surface-variant font-data-mono">
+                              {record.invoiceDocument ? (
+                                <span className="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded shadow-sm">
+                                  {record.invoiceDocument}
+                                </span>
+                              ) : (
+                                <span className="text-on-surface-variant/40">—</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 font-bold text-on-surface-variant font-data-mono">
+                              {record.seiDocument ? (
+                                <span className="text-[10px] font-bold bg-slate-50 text-slate-700 border border-slate-200 px-1.5 py-0.5 rounded shadow-sm">
+                                  {record.seiDocument}
+                                </span>
+                              ) : (
+                                <span className="text-on-surface-variant/40">—</span>
+                              )}
                             </td>
                             <td className="px-6 py-4">
                               <select 
@@ -559,17 +612,26 @@ export default function MaintenanceControl() {
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <button 
-                                onClick={async () => {
-                                  if (window.confirm("Deseja realmente excluir este registro de manutenção permanente?")) {
-                                    await deleteRecord(record.id);
-                                  }
-                                }}
-                                className="text-on-surface-variant hover:text-error transition-colors p-1"
-                                title="Excluir O.S."
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={() => handleEditClick(record)}
+                                  className="text-on-surface-variant hover:text-primary transition-colors p-1"
+                                  title="Editar O.S."
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button 
+                                  onClick={async () => {
+                                    if (window.confirm("Deseja realmente excluir este registro de manutenção permanente?")) {
+                                      await deleteRecord(record.id);
+                                    }
+                                  }}
+                                  className="text-on-surface-variant hover:text-error transition-colors p-1"
+                                  title="Excluir O.S."
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -707,7 +769,14 @@ export default function MaintenanceControl() {
                           </div>
                         </div>
 
-                        <div className="pt-2 border-t border-outline-variant/30 flex justify-end">
+                        <div className="pt-2 border-t border-outline-variant/30 flex justify-end gap-2">
+                          <button 
+                            onClick={() => handleEditClick(record)}
+                            className="flex items-center gap-1.5 text-[9px] font-black text-primary uppercase tracking-widest hover:underline px-3 py-1 bg-primary/5 hover:bg-primary/10 border border-primary/10 rounded-lg transition-all"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                            Editar Registro
+                          </button>
                           <button 
                             onClick={async () => {
                               if (window.confirm("Deseja realmente excluir este registro de manutenção permanente?")) {
