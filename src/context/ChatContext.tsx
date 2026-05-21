@@ -124,7 +124,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const unreadCount = useMemo(() => {
     if (!user) return 0;
     
-    const isAdmin = user.role === UserRole.ADMINISTRADOR;
+    const isAdmin = user.role === UserRole.ADMINISTRADOR || user.role === UserRole.DESENVOLVEDOR;
 
     return messages.filter((msg) => {
       if (msg.is_read) return false;

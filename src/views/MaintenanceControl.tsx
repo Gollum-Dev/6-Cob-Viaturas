@@ -1,11 +1,21 @@
 import React, { useState, useMemo } from 'react';
-import { Wrench, Plus, Trash2, Filter, DollarSign, CheckCircle2, FileSpreadsheet, Pencil } from 'lucide-react';
+import { Wrench, Plus, Trash2, Filter, DollarSign, CheckCircle2, FileSpreadsheet, Pencil, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useVehicles } from '../context/VehicleContext';
 import { useMaintenance } from '../context/MaintenanceContext';
 import { useAuth } from '../context/AuthContext';
 import { MaintenanceType, MaintenanceStatus, Commitment, CommitmentStatus, CommitmentCategory, MaintenanceRecord } from '../types';
 import { cn } from '../lib/utils';
+const getProgressFromStatus = (status: MaintenanceStatus): number => {
+  switch (status) {
+    case MaintenanceStatus.MANUTENCAO: return 20;
+    case MaintenanceStatus.ORCAMENTO: return 40;
+    case MaintenanceStatus.NOTA_FISCAL: return 60;
+    case MaintenanceStatus.SEI: return 80;
+    case MaintenanceStatus.CONCLUIDO: return 100;
+    default: return 0;
+  }
+};
 
 export default function MaintenanceControl() {
   const { vehicles } = useVehicles();
@@ -44,6 +54,8 @@ export default function MaintenanceControl() {
   // Filtros de O.S.
   const [filterVehicle, setFilterVehicle] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterCommitment, setFilterCommitment] = useState('');
+  const [filterSearchQuery, setFilterSearchQuery] = useState('');
   // State e Filtros de Empenho
   const [filterCommitmentQuery, setFilterCommitmentQuery] = useState('');
   const [filterCommitmentStatus, setFilterCommitmentStatus] = useState('');
@@ -118,14 +130,26 @@ export default function MaintenanceControl() {
       .filter(r => {
         const matchVehicle = !filterVehicle || r.vehicleId === filterVehicle;
         const matchStatus = !filterStatus || r.status === filterStatus;
-        return matchVehicle && matchStatus;
+        const matchCommitment = !filterCommitment || r.commitmentId === filterCommitment;
+        
+        const query = filterSearchQuery.toLowerCase();
+        const matchSearch = !query || 
+          (r.type?.toLowerCase().includes(query)) ||
+          (r.workshop?.toLowerCase().includes(query)) ||
+          (r.servicesPerformed?.toLowerCase().includes(query)) ||
+          (r.budgetDocument?.toLowerCase().includes(query)) ||
+          (r.commitmentDocument?.toLowerCase().includes(query)) ||
+          (r.invoiceDocument?.toLowerCase().includes(query)) ||
+          (r.seiDocument?.toLowerCase().includes(query));
+
+        return matchVehicle && matchStatus && matchCommitment && matchSearch;
       })
       .sort((a, b) => {
         const dateA = a.date ? new Date(a.date).getTime() : 0;
         const dateB = b.date ? new Date(b.date).getTime() : 0;
         return dateB - dateA;
       });
-  }, [records, filterVehicle, filterStatus]);
+  }, [records, filterVehicle, filterStatus, filterCommitment, filterSearchQuery]);
 
   const commitmentSuppliers = useMemo(() => {
     const seen = new Set<string>();
@@ -174,7 +198,7 @@ export default function MaintenanceControl() {
       odometerAtMaintenance: Number(odometer),
       status: maintenanceStatus,
       cost: Number(cost || 0),
-      progress: maintenanceStatus === MaintenanceStatus.CONCLUIDO ? 100 : 50,
+      progress: getProgressFromStatus(maintenanceStatus),
       servicesPerformed,
       budgetDocument,
       commitmentDocument,
@@ -277,7 +301,7 @@ export default function MaintenanceControl() {
                         <option value="">-- Escolha um empenho cadastrado --</option>
                         {commitments.filter(c => c.status === CommitmentStatus.VIGENTE).map(c => (
                           <option key={c.id} value={c.id}>
-                            {c.number} - {c.supplier} (Saldo: R$ {c.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                            {c.number} - {c.category} - {c.city} (Saldo: R$ {c.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
                           </option>
                         ))}
                       </select>
@@ -490,6 +514,28 @@ export default function MaintenanceControl() {
                       ))}
                     </select>
                   </div>
+                  <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg w-full sm:w-auto">
+                    <select 
+                      value={filterCommitment}
+                      onChange={(e) => setFilterCommitment(e.target.value)}
+                      className="text-xs font-bold text-on-surface focus:outline-none bg-transparent w-full sm:w-auto"
+                    >
+                      <option value="">Todos os Empenhos</option>
+                      {commitments.map(c => (
+                        <option key={c.id} value={c.id}>{c.number} - {c.category} - {c.city}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white border border-outline-variant px-3 py-1.5 rounded-lg w-full sm:w-auto">
+                    <Search className="w-3.5 h-3.5 text-on-surface-variant" />
+                    <input
+                      type="text"
+                      placeholder="Buscar em todos os dados..."
+                      value={filterSearchQuery}
+                      onChange={(e) => setFilterSearchQuery(e.target.value)}
+                      className="text-xs font-bold text-on-surface focus:outline-none bg-transparent w-full sm:w-auto placeholder:font-normal"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -580,7 +626,7 @@ export default function MaintenanceControl() {
                                 value={record.status}
                                 onChange={async (e) => {
                                   const newStatus = e.target.value as MaintenanceStatus;
-                                  const newProgress = newStatus === MaintenanceStatus.CONCLUIDO ? 100 : 50;
+                                  const newProgress = getProgressFromStatus(newStatus);
                                   await updateRecord(record.id, { status: newStatus, progress: newProgress });
                                 }}
                                 className={cn(
@@ -734,7 +780,7 @@ export default function MaintenanceControl() {
                               value={record.status}
                               onChange={async (e) => {
                                 const newStatus = e.target.value as MaintenanceStatus;
-                                const newProgress = newStatus === MaintenanceStatus.CONCLUIDO ? 100 : 50;
+                                const newProgress = getProgressFromStatus(newStatus);
                                   await updateRecord(record.id, { status: newStatus, progress: newProgress });
                               }}
                               className={cn(

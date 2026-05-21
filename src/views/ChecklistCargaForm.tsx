@@ -45,8 +45,8 @@ export default function ChecklistCargaForm() {
         .from('load_maps')
         .select('*, vehicles(prefix, type)');
 
-      // Non-administrators only see maps of their unit
-      if (user.role !== UserRole.ADMINISTRADOR) {
+      // Non-administrators and non-developers only see maps of their unit
+      if (user.role !== UserRole.ADMINISTRADOR && user.role !== UserRole.DESENVOLVEDOR) {
         query = query.eq('unit', user.unit);
       }
 

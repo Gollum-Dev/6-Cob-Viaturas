@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useVehicles } from '../context/VehicleContext';
 import { useMaintenance } from '../context/MaintenanceContext';
 import { useReports } from '../context/ReportContext';
-import { VehicleStatus } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { VehicleStatus, UserRole } from '../types';
 import { cn } from '../lib/utils';
 
 export default function Dashboard() {
@@ -13,6 +14,9 @@ export default function Dashboard() {
   const { vehicles } = useVehicles();
   const { records } = useMaintenance();
   const { submissions } = useReports();
+  const { user } = useAuth();
+
+  const showUnitStats = user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR;
 
   // Estados do Modal Premium
   const [selectedModal, setSelectedModal] = useState<{
@@ -195,8 +199,9 @@ export default function Dashboard() {
       </div>
 
       {/* Grid de viaturas por unidade com botão de listagem */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
-        <div className="lg:col-span-12 space-y-6">
+      {showUnitStats && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
+          <div className="lg:col-span-12 space-y-6">
           <section className="bg-white border border-outline-variant rounded-2xl overflow-hidden shadow-sm">
             <div className="p-4 sm:p-5 md:p-6 border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
               <h3 className="text-xs sm:text-sm md:text-base font-black text-on-surface uppercase tracking-tight flex items-center gap-2">
@@ -285,6 +290,7 @@ export default function Dashboard() {
           </section>
         </div>
       </div>
+      )}
 
       {/* Modal Interativo e Premium */}
       <AnimatePresence>

@@ -119,8 +119,8 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
     if (!error && data) {
       let mapped = data.map(mapRecordFromDB);
       
-      // Filtrar registros se não for ADMINISTRADOR
-      if (user.role !== UserRole.ADMINISTRADOR) {
+      // For non-ADMIN/DEV, filter records based on their unit's vehicles
+      if (user.role !== UserRole.ADMINISTRADOR && user.role !== UserRole.DESENVOLVEDOR) {
         const allowedVehicleIds = new Set(vehicles.map(v => v.id));
         mapped = mapped.filter(rec => allowedVehicleIds.has(rec.vehicleId));
       }
