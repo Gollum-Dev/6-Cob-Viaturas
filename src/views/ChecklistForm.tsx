@@ -7,19 +7,48 @@ import { useAuth } from '../context/AuthContext';
 import { useReports } from '../context/ReportContext';
 import { cn } from '../lib/utils';
 
-const checklistItems = [
-  "LUZES INTERIORES: VERIFICAR O FUNCIONAMENTO",
-  "BUZINA: VERIFICAR O FUNCIONAMENTO",
-  "VERIFICAR SIRENE E/OU FÁDÓ (COMPLETAR O ÓLEO DA FÁDÓ SE NECESSÁRIO)",
-  "VERIFICAR LUZES ACESAS NO PAINEL COM O MOTOR FUNCIONANDO (ABS, AIRBAG, INJEÇÃO, FREIO, ETC)",
-  "PALHETA DOS LIMPADORES DOS VIDROS: VERIFICAR",
-  "PARA-BRISA: REALIZAR INSPEÇÃO VISUAL QUANTO A DANOS (TRINCAS)",
-  "SISTEMA DE LIMPADOR E LAVADOR DOS VIDROS: VERIFICAR O FUNCIONAMENTO",
-  "PNEUS: VERIFICAR QUANTO A DESGASTE (TWI) E CALIBRAR",
-  "LÍQUIDO DE ARREFECIMENTO (ÁGUA DO RADIADOR): VERIFICAR",
-  "VERIFICAR NÍVEL DE ÓLEO DO MOTOR",
-  "COMPLETAR O COMBUSTÍVEL",
+const checklistCategories = [
+  {
+    title: "Elétrica e Painel",
+    items: [
+      "LUZES INTERIORES: VERIFICAR O FUNCIONAMENTO.",
+      "BUZINA E SIRENE: VERIFICAR O FUNCIONAMENTO.",
+      "PAINEL: VERIFICAR LUZES DE ADVERTÊNCIA ACESAS COM O MOTOR FUNCIONANDO (ABS, AIRBAG, INJEÇÃO, FREIO, ETC) E MARCADORES (COMBUSTÍVEL/TEMPERATURA).",
+      "ILUMINAÇÃO EXTERNA: VERIFICAR FARÓIS, LANTERNAS, SETAS, LUZ DE PLACA, LUZ DE RÉ E LUZ DE FREIO.",
+      "BATERIA: VERIFICAR A FIXAÇÃO E LIMPEZA DOS BORNES (POSITIVO E NEGATIVO)."
+    ]
+  },
+  {
+    title: "Vidros, Visibilidade e Ergonomia",
+    items: [
+      "PALHETAS DOS LIMPADORES: VERIFICAR O ESTADO DA BORRACHA e DESGASTE.",
+      "SISTEMA DE LIMPADOR E LAVADOR: VERIFICAR O FUNCIONAMENTO E O NÍVEL DO RESERVATÓRIO DE ÁGUA DO PARABRISA.",
+      "PARA-BRISA E JANELAS: REALIZAR INSPEÇÃO VISUAL QUANTO A DANOS, TRINCAS OU RACHADURAS.",
+      "RETROVISORES E CINTOS: VERIFICAR FIXAÇÃO/REGULAGEM DOS ESPELHOS E O TRAVAMENTO DOS CINTOS DE SEGURANÇA."
+    ]
+  },
+  {
+    title: "Fluidos, Motor e Mecânica",
+    items: [
+      "ÓLEO DO MOTOR: VERIFICAR NÍVEL (MOTOR FRIO MÍNIMO 20 MIN. EM REPOUSO, LOCAL PLANO) E COMPLETAR SE NECESSÁRIO.",
+      "LÍQUIDO DE ARREFECIMENTO: VERIFICAR NÍVEL NO VASO DE EXPANSÃO (RADIADOR) E COMPLETAR SE NECESSÁRIO.",
+      "FLUIDO DE FREIO E EMBREAGEM: VERIFICAR O NÍVEL NO RESERVATÓRIO.",
+      "ÓLEO DA DIREÇÃO HIDRÁULICA: VERIFICAR NÍVEL E COMPLETAR SE NECESSÁRIO.",
+      "SISTEMA PNEUMÁTICO (CAMINHÕES): DRENAR A ÁGUA DOS RESERVATÓRIOS DE AR E CHECAR A PRESSÃO DOS MANÔMETROS NO PAINEL.",
+      "CORREIAS E VAZAMENTOS: INSPEÇÃO VISUAL DE CORREIAS VISÍVEIS (DESFIAMENTOS) E VERIFICAÇÃO DE VAZAMENTOS EM GERAL SOB O VEÍCULO."
+    ]
+  },
+  {
+    title: "Rodagem, Estrutura e Segurança",
+    items: [
+      "PNEUS E RODAS: VERIFICAR DESGASTE (TWI), CALIBRAGEM (INCLUSIVE DO ESTEPE/SOBRESSALENTE) E FIXAÇÃO VISUAL DAS PORCAS/PARAFUSOS.",
+      "CARROCERIA: REALIZAR INSPEÇÃO VISUAL INTERNA E EXTERNA (INTEGRIDADE, FIXAÇÃO DE PARA-CHOQUES, PLACAS E TRAVAMENTO DE CABINE SE FOR CAMINHÃO).",
+      "KIT DE EMERGÊNCIA: VERIFICAR A PRESENÇA E ESTADO DA CHAVE DE RODA, MACACO E TRIÂNGULO."
+    ]
+  }
 ];
+
+const checklistItems = checklistCategories.flatMap(c => c.items);
 
 export default function ChecklistForm() {
   const navigate = useNavigate();
@@ -180,70 +209,85 @@ export default function ChecklistForm() {
           </div>
           
           <div className="divide-y divide-outline-variant/30">
-            {checklistItems.map((item, index) => (
-              <div key={index} className="px-4 md:px-8 py-4 md:py-6 group hover:bg-surface-container-low transition-colors">
-                <div className="flex flex-row items-center justify-between gap-4">
-                  <p className="text-xs md:text-sm font-semibold text-on-surface leading-tight flex-1">
-                    <span className="text-on-surface-variant font-data-mono mr-2 md:mr-3">{String(index + 1).padStart(2, '0')}.</span>
-                    {item}
-                  </p>
-                  
-                  <div className="flex items-center justify-end shrink-0">
-                    <button 
-                      type="button"
-                      onClick={() => toggleStatus(index)}
-                      className={cn(
-                        "relative w-20 h-8 rounded-full transition-all duration-300 p-1 flex items-center font-black text-[9px] uppercase tracking-tighter",
-                        statuses[index] ? "bg-green-600" : "bg-error"
-                      )}
-                    >
-                      <div className="absolute inset-0 flex justify-between items-center px-3 pointer-events-none text-white opacity-80">
-                        <span>OK</span>
-                        <span>X</span>
-                      </div>
-                      <motion.div 
-                        animate={{ x: statuses[index] ? 48 : 0 }}
-                        className="w-6 h-6 rounded-full bg-white shadow-lg flex items-center justify-center z-10"
-                      >
-                         {!statuses[index] && <AlertCircle className="w-3 h-3 text-error" />}
-                         {statuses[index] && <CheckCircle2 className="w-3 h-3 text-green-600" />}
-                      </motion.div>
-                    </button>
+            {checklistCategories.map((category, catIndex) => {
+              const startIndex = checklistCategories.slice(0, catIndex).reduce((acc, curr) => acc + curr.items.length, 0);
+              return (
+                <div key={catIndex}>
+                  <div className="bg-surface-container-low px-4 md:px-8 py-3 flex items-center gap-2">
+                     <span className="font-bold text-[10px] md:text-xs text-primary uppercase tracking-widest">{category.title}</span>
+                  </div>
+                  <div className="divide-y divide-outline-variant/30">
+                    {category.items.map((item, relativeIndex) => {
+                      const index = startIndex + relativeIndex;
+                      return (
+                        <div key={index} className="px-4 md:px-8 py-4 md:py-6 group hover:bg-surface-container-low transition-colors">
+                          <div className="flex flex-row items-center justify-between gap-4">
+                            <p className="text-xs md:text-sm font-semibold text-on-surface leading-tight flex-1">
+                              <span className="text-on-surface-variant font-data-mono mr-2 md:mr-3">{String(index + 1).padStart(2, '0')}.</span>
+                              {item}
+                            </p>
+                            
+                            <div className="flex items-center justify-end shrink-0">
+                              <button 
+                                type="button"
+                                onClick={() => toggleStatus(index)}
+                                className={cn(
+                                  "relative w-20 h-8 rounded-full transition-all duration-300 p-1 flex items-center font-black text-[9px] uppercase tracking-tighter",
+                                  statuses[index] ? "bg-green-600" : "bg-error"
+                                )}
+                              >
+                                <div className="absolute inset-0 flex justify-between items-center px-3 pointer-events-none text-white opacity-80">
+                                  <span>OK</span>
+                                  <span>X</span>
+                                </div>
+                                <motion.div 
+                                  animate={{ x: statuses[index] ? 48 : 0 }}
+                                  className="w-6 h-6 rounded-full bg-white shadow-lg flex items-center justify-center z-10"
+                                >
+                                   {!statuses[index] && <AlertCircle className="w-3 h-3 text-error" />}
+                                   {statuses[index] && <CheckCircle2 className="w-3 h-3 text-green-600" />}
+                                </motion.div>
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <AnimatePresence>
+                            {!statuses[index] && (
+                              <motion.div 
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="mt-6 p-6 bg-error-container/10 rounded-lg border border-error/20 space-y-4">
+                                  <div className="flex justify-between items-center">
+                                    <label className="text-[10px] font-black text-error uppercase tracking-widest flex items-center gap-2">
+                                      <AlertCircle className="w-3 h-3" />
+                                      Descrição da Anomalia
+                                    </label>
+                                    <button type="button" className="flex items-center gap-2 bg-white border border-outline px-3 py-1.5 rounded-lg text-on-surface text-[10px] font-bold uppercase hover:bg-surface-container transition-all">
+                                      <Camera className="w-3 h-3" />
+                                      Anexar Foto
+                                    </button>
+                                  </div>
+                                  <textarea 
+                                    placeholder="Especifique o problema encontrado..."
+                                    value={observations[index] || ''}
+                                    onChange={(e) => handleObservationChange(index, e.target.value)}
+                                    className="w-full bg-white border border-error/20 rounded-lg p-4 text-sm focus:outline-none focus:border-error transition-all"
+                                    rows={2}
+                                  />
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                
-                <AnimatePresence>
-                  {!statuses[index] && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="mt-6 p-6 bg-error-container/10 rounded-lg border border-error/20 space-y-4">
-                        <div className="flex justify-between items-center">
-                          <label className="text-[10px] font-black text-error uppercase tracking-widest flex items-center gap-2">
-                            <AlertCircle className="w-3 h-3" />
-                            Descrição da Anomalia
-                          </label>
-                          <button className="flex items-center gap-2 bg-white border border-outline px-3 py-1.5 rounded-lg text-on-surface text-[10px] font-bold uppercase hover:bg-surface-container transition-all">
-                            <Camera className="w-3 h-3" />
-                            Anexar Foto
-                          </button>
-                        </div>
-                        <textarea 
-                          placeholder="Especifique o problema encontrado..."
-                          value={observations[index] || ''}
-                          onChange={(e) => handleObservationChange(index, e.target.value)}
-                          className="w-full bg-white border border-error/20 rounded-lg p-4 text-sm focus:outline-none focus:border-error transition-all"
-                          rows={2}
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
