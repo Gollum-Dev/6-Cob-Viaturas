@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Car, ClipboardCheck, ClipboardList, Wrench, FileText, FileSpreadsheet, User as UserIcon, Settings, LogOut, Users, Calendar, MessageSquare, Package, Home } from 'lucide-react';
+import { LayoutDashboard, Car, ClipboardCheck, ClipboardList, Wrench, FileText, FileSpreadsheet, User as UserIcon, Settings, LogOut, Users, Calendar, MessageSquare, Package, Home, Clock } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
@@ -21,6 +21,7 @@ const navItems = [
   { icon: Package, label: 'Mapa Carga', href: '/mapacarga', roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP] },
   { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
   { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
+  { icon: Clock, label: 'Banco de Horas', href: '/banco-horas', roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
   { icon: FileText, label: 'Relatório Viatura', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: FileSpreadsheet, label: 'Relatório Carga', href: '/relatorios-carga', roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: MessageSquare, label: 'Mensagens', href: '/chat', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },

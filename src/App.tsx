@@ -25,6 +25,7 @@ import ChecklistCargaForm from './views/ChecklistCargaForm';
 import { LoadChecklistProvider } from './context/LoadChecklistContext';
 import LoadReports from './views/LoadReports';
 import Home from './views/Home';
+import BancoDeHoras from './views/BancoDeHoras';
 
 
 function AppContent() {
@@ -64,6 +65,7 @@ function AppContent() {
             <>
               <Route path="checklist" element={<ChecklistForm />} />
               <Route path="checklist-carga" element={<ChecklistCargaForm />} />
+              <Route path="banco-horas" element={<BancoDeHoras />} />
               <Route path="chat" element={<ChatView />} />
               <Route path="configuracoes" element={<SettingsView />} />
               <Route path="*" element={<Navigate to="/" replace />} />
@@ -100,6 +102,7 @@ function AppContent() {
                 <Route path="mapacarga" element={<LoadMaps />} />
               )}
               <Route path="chat" element={<ChatView />} />
+              <Route path="banco-horas" element={<BancoDeHoras />} />
               {canAccessMaintenanceAndRevisions && (
                 <>
                   <Route path="manutencao" element={<MaintenanceControl />} />

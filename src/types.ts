@@ -30,6 +30,7 @@ export interface User {
   rg?: string;
   birthDate?: string;
   fullName?: string;
+  ala?: string;
 }
 
 export interface Vehicle {
@@ -228,3 +229,23 @@ export interface LoadChecklistSubmission {
   unit: string;
   items: LoadChecklistItem[];
 }
+
+export enum TimeBankType {
+  WORKED = 'TRABALHADA',
+  OVERTIME = 'EXTRA',
+  TIME_OFF = 'FOLGA',
+}
+
+export interface TimeBankRecord {
+  id: string;
+  userId: string;
+  type: TimeBankType;
+  hours: number;
+  date: string;
+  description?: string;
+  createdAt: string;
+  createdBy?: string;
+  creatorRank?: string;
+  creatorName?: string;
+}
+
