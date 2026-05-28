@@ -20,6 +20,7 @@ interface DailyGroup {
   saidas: number;
   saldo: number;
   records: TimeBankRecord[];
+  km: number;
 }
 
 export default function MovimentacaoDiaria() {
@@ -99,7 +100,8 @@ export default function MovimentacaoDiaria() {
         date: r.date,
         description: r.description,
         createdAt: r.created_at,
-        createdBy: r.created_by
+        createdBy: r.created_by,
+        km: Number(r.km || 0)
       }));
 
       setRecords(mappedRecords);
@@ -128,11 +130,13 @@ export default function MovimentacaoDiaria() {
           entradas: 0,
           saidas: 0,
           saldo: 0,
-          records: []
+          records: [],
+          km: 0
         };
       }
 
       groups[dateKey].records.push(record);
+      groups[dateKey].km += record.km || 0;
 
       if (record.type === TimeBankType.WORKED || record.type === TimeBankType.OVERTIME) {
         groups[dateKey].entradas += record.hours;
@@ -154,16 +158,19 @@ export default function MovimentacaoDiaria() {
   const periodTotals = useMemo(() => {
     let totalEntradas = 0;
     let totalSaidas = 0;
+    let totalKm = 0;
 
     dailyGroups.forEach(g => {
       totalEntradas += g.entradas;
       totalSaidas += g.saidas;
+      totalKm += g.km;
     });
 
     return {
       entradas: totalEntradas,
       saidas: totalSaidas,
-      saldo: totalEntradas - totalSaidas
+      saldo: totalEntradas - totalSaidas,
+      km: totalKm
     };
   }, [dailyGroups]);
 
@@ -284,7 +291,7 @@ export default function MovimentacaoDiaria() {
       </div>
 
       {/* Period Consolidation Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         {/* Entradas */}
         <motion.div
           whileHover={{ y: -2 }}
@@ -336,6 +343,21 @@ export default function MovimentacaoDiaria() {
             </span>
           </div>
         </motion.div>
+
+        {/* Total KM Rodados */}
+        <motion.div
+          whileHover={{ y: -2 }}
+          className="bg-surface-container-lowest p-6 rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
+        >
+          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1">
+            <ArrowUpDown className="w-4 h-4 text-blue-500" />
+            Total KM Rodados
+          </span>
+          <div className="flex justify-between items-end mt-4">
+            <span className="text-3xl font-black text-blue-500">{periodTotals.km.toFixed(0)} km</span>
+            <span className="text-[10px] font-black uppercase text-blue-500/70 bg-blue-500/10 px-2.5 py-1 rounded-full">Distância</span>
+          </div>
+        </motion.div>
       </div>
 
       {/* Daily Grouping Table */}
@@ -348,6 +370,7 @@ export default function MovimentacaoDiaria() {
                 <th className="px-8 py-5 text-left text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant">Data</th>
                 <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant">Entradas (+h)</th>
                 <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant">Saídas (-h)</th>
+                <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant">KM Rodados</th>
                 <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant">Saldo do Dia</th>
                 <th className="px-8 py-5 text-right text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[120px]">Ações</th>
               </tr>
@@ -355,7 +378,7 @@ export default function MovimentacaoDiaria() {
             <tbody className="divide-y divide-outline-variant/30">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-8 py-20 text-center">
+                  <td colSpan={7} className="px-8 py-20 text-center">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
                       <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Carregando movimentações...</p>
@@ -400,6 +423,11 @@ export default function MovimentacaoDiaria() {
                           {g.saidas > 0 ? `-${g.saidas.toFixed(1)}h` : '0.0h'}
                         </td>
 
+                        {/* KM Rodados */}
+                        <td className="px-8 py-5 text-center font-bold text-slate-400">
+                          {g.km > 0 ? `${g.km.toFixed(0)} km` : '0 km'}
+                        </td>
+
                         {/* Saldo */}
                         <td className={`px-8 py-5 text-center font-black text-sm ${
                           g.saldo >= 0 ? 'text-green-600' : 'text-error'
@@ -424,7 +452,7 @@ export default function MovimentacaoDiaria() {
                       {/* Expandable details container */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan={6} className="bg-surface-container-low/10 p-6 border-b border-outline-variant">
+                          <td colSpan={7} className="bg-surface-container-low/10 p-6 border-b border-outline-variant">
                             <motion.div
                               initial={{ opacity: 0, height: 0 }}
                               animate={{ opacity: 1, height: 'auto' }}
@@ -477,6 +505,11 @@ export default function MovimentacaoDiaria() {
                                           }`}>
                                             {record.type === TimeBankType.TIME_OFF ? '-' : '+'}{record.hours.toFixed(1)}h
                                           </span>
+                                          {record.km && record.km > 0 ? (
+                                            <span className="text-[9px] font-bold text-blue-500 block">
+                                              {record.km.toFixed(0)} km
+                                            </span>
+                                          ) : null}
                                           <span className="text-[8px] font-black uppercase text-on-surface-variant/40 block mt-0.5">
                                             Por: {getCreatorInfo(record.createdBy)}
                                           </span>
@@ -495,7 +528,7 @@ export default function MovimentacaoDiaria() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-8 py-20 text-center">
+                  <td colSpan={7} className="px-8 py-20 text-center">
                     <div className="flex flex-col items-center justify-center opacity-30">
                       <HelpCircle className="w-16 h-16 mb-4" />
                       <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Nenhuma movimentação registrada neste período</p>

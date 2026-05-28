@@ -247,5 +247,6 @@ export interface TimeBankRecord {
   createdBy?: string;
   creatorRank?: string;
   creatorName?: string;
+  km?: number;
 }
 

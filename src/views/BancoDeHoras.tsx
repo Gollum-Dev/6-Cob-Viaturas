@@ -35,7 +35,7 @@ export default function BancoDeHoras() {
     // Operational users see ONLY Consulta de Horas and Movimentação Diária
     if (user.role === UserRole.OPERACIONAL) {
       return [
-        { id: 'consulta' as SubTab, label: 'CONSULTA DE HORAS', icon: Eye },
+        { id: 'consulta' as SubTab, label: 'CONSULTA', icon: Eye },
         { id: 'movimentacao' as SubTab, label: 'MOVIMENTAÇÃO DIÁRIA', icon: ArrowUpDown }
       ];
     }
@@ -46,7 +46,7 @@ export default function BancoDeHoras() {
         { id: 'escala' as SubTab, label: 'ESCALA', icon: Calendar },
         { id: 'folga_extra' as SubTab, label: 'FOLGA / HORA EXTRA', icon: Clock },
         { id: 'plantao' as SubTab, label: 'PLANTÃO', icon: CalendarCheck },
-        { id: 'consulta' as SubTab, label: 'CONSULTA DE HORAS', icon: Eye },
+        { id: 'consulta' as SubTab, label: 'CONSULTA', icon: Eye },
         { id: 'movimentacao' as SubTab, label: 'MOVIMENTAÇÃO DIÁRIA', icon: ArrowUpDown }
       ];
     }
@@ -60,7 +60,7 @@ export default function BancoDeHoras() {
       <div className="p-8 bg-surface-container-lowest border border-outline-variant rounded-[24px] text-center shadow-sm max-w-lg mx-auto mt-10">
         <p className="text-xs font-black uppercase text-error tracking-widest">Acesso Não Autorizado</p>
         <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-2">
-          O Banco de Horas não está disponível para o perfil Administrativo.
+          O Banco de Horas / KM não está disponível para o perfil Administrativo.
         </p>
       </div>
     );

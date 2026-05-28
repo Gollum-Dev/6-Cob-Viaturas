@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Eye, History, Search, Award, Users, RefreshCw, Clock, Filter, Calendar, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, History, Search, Award, Users, RefreshCw, Clock, Filter, Calendar, X, FileText, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, TimeBankType, TimeBankRecord } from '../types';
 import { supabase } from '../lib/supabase';
@@ -20,6 +20,7 @@ interface UserBalance {
   overtime: number;
   timeOff: number;
   netBalance: number;
+  km: number;
 }
 
 export default function ConsultaHoras() {
@@ -65,7 +66,7 @@ export default function ConsultaHoras() {
       // 2. Fetch Time Bank Records for consolidation
       const { data: recordsData, error: recordsError } = await supabase
         .from('time_bank_records')
-        .select('user_id, type, hours');
+        .select('user_id, type, hours, km');
       
       if (recordsError) throw recordsError;
 
@@ -73,20 +74,22 @@ export default function ConsultaHoras() {
       const aggregated: { [key: string]: UserBalance } = {};
       
       (usersData || []).forEach(u => {
-        aggregated[u.id] = { worked: 0, overtime: 0, timeOff: 0, netBalance: 0 };
+        aggregated[u.id] = { worked: 0, overtime: 0, timeOff: 0, netBalance: 0, km: 0 };
       });
 
       (recordsData || []).forEach(r => {
         const uid = r.user_id;
         const type = r.type;
         const hours = Number(r.hours);
+        const kmVal = Number(r.km || 0);
 
         if (!aggregated[uid]) {
-          aggregated[uid] = { worked: 0, overtime: 0, timeOff: 0, netBalance: 0 };
+          aggregated[uid] = { worked: 0, overtime: 0, timeOff: 0, netBalance: 0, km: 0 };
         }
 
         if (type === 'TRABALHADA') {
           aggregated[uid].worked += hours;
+          aggregated[uid].km += kmVal;
         } else if (type === 'EXTRA') {
           aggregated[uid].overtime += hours;
         } else if (type === 'FOLGA') {
@@ -140,19 +143,13 @@ export default function ConsultaHoras() {
     return filteredUsers.slice(start, start + itemsPerPage);
   }, [filteredUsers, currentPage]);
 
-  // Open audit modal and fetch history
-  const handleOpenAudit = async (targetUser: ConsultaUser) => {
-    setAuditUser(targetUser);
-    setIsModalOpen(true);
-    setAuditRecords([]);
-    setAuditCurrentPage(1);
+  const fetchAuditRecords = async (userId: string) => {
     setIsAuditLoading(true);
-
     try {
       const { data, error } = await supabase
         .from('time_bank_records')
         .select('*')
-        .eq('user_id', targetUser.id)
+        .eq('user_id', userId)
         .order('date', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -166,13 +163,47 @@ export default function ConsultaHoras() {
         date: r.date,
         description: r.description,
         createdAt: r.created_at,
-        createdBy: r.created_by
+        createdBy: r.created_by,
+        km: Number(r.km || 0)
       }));
       setAuditRecords(mapped);
     } catch (err) {
       console.error('Error fetching audit trail:', err);
     } finally {
       setIsAuditLoading(false);
+    }
+  };
+
+  // Open audit modal and fetch history
+  const handleOpenAudit = async (targetUser: ConsultaUser) => {
+    setAuditUser(targetUser);
+    setIsModalOpen(true);
+    setAuditRecords([]);
+    setAuditCurrentPage(1);
+    await fetchAuditRecords(targetUser.id);
+  };
+
+  // Handle record deletion for CIA OP
+  const handleDeleteRecord = async (recordId: string) => {
+    if (!auditUser) return;
+    if (!window.confirm('Tem certeza que deseja remover este lançamento? Esta ação não pode ser desfeita.')) return;
+
+    try {
+      const { error } = await supabase
+        .from('time_bank_records')
+        .delete()
+        .eq('id', recordId);
+
+      if (error) {
+        alert('Erro ao deletar registro: ' + error.message);
+      } else {
+        // Refresh audit list
+        await fetchAuditRecords(auditUser.id);
+        // Refresh parent screen balances
+        await fetchData();
+      }
+    } catch (err: any) {
+      alert('Erro inesperado: ' + err.message);
     }
   };
 
@@ -201,7 +232,7 @@ export default function ConsultaHoras() {
         <div>
           <h1 className="text-xl font-black text-on-surface uppercase tracking-tight flex items-center gap-2">
             <Clock className="w-6 h-6 text-primary" />
-            Consulta de Horas
+            Consulta
           </h1>
           <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mt-1 opacity-60">
             Consulta Geral de Saldos e Rastreamento/Auditoria de Lançamentos
@@ -280,17 +311,18 @@ export default function ConsultaHoras() {
               <tr className="bg-surface-container-low/50">
                 <th className="px-8 py-5 text-left text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant">Militar</th>
                 <th className="px-8 py-5 text-left text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant">Ala</th>
-                <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[120px]">Plantões</th>
-                <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[120px]">Horas Extras</th>
-                <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[120px]">Folgas</th>
-                <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[120px]">Saldo Geral</th>
-                <th className="px-8 py-5 text-right text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[120px]">Ações</th>
+                <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[100px]">Plantões</th>
+                <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[100px]">KM Rodados</th>
+                <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[100px]">Horas Extras</th>
+                <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[100px]">Folgas</th>
+                <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[100px]">Saldo Geral</th>
+                <th className="px-8 py-5 text-right text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[100px]">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/30">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-8 py-20 text-center">
+                  <td colSpan={8} className="px-8 py-20 text-center">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
                       <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Carregando saldos...</p>
@@ -299,7 +331,7 @@ export default function ConsultaHoras() {
                 </tr>
               ) : filteredUsers.length > 0 ? (
                 paginatedUsers.map((u) => {
-                  const bal = balances[u.id] || { worked: 0, overtime: 0, timeOff: 0, netBalance: 0 };
+                  const bal = balances[u.id] || { worked: 0, overtime: 0, timeOff: 0, netBalance: 0, km: 0 };
                   return (
                     <tr key={u.id} className="hover:bg-surface-container-low/30 transition-all">
                       
@@ -340,6 +372,11 @@ export default function ConsultaHoras() {
                         {bal.worked > 0 ? `+${bal.worked.toFixed(1)}h` : '0.0h'}
                       </td>
 
+                      {/* KM Rodados */}
+                      <td className="px-8 py-5 text-center font-bold text-slate-400">
+                        {bal.km > 0 ? `${bal.km.toFixed(0)} km` : '0 km'}
+                      </td>
+
                       {/* Extras */}
                       <td className="px-8 py-5 text-center font-bold text-green-500">
                         {bal.overtime > 0 ? `+${bal.overtime.toFixed(1)}h` : '0.0h'}
@@ -374,7 +411,7 @@ export default function ConsultaHoras() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-8 py-20 text-center">
+                  <td colSpan={8} className="px-8 py-20 text-center">
                     <div className="flex flex-col items-center justify-center opacity-30">
                       <Users className="w-16 h-16 mb-4" />
                       <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Nenhum militar encontrado</p>
@@ -395,7 +432,7 @@ export default function ConsultaHoras() {
             </div>
           ) : filteredUsers.length > 0 ? (
             paginatedUsers.map((u) => {
-              const bal = balances[u.id] || { worked: 0, overtime: 0, timeOff: 0, netBalance: 0 };
+              const bal = balances[u.id] || { worked: 0, overtime: 0, timeOff: 0, netBalance: 0, km: 0 };
               return (
                 <div 
                   key={u.id}
@@ -410,7 +447,7 @@ export default function ConsultaHoras() {
                         {u.name}
                       </p>
                       <p className="text-[9px] font-bold text-on-surface-variant/60 uppercase tracking-widest mt-1">
-                        RE {u.mil_number}
+                        RE {u.mil_number} {bal.km > 0 ? `• ${bal.km.toFixed(0)} km` : ''}
                       </p>
                     </div>
                     <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
@@ -589,15 +626,32 @@ export default function ConsultaHoras() {
                           </div>
                         </div>
 
-                        <div className="text-right flex-shrink-0">
-                          <span className={`text-xs font-black ${
-                            record.type === TimeBankType.TIME_OFF ? 'text-error' : 'text-on-surface'
-                          }`}>
-                            {record.type === TimeBankType.TIME_OFF ? '-' : '+'}{record.hours.toFixed(2)}h
-                          </span>
-                          <span className="text-[8px] font-bold text-on-surface-variant/40 block mt-1 uppercase">
-                            {new Date(record.createdAt).toLocaleDateString('pt-BR')} às {new Date(record.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="text-right">
+                            <span className={`text-xs font-black block ${
+                              record.type === TimeBankType.TIME_OFF ? 'text-error' : 'text-on-surface'
+                            }`}>
+                              {record.type === TimeBankType.TIME_OFF ? '-' : '+'}{record.hours.toFixed(2)}h
+                            </span>
+                            {record.km && record.km > 0 ? (
+                              <span className="text-[9px] font-bold text-blue-500 block">
+                                ({record.km.toFixed(0)} km)
+                              </span>
+                            ) : null}
+                            <span className="text-[8px] font-bold text-on-surface-variant/40 block mt-1 uppercase">
+                              {new Date(record.createdAt).toLocaleDateString('pt-BR')} às {new Date(record.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+
+                          {user?.role === UserRole.CIA_OP && (
+                            <button
+                              onClick={() => handleDeleteRecord(record.id)}
+                              className="p-2 text-error hover:bg-error/10 border border-transparent hover:border-error/20 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center shrink-0"
+                              title="Excluir lançamento"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

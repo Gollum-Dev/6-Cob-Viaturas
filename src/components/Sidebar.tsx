@@ -21,7 +21,7 @@ const navItems = [
   { icon: Package, label: 'Mapa Carga', href: '/mapacarga', roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP] },
   { icon: Wrench, label: 'Manutenção', href: '/manutencao', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
   { icon: Calendar, label: 'Revisões', href: '/revisoes', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR] },
-  { icon: Clock, label: 'Banco de Horas', href: '/banco-horas', roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
+  { icon: Clock, label: 'Horas / KM', href: '/banco-horas', roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },
   { icon: FileText, label: 'Relatório Viatura', href: '/relatorios', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: FileSpreadsheet, label: 'Relatório Carga', href: '/relatorios-carga', roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU] },
   { icon: MessageSquare, label: 'Mensagens', href: '/chat', roles: [UserRole.ADMINISTRADOR, UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL] },

@@ -27,6 +27,7 @@ export default function Plantao() {
   const [selectedUsers, setSelectedUsers] = useState<{ [key: string]: boolean }>({});
   const [overtimeHours, setOvertimeHours] = useState<{ [key: string]: string }>({});
   const [folgaHours, setFolgaHours] = useState<{ [key: string]: string }>({});
+  const [kmDriven, setKmDriven] = useState<{ [key: string]: string }>({});
   
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -129,13 +130,15 @@ export default function Plantao() {
 
       activeUserIds.forEach(userId => {
         // 1. Base Worked Hours (1.14h)
+        const kmVal = parseFloat(kmDriven[userId] || '0');
         recordsToInsert.push({
           user_id: userId,
           type: TimeBankType.WORKED, // 'TRABALHADA'
           hours: 1.14,
           date: date,
           description: 'Serviço de Plantão Operacional (Crédito Base)',
-          created_by: user?.id
+          created_by: user?.id,
+          km: !isNaN(kmVal) && kmVal > 0 ? kmVal : 0
         });
 
         // 2. Overtime if specified
@@ -179,6 +182,7 @@ export default function Plantao() {
         setSelectedUsers({});
         setOvertimeHours({});
         setFolgaHours({});
+        setKmDriven({});
         
         // Auto-clear success message
         setTimeout(() => {
@@ -338,14 +342,15 @@ export default function Plantao() {
                   <th className="px-8 py-5 text-left text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant">Identificação</th>
                   <th className="px-8 py-5 text-left text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant">Ala</th>
                   <th className="px-8 py-5 text-left text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[160px]">Lançamento Base</th>
-                  <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[180px]">Hora Extra (+h)</th>
-                  <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[180px]">Folga (-h)</th>
+                  <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[140px]">KM Rodado</th>
+                  <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[140px]">Hora Extra (+h)</th>
+                  <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[140px]">Folga (-h)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-8 py-20 text-center">
+                    <td colSpan={7} className="px-8 py-20 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
                         <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Carregando militares...</p>
@@ -413,6 +418,21 @@ export default function Plantao() {
                           </span>
                         </td>
 
+                        {/* KM input */}
+                        <td className="px-8 py-5 text-center">
+                          <input 
+                            type="number"
+                            min="0"
+                            placeholder="KM rodado"
+                            disabled={!isChecked}
+                            value={kmDriven[u.id] || ''}
+                            onChange={(e) => setKmDriven(prev => ({ ...prev, [u.id]: e.target.value }))}
+                            className={`w-28 text-center bg-surface-container-low border border-outline-variant p-2 rounded-xl text-xs font-bold focus:outline-none focus:border-primary/50 transition-all ${
+                              !isChecked ? 'opacity-30 cursor-not-allowed border-transparent bg-surface-container-lowest' : 'shadow-inner'
+                            }`}
+                          />
+                        </td>
+
                         {/* Overtime input */}
                         <td className="px-8 py-5 text-center">
                           <input 
@@ -450,7 +470,7 @@ export default function Plantao() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-8 py-20 text-center">
+                    <td colSpan={7} className="px-8 py-20 text-center">
                       <div className="flex flex-col items-center justify-center opacity-30">
                         <Users className="w-16 h-16 mb-4" />
                         <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Nenhum militar encontrado</p>
@@ -531,7 +551,18 @@ export default function Plantao() {
 
                     {/* Inputs */}
                     {isChecked && (
-                      <div className="grid grid-cols-2 gap-3 pt-1">
+                      <div className="grid grid-cols-3 gap-2 pt-1">
+                        <div className="space-y-1">
+                          <label className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">KM Rodado</label>
+                          <input 
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={kmDriven[u.id] || ''}
+                            onChange={(e) => setKmDriven(prev => ({ ...prev, [u.id]: e.target.value }))}
+                            className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-xl text-xs font-bold focus:outline-none focus:border-primary/50 shadow-inner"
+                          />
+                        </div>
                         <div className="space-y-1">
                           <label className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Hora Extra (+h)</label>
                           <input 
