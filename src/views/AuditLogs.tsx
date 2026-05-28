@@ -1,16 +1,20 @@
 import React, { useState, useMemo } from 'react';
-import { Shield, Terminal, User, FileText, AlertTriangle, Car, ChevronDown, Eye, X } from 'lucide-react';
+import { Shield, Terminal, User, FileText, AlertTriangle, Car, ChevronDown, Eye, X, Pencil, Trash2, Save } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useReports } from '../context/ReportContext';
+import { useAuth } from '../context/AuthContext';
+import { UserRole } from '../types';
 import { cn } from '../lib/utils';
 
 export default function AuditLogs() {
-  const { submissions } = useReports();
+  const { submissions, deleteSubmission, updateSubmission } = useReports();
+  const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'OK' | 'ISSUE' | 'MAINTENANCE'>('ALL');
   const [vehicleFilter, setVehicleFilter] = useState('');
   const [militarFilter, setMilitarFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
+  const [editingSubmission, setEditingSubmission] = useState<any>(null);
 
   const today = new Date().toLocaleDateString('pt-BR');
 
@@ -303,6 +307,7 @@ export default function AuditLogs() {
                 <th className="px-8 py-6">Odômetro</th>
                 <th className="px-8 py-6 text-center">Status</th>
                 <th className="px-8 py-6 text-center">Itens OK</th>
+                {user?.role === UserRole.DESENVOLVEDOR && <th className="px-8 py-6 text-center">Ações</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/30 text-[13px]">
@@ -375,6 +380,30 @@ export default function AuditLogs() {
                           </div>
                         </div>
                       </td>
+                      {user?.role === UserRole.DESENVOLVEDOR && (
+                        <td className="px-8 py-6">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => setEditingSubmission(sub)}
+                              className="p-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-colors cursor-pointer"
+                              title="Editar"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (window.confirm("Deseja excluir este relatório permanentemente?")) {
+                                  await deleteSubmission(sub.id);
+                                }
+                              }}
+                              className="p-1.5 bg-error/10 text-error hover:bg-error hover:text-white rounded-lg transition-colors cursor-pointer"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })
@@ -456,6 +485,29 @@ export default function AuditLogs() {
                       />
                     </div>
                   </div>
+
+                  {user?.role === UserRole.DESENVOLVEDOR && (
+                    <div className="pt-3 border-t border-outline-variant/30 flex justify-end gap-2">
+                      <button
+                        onClick={() => setEditingSubmission(sub)}
+                        className="flex items-center gap-1.5 text-[9px] font-black text-primary uppercase tracking-widest px-3 py-1.5 bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors cursor-pointer border border-primary/10"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Editar
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (window.confirm("Deseja excluir este relatório permanentemente?")) {
+                            await deleteSubmission(sub.id);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 text-[9px] font-black text-error uppercase tracking-widest px-3 py-1.5 bg-error/5 hover:bg-error/10 rounded-lg transition-colors cursor-pointer border border-error/10"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Excluir
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })
@@ -557,6 +609,123 @@ export default function AuditLogs() {
                 className="bg-on-surface text-white hover:bg-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
               >
                 Fechar
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Modal de Edição */}
+      {editingSubmission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <motion.div 
+            initial={{ scale: 0.95, y: 10, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            className="bg-white border border-outline-variant w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+          >
+            <div className="p-6 bg-primary/10 border-b border-outline-variant flex justify-between items-start">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Pencil className="w-5 h-5 text-primary shrink-0" />
+                  <h3 className="font-black text-on-surface text-base uppercase tracking-wider">
+                    Editar Relatório
+                  </h3>
+                </div>
+                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
+                  {editingSubmission.vehiclePrefix} • {editingSubmission.timestamp}
+                </p>
+              </div>
+              <button 
+                onClick={() => setEditingSubmission(null)}
+                className="p-1.5 rounded-lg hover:bg-surface-container transition-colors text-outline hover:text-on-surface cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Odômetro</label>
+                <input 
+                  type="number"
+                  value={editingSubmission.odometer}
+                  onChange={(e) => setEditingSubmission({ ...editingSubmission, odometer: parseInt(e.target.value) || 0 })}
+                  className="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-bold text-sm"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Itens do Checklist</h4>
+                <div className="space-y-3">
+                  {editingSubmission.items.map((item: any, idx: number) => (
+                    <div key={idx} className="p-4 border border-outline-variant rounded-xl bg-surface-container-low/50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-sm">{item.description}</span>
+                        <div className="flex items-center gap-2 bg-surface-container rounded-lg p-1">
+                          <button
+                            onClick={() => {
+                              const newItems = [...editingSubmission.items];
+                              newItems[idx].status = true;
+                              setEditingSubmission({ ...editingSubmission, items: newItems });
+                            }}
+                            className={cn("px-3 py-1 rounded text-xs font-black uppercase tracking-widest transition-all", item.status ? "bg-green-500 text-white shadow-sm" : "text-on-surface-variant hover:bg-black/5")}
+                          >
+                            OK
+                          </button>
+                          <button
+                            onClick={() => {
+                              const newItems = [...editingSubmission.items];
+                              newItems[idx].status = false;
+                              setEditingSubmission({ ...editingSubmission, items: newItems });
+                            }}
+                            className={cn("px-3 py-1 rounded text-xs font-black uppercase tracking-widest transition-all", !item.status ? "bg-error text-white shadow-sm" : "text-on-surface-variant hover:bg-black/5")}
+                          >
+                            Ressalva
+                          </button>
+                        </div>
+                      </div>
+                      {!item.status && (
+                        <textarea
+                          value={item.observation || ''}
+                          onChange={(e) => {
+                            const newItems = [...editingSubmission.items];
+                            newItems[idx].observation = e.target.value;
+                            setEditingSubmission({ ...editingSubmission, items: newItems });
+                          }}
+                          placeholder="Descreva a ressalva..."
+                          className="w-full px-3 py-2 text-xs border border-error/30 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-error"
+                          rows={2}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-surface-container-low border-t border-outline-variant flex justify-end gap-3">
+              <button 
+                onClick={() => setEditingSubmission(null)}
+                className="px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest text-on-surface-variant hover:bg-surface-container transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={async () => {
+                  try {
+                    await updateSubmission(editingSubmission.id, {
+                      odometer: editingSubmission.odometer,
+                      items: editingSubmission.items
+                    });
+                    setEditingSubmission(null);
+                  } catch (err) {
+                    alert('Erro ao atualizar relatório.');
+                  }
+                }}
+                className="bg-primary text-white hover:bg-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer shadow-lg hover:shadow-xl"
+              >
+                <Save className="w-4 h-4" />
+                Salvar Alterações
               </button>
             </div>
           </motion.div>

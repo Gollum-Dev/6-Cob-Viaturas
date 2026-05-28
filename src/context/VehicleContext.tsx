@@ -92,8 +92,8 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     let query = supabase.from('vehicles').select('*');
     
-    // Only filter by unit if the user is NOT an ADMINISTRADOR
-    if (user.role !== UserRole.ADMINISTRADOR) {
+    // If not ADMINISTRADOR or DESENVOLVEDOR, filter by user unit
+    if (user.role !== UserRole.ADMINISTRADOR && user.role !== UserRole.DESENVOLVEDOR) {
       query = query.eq('unit', user.unit);
     }
     

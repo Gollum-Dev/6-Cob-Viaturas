@@ -119,8 +119,8 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
     if (!error && data) {
       let mapped = data.map(mapRecordFromDB);
       
-      // Filtrar registros se não for ADMINISTRADOR
-      if (user.role !== UserRole.ADMINISTRADOR) {
+      // For non-ADMIN/DEV, filter records based on their unit's vehicles
+      if (user.role !== UserRole.ADMINISTRADOR && user.role !== UserRole.DESENVOLVEDOR) {
         const allowedVehicleIds = new Set(vehicles.map(v => v.id));
         mapped = mapped.filter(rec => allowedVehicleIds.has(rec.vehicleId));
       }
@@ -164,11 +164,55 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, user, vehicles]);
 
+  const syncCommitmentLiquidatedValue = async (commitmentId: string) => {
+    if (!commitmentId) return;
+    try {
+      const { data: recordsData, error: recordsError } = await supabase
+        .from('maintenance_records')
+        .select('invoice_value')
+        .eq('commitment_id', commitmentId);
+
+      if (recordsError) {
+        console.error('Error fetching records for commitment sync:', recordsError);
+        return;
+      }
+
+      const totalLiquidated = (recordsData || []).reduce(
+        (sum, item) => sum + Number(item.invoice_value || 0),
+        0
+      );
+
+      const { data: updatedCommitment, error: updateError } = await supabase
+        .from('commitments')
+        .update({ liquidated_value: totalLiquidated })
+        .eq('id', commitmentId)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating commitment liquidated value:', updateError);
+        return;
+      }
+
+      if (updatedCommitment) {
+        setCommitments((prev) =>
+          prev.map((c) => (c.id === commitmentId ? mapCommitmentFromDB(updatedCommitment) : c))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to sync commitment liquidated value:', err);
+    }
+  };
+
   const addRecord = async (data: Omit<MaintenanceRecord, 'id'>) => {
     const dbPayload = mapRecordToDB(data);
     const { data: inserted, error } = await supabase.from('maintenance_records').insert([dbPayload]).select().single();
     if (!error && inserted) {
-      setRecords((prev) => [mapRecordFromDB(inserted), ...prev]);
+      const mappedRecord = mapRecordFromDB(inserted);
+      setRecords((prev) => [mappedRecord, ...prev]);
+      if (mappedRecord.commitmentId) {
+        await syncCommitmentLiquidatedValue(mappedRecord.commitmentId);
+      }
     } else {
       console.error('Error adding maintenance record:', error);
       throw error;
@@ -176,10 +220,21 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
   };
 
   const updateRecord = async (id: string, updates: Partial<MaintenanceRecord>) => {
+    const oldRecord = records.find((r) => r.id === id);
     const dbPayload = mapRecordToDB(updates);
     const { error } = await supabase.from('maintenance_records').update(dbPayload).eq('id', id);
     if (!error) {
       setRecords((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+
+      const oldCommitmentId = oldRecord?.commitmentId;
+      const newCommitmentId = updates.commitmentId !== undefined ? updates.commitmentId : oldCommitmentId;
+
+      if (newCommitmentId) {
+        await syncCommitmentLiquidatedValue(newCommitmentId);
+      }
+      if (oldCommitmentId && oldCommitmentId !== newCommitmentId) {
+        await syncCommitmentLiquidatedValue(oldCommitmentId);
+      }
     } else {
       console.error('Error updating maintenance record:', error);
       throw error;
@@ -187,9 +242,13 @@ export function MaintenanceProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteRecord = async (id: string) => {
+    const recordToDelete = records.find((r) => r.id === id);
     const { error } = await supabase.from('maintenance_records').delete().eq('id', id);
     if (!error) {
       setRecords((prev) => prev.filter((r) => r.id !== id));
+      if (recordToDelete?.commitmentId) {
+        await syncCommitmentLiquidatedValue(recordToDelete.commitmentId);
+      }
     } else {
       console.error('Error deleting maintenance record:', error);
       throw error;

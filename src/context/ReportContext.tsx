@@ -8,6 +8,7 @@ interface ReportContextType {
   submissions: ChecklistSubmission[];
   isLoading: boolean;
   addSubmission: (submission: Omit<ChecklistSubmission, 'id' | 'timestamp'>) => Promise<void>;
+  updateSubmission: (id: string, updates: Partial<Omit<ChecklistSubmission, 'id' | 'timestamp' | 'userName' | 'userRank' | 'userMilNumber' | 'vehiclePrefix' | 'vehicleType'>>) => Promise<void>;
   deleteSubmission: (id: string) => Promise<void>;
   refreshSubmissions: () => Promise<void>;
 }
@@ -47,8 +48,8 @@ export function ReportProvider({ children }: { children: ReactNode }) {
     if (!error && data) {
       let mapped = data.map(mapSubmissionFromDB);
       
-      // If not ADMINISTRADOR, filter by allowed vehicles of this unit
-      if (user.role !== UserRole.ADMINISTRADOR) {
+      // If not ADMINISTRADOR and not DESENVOLVEDOR, filter by allowed vehicles of this unit
+      if (user.role !== UserRole.ADMINISTRADOR && user.role !== UserRole.DESENVOLVEDOR) {
         const allowedVehicleIds = new Set(vehicles.map(v => v.id));
         mapped = mapped.filter(sub => allowedVehicleIds.has(sub.vehicleId));
       }
@@ -92,14 +93,43 @@ export function ReportProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateSubmission = async (id: string, updates: Partial<Omit<ChecklistSubmission, 'id' | 'timestamp' | 'userName' | 'userRank' | 'userMilNumber' | 'vehiclePrefix' | 'vehicleType'>>) => {
+    if (!user) throw new Error("Usuário não autenticado");
+
+    const dbPayload: any = {};
+    if (updates.odometer !== undefined) dbPayload.odometer = updates.odometer;
+    if (updates.items !== undefined) dbPayload.items = updates.items;
+
+    const { data: updated, error } = await supabase
+      .from('checklists')
+      .update(dbPayload)
+      .eq('id', id)
+      .select('*, users(name, rank, mil_number), vehicles(prefix, type)')
+      .single();
+
+    if (!error && updated) {
+      setSubmissions((prev) => prev.map((s) => (s.id === id ? mapSubmissionFromDB(updated) : s)));
+    } else {
+      console.error('Error updating checklist:', error);
+      throw error;
+    }
+  };
+
   const deleteSubmission = async (id: string) => {
-    console.error("Atenção: Passagens de Serviço são documentos imutáveis e não podem ser deletadas do banco de dados.");
-    alert("Operação bloqueada por segurança. Passagens de Serviço não podem ser excluídas.");
-    // No backend operation is performed
+    if (!user) throw new Error("Usuário não autenticado");
+    
+    // Agora o sistema permite a exclusão para funções com permissão (tratado na UI)
+    const { error } = await supabase.from('checklists').delete().eq('id', id);
+    if (!error) {
+      setSubmissions((prev) => prev.filter((s) => s.id !== id));
+    } else {
+      console.error('Error deleting checklist:', error);
+      throw error;
+    }
   };
 
   return (
-    <ReportContext.Provider value={{ submissions, isLoading, addSubmission, deleteSubmission, refreshSubmissions: fetchSubmissions }}>
+    <ReportContext.Provider value={{ submissions, isLoading, addSubmission, updateSubmission, deleteSubmission, refreshSubmissions: fetchSubmissions }}>
       {children}
     </ReportContext.Provider>
   );

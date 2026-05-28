@@ -269,8 +269,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      // Atualiza a lista local de usuários se for administrador
-      if (user?.role === UserRole.ADMINISTRADOR) {
+      // Atualiza a lista local de usuários se for administrador ou desenvolvedor
+      if (user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) {
         setRegisteredUsers(prev => [...prev, {
           id: data,
           role,

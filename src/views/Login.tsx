@@ -74,21 +74,25 @@ export default function Login() {
           >
             {/* Form content */}
             <div className="flex flex-col items-center mb-10 text-center">
-              <div className="w-24 h-24 mb-6 relative flex items-center justify-center">
+              <div className="flex items-center justify-center mb-6 relative">
                 <div className="absolute inset-0 bg-primary/10 rounded-full blur-2xl animate-pulse" />
-                <img 
-                  src="https://www.bombeiros.mg.gov.br/images/logo.png" 
-                  alt="CBMMG Logo" 
-                  className="w-full h-full object-contain relative z-10 drop-shadow-xl"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
-                    if (fallback) fallback.classList.remove('hidden');
-                  }}
-                />
-                <div className="fallback-icon hidden w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center shadow-inner ring-1 ring-primary/20 relative z-10">
-                  <Shield className="w-10 h-10 text-primary" />
+                
+                {/* Logo CBMMG */}
+                <div className="w-28 h-28 md:w-36 md:h-36 relative flex items-center justify-center">
+                  <img 
+                    src="https://www.bombeiros.mg.gov.br/images/logo.png" 
+                    alt="CBMMG Logo" 
+                    className="w-full h-full object-contain relative z-10 drop-shadow-xl"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
+                      if (fallback) fallback.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="fallback-icon hidden w-full h-full bg-primary/10 rounded-2xl flex items-center justify-center shadow-inner ring-1 ring-primary/20 relative z-10">
+                    <Shield className="w-14 h-14 text-primary" />
+                  </div>
                 </div>
               </div>
               <h1 className="text-2xl font-black text-on-surface uppercase tracking-tight mb-2">
