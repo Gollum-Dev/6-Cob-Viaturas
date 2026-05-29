@@ -1,10 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, Wrench, Disc, Gauge, Droplets, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, Wrench, Disc, Gauge, Droplets, AlertTriangle, Edit } from 'lucide-react';
 import { useVehicles } from '../context/VehicleContext';
+import { useAuth } from '../context/AuthContext';
+import { UserRole } from '../types';
 import { cn } from '../lib/utils';
 
 export default function RevisionsControl() {
   const { vehicles } = useVehicles();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isCBU = user?.role === UserRole.CBU;
+  const isCiaOP = user?.role === UserRole.CIA_OP;
   
   const [tirePage, setTirePage] = useState(1);
   const [oilKmPage, setOilKmPage] = useState(1);
@@ -120,12 +127,15 @@ export default function RevisionsControl() {
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Validade</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Dias Restantes</th>
+                  {!isCBU && !isCiaOP && (
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[80px] text-center">Ações</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
                 {tireValidityAlerts.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                    <td colSpan={!isCBU && !isCiaOP ? 5 : 4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                       Nenhuma data de validade de pneus cadastrada.
                     </td>
                   </tr>
@@ -156,6 +166,17 @@ export default function RevisionsControl() {
                            {alert.daysRemaining < 0 ? `${Math.abs(alert.daysRemaining)} dias atrás` : `${alert.daysRemaining} dias`}
                          </span>
                       </td>
+                      {!isCBU && !isCiaOP && (
+                        <td className="px-6 py-4 text-center">
+                          <button 
+                            onClick={() => navigate(`/viaturas/editar/${alert.id}`)}
+                            className="p-1 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center"
+                            title="Editar Viatura"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
@@ -173,9 +194,20 @@ export default function RevisionsControl() {
               paginatedTireAlerts.map((alert) => (
                 <div key={alert.id} className="p-4 space-y-3 hover:bg-surface-container-low/30 transition-colors">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
-                      <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
+                        <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                      </div>
+                      {!isCBU && !isCiaOP && (
+                        <button 
+                          onClick={() => navigate(`/viaturas/editar/${alert.id}`)}
+                          className="p-1 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
+                          title="Editar Viatura"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                     <div>
                       {alert.daysRemaining < 0 ? (
@@ -266,12 +298,15 @@ export default function RevisionsControl() {
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Próxima Troca</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">KM Restante</th>
+                  {!isCBU && !isCiaOP && (
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[80px] text-center">Ações</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
                 {oilChangeKmAlerts.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                    <td colSpan={!isCBU && !isCiaOP ? 5 : 4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                       Nenhuma informação de quilometragem de óleo cadastrada.
                     </td>
                   </tr>
@@ -302,6 +337,17 @@ export default function RevisionsControl() {
                            {alert.kmRemaining <= 0 ? `Excedido em ${Math.abs(alert.kmRemaining).toLocaleString()} KM` : `${alert.kmRemaining.toLocaleString()} KM rest`}
                          </span>
                       </td>
+                      {!isCBU && !isCiaOP && (
+                        <td className="px-6 py-4 text-center">
+                          <button 
+                            onClick={() => navigate(`/viaturas/editar/${alert.id}`)}
+                            className="p-1 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center"
+                            title="Editar Viatura"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
@@ -319,9 +365,20 @@ export default function RevisionsControl() {
               paginatedOilKmAlerts.map((alert) => (
                 <div key={alert.id} className="p-4 space-y-3 hover:bg-surface-container-low/30 transition-colors">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
-                      <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
+                        <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                      </div>
+                      {!isCBU && !isCiaOP && (
+                        <button 
+                          onClick={() => navigate(`/viaturas/editar/${alert.id}`)}
+                          className="p-1 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
+                          title="Editar Viatura"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                     <div>
                       {alert.kmRemaining <= 0 ? (
@@ -412,12 +469,15 @@ export default function RevisionsControl() {
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Próxima Troca</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Dias Restantes</th>
+                  {!isCBU && !isCiaOP && (
+                    <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[80px] text-center">Ações</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
                 {oilChangeAlerts.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                    <td colSpan={!isCBU && !isCiaOP ? 5 : 4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                       Nenhuma data de próxima troca de óleo cadastrada.
                     </td>
                   </tr>
@@ -448,6 +508,17 @@ export default function RevisionsControl() {
                            {alert.daysRemaining < 0 ? `${Math.abs(alert.daysRemaining)} dias atrás` : `${alert.daysRemaining} dias`}
                          </span>
                       </td>
+                      {!isCBU && !isCiaOP && (
+                        <td className="px-6 py-4 text-center">
+                          <button 
+                            onClick={() => navigate(`/viaturas/editar/${alert.id}`)}
+                            className="p-1 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center"
+                            title="Editar Viatura"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
@@ -465,9 +536,20 @@ export default function RevisionsControl() {
               paginatedOilDateAlerts.map((alert) => (
                 <div key={alert.id} className="p-4 space-y-3 hover:bg-surface-container-low/30 transition-colors">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
-                      <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
+                        <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                      </div>
+                      {!isCBU && !isCiaOP && (
+                        <button 
+                          onClick={() => navigate(`/viaturas/editar/${alert.id}`)}
+                          className="p-1 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
+                          title="Editar Viatura"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                     <div>
                       {alert.daysRemaining < 0 ? (

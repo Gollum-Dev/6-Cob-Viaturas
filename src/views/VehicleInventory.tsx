@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Filter, Plus, Edit, Eye, ChevronLeft, ChevronRight, Trash2, Car, X, Radio, DollarSign, Disc, Settings, FileText, Calendar, Hash, Zap, Shield, MapPin } from 'lucide-react';
+import { Filter, Plus, Edit, Eye, ChevronLeft, ChevronRight, Trash2, Car, X, Radio, DollarSign, Disc, Settings, FileText, Calendar, Hash, Zap, Shield, MapPin, Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useVehicles } from '../context/VehicleContext';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +16,7 @@ export default function VehicleInventory() {
   const [typeFilter, setTypeFilter] = useState('Todos');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [unitFilter, setUnitFilter] = useState('Todos');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
   // Inline odometer editing state
@@ -83,9 +84,20 @@ export default function VehicleInventory() {
       const matchType = typeFilter === 'Todos' || v.type === typeFilter;
       const matchStatus = statusFilter === 'Todos' || v.status === statusFilter;
       const matchUnit = unitFilter === 'Todos' || v.unit === unitFilter;
-      return matchType && matchStatus && matchUnit;
+      
+      const searchLower = searchTerm.toLowerCase().trim();
+      const matchSearch = !searchLower || 
+        (v.prefix || '').toLowerCase().includes(searchLower) ||
+        (v.type || '').toLowerCase().includes(searchLower) ||
+        (v.unit || '').toLowerCase().includes(searchLower) ||
+        (v.plate || '').toLowerCase().includes(searchLower) ||
+        (v.vehicleClass || '').toLowerCase().includes(searchLower) ||
+        (v.patrimony || '').toLowerCase().includes(searchLower) ||
+        (v.model || '').toLowerCase().includes(searchLower);
+
+      return matchType && matchStatus && matchUnit && matchSearch;
     });
-  }, [vehicles, typeFilter, statusFilter, unitFilter]);
+  }, [vehicles, typeFilter, statusFilter, unitFilter, searchTerm]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 relative">
@@ -104,6 +116,22 @@ export default function VehicleInventory() {
       <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant overflow-hidden shadow-sm">
         <div className="p-6 md:p-8 border-b border-outline-variant bg-surface-container-low/30">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap gap-4 items-end w-full">
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[200px] w-full">
+              <label className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest pl-1">Pesquisa rápida</label>
+              <div className="relative">
+                <input 
+                  type="text"
+                  placeholder="PREFIXO, PLACA, MODELO..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 pr-10 rounded-xl text-xs font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest text-on-surface placeholder:text-on-surface-variant/40"
+                />
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant/60">
+                  <Search className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-1.5 flex-1 min-w-[140px] w-full">
               <label className="text-[9px] font-black text-on-surface-variant/70 uppercase tracking-widest pl-1">Tipo</label>
               <div className="relative">
@@ -165,6 +193,7 @@ export default function VehicleInventory() {
                 setTypeFilter('Todos');
                 setStatusFilter('Todos');
                 setUnitFilter('Todos');
+                setSearchTerm('');
               }}
               className="flex items-center justify-center gap-2 h-[42px] px-6 border border-outline hover:bg-surface-container rounded-xl text-on-surface-variant hover:text-primary font-black transition-all uppercase tracking-widest text-[10px] w-full md:w-auto shrink-0 mt-2 md:mt-0"
             >
