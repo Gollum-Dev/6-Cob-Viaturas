@@ -223,58 +223,58 @@ export default function TimeBank() {
 
 
       {/* Balances Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {/* Plantões */}
         <motion.div
           whileHover={{ y: -2 }}
-          className="bg-surface-container-lowest p-6 rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
+          className="bg-surface-container-lowest p-4 sm:p-6 rounded-2xl sm:rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
         >
-          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Plantões</span>
-          <div className="flex justify-between items-end mt-4">
-            <span className="text-3xl font-black text-blue-500">+{balances.worked.toFixed(1)}h</span>
-            <span className="text-[10px] font-black uppercase text-blue-500/70 bg-blue-500/10 px-2.5 py-1 rounded-full">Trabalhadas</span>
+          <span className="text-[8px] sm:text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Plantões</span>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-2 sm:mt-4 gap-1.5 sm:gap-0">
+            <span className="text-xl sm:text-3xl font-black text-blue-500 leading-none">+{balances.worked.toFixed(1)}h</span>
+            <span className="text-[8px] sm:text-[10px] font-black uppercase text-blue-500/70 bg-blue-500/10 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full inline-block">Trabalhadas</span>
           </div>
         </motion.div>
 
         {/* Extras */}
         <motion.div
           whileHover={{ y: -2 }}
-          className="bg-surface-container-lowest p-6 rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
+          className="bg-surface-container-lowest p-4 sm:p-6 rounded-2xl sm:rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
         >
-          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Horas Extras</span>
-          <div className="flex justify-between items-end mt-4">
-            <span className="text-3xl font-black text-green-500">+{balances.overtime.toFixed(1)}h</span>
-            <span className="text-[10px] font-black uppercase text-green-500/70 bg-green-500/10 px-2.5 py-1 rounded-full">Crédito</span>
+          <span className="text-[8px] sm:text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Horas Extras</span>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-2 sm:mt-4 gap-1.5 sm:gap-0">
+            <span className="text-xl sm:text-3xl font-black text-green-500 leading-none">+{balances.overtime.toFixed(1)}h</span>
+            <span className="text-[8px] sm:text-[10px] font-black uppercase text-green-500/70 bg-green-500/10 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full inline-block">Crédito</span>
           </div>
         </motion.div>
 
         {/* Folgas */}
         <motion.div
           whileHover={{ y: -2 }}
-          className="bg-surface-container-lowest p-6 rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
+          className="bg-surface-container-lowest p-4 sm:p-6 rounded-2xl sm:rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
         >
-          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Folgas / Dispensa</span>
-          <div className="flex justify-between items-end mt-4">
-            <span className="text-3xl font-black text-error">-{balances.timeOff.toFixed(1)}h</span>
-            <span className="text-[10px] font-black uppercase text-error/70 bg-error/10 px-2.5 py-1 rounded-full">Débito</span>
+          <span className="text-[8px] sm:text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Folgas / Dispensa</span>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-2 sm:mt-4 gap-1.5 sm:gap-0">
+            <span className="text-xl sm:text-3xl font-black text-error leading-none">-{balances.timeOff.toFixed(1)}h</span>
+            <span className="text-[8px] sm:text-[10px] font-black uppercase text-error/70 bg-error/10 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full inline-block">Débito</span>
           </div>
         </motion.div>
 
         {/* Saldo Líquido */}
         <motion.div
           whileHover={{ y: -2 }}
-          className={`p-6 rounded-[24px] border shadow-sm flex flex-col justify-between ${
+          className={`p-4 sm:p-6 rounded-2xl sm:rounded-[24px] border shadow-sm flex flex-col justify-between ${
             balances.netBalance >= 0 
               ? 'bg-gradient-to-br from-green-500/5 to-transparent border-green-500/20' 
               : 'bg-gradient-to-br from-error/5 to-transparent border-error/20'
           }`}
         >
-          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Saldo Geral</span>
-          <div className="flex justify-between items-end mt-4">
-            <span className={`text-3xl font-black ${balances.netBalance >= 0 ? 'text-green-600' : 'text-error'}`}>
+          <span className="text-[8px] sm:text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Saldo Geral</span>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-2 sm:mt-4 gap-1.5 sm:gap-0">
+            <span className={`text-xl sm:text-3xl font-black leading-none ${balances.netBalance >= 0 ? 'text-green-600' : 'text-error'}`}>
               {balances.netBalance >= 0 ? '+' : ''}{balances.netBalance.toFixed(1)}h
             </span>
-            <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${
+            <span className={`text-[8px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full inline-block ${
               balances.netBalance >= 0 ? 'text-green-600 bg-green-600/10' : 'text-error bg-error/10'
             }`}>
               {balances.netBalance >= 0 ? 'Positivo' : 'Negativo'}
