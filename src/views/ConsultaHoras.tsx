@@ -643,7 +643,7 @@ export default function ConsultaHoras() {
                             </span>
                           </div>
 
-                          {user?.role === UserRole.CIA_OP && (
+                          {(user?.role === UserRole.CIA_OP || user?.role === UserRole.DESENVOLVEDOR) && (
                             <button
                               onClick={() => handleDeleteRecord(record.id)}
                               className="p-2 text-error hover:bg-error/10 border border-transparent hover:border-error/20 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center shrink-0"

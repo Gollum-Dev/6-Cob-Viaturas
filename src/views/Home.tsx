@@ -117,6 +117,16 @@ export default function Home() {
       roles: [UserRole.DESENVOLVEDOR, UserRole.CBU, UserRole.OPERACIONAL]
     },
     {
+      id: 'banco-horas',
+      label: 'Horas / KM',
+      description: 'Gestão de folgas, horas extras, plantões, escalas e controle da quilometragem rodada.',
+      href: '/banco-horas',
+      icon: Clock,
+      color: 'from-sky-500/20 to-sky-600/5 hover:border-sky-500/50 text-sky-600 dark:text-sky-400',
+      iconColor: 'bg-sky-500/10 text-sky-600',
+      roles: [UserRole.DESENVOLVEDOR, UserRole.CIA_OP, UserRole.CBU, UserRole.OPERACIONAL]
+    },
+    {
       id: 'mapacarga',
       label: 'Mapa de Carga',
       description: 'Visualização e acompanhamento dos mapas de carga ativos e atribuições de materiais.',
