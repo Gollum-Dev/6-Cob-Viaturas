@@ -85,6 +85,10 @@ function mapCommitmentFromDB(dbC: any): Commitment {
     liquidatedValue: Number(dbC.liquidated_value || 0),
     balance: Number(dbC.balance || 0),
     createdAt: dbC.created_at,
+    partDiscount: dbC.part_discount !== null && dbC.part_discount !== undefined ? Number(dbC.part_discount) : undefined,
+    partTax: dbC.part_tax !== null && dbC.part_tax !== undefined ? Number(dbC.part_tax) : undefined,
+    laborRate: dbC.labor_rate !== null && dbC.labor_rate !== undefined ? Number(dbC.labor_rate) : undefined,
+    laborTax: dbC.labor_tax !== null && dbC.labor_tax !== undefined ? Number(dbC.labor_tax) : undefined,
   };
 }
 
@@ -103,6 +107,10 @@ function mapCommitmentToDB(c: Partial<Commitment>): any {
   if (c.cancellationValue !== undefined) dbC.cancellation_value = c.cancellationValue;
   if (c.budgetedToPay !== undefined) dbC.budgeted_to_pay = c.budgetedToPay;
   if (c.liquidatedValue !== undefined) dbC.liquidated_value = c.liquidatedValue;
+  if (c.partDiscount !== undefined) dbC.part_discount = c.partDiscount;
+  if (c.partTax !== undefined) dbC.part_tax = c.partTax;
+  if (c.laborRate !== undefined) dbC.labor_rate = c.laborRate;
+  if (c.laborTax !== undefined) dbC.labor_tax = c.laborTax;
   return dbC;
 }
 

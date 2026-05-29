@@ -17,6 +17,15 @@ const getProgressFromStatus = (status: MaintenanceStatus): number => {
   }
 };
 
+interface PartItem {
+  id: string;
+  description: string;
+  quantity: number | string;
+  price: number | string;
+  discount: number | string; // %
+  tax: number | string; // %
+}
+
 export default function MaintenanceControl() {
   const { vehicles } = useVehicles();
   const { 
@@ -31,8 +40,180 @@ export default function MaintenanceControl() {
   } = useMaintenance();
   const { user } = useAuth();
   
-  const [activeTab, setActiveTab] = useState<'manutencoes' | 'empenhos'>('manutencoes');
+  const [activeTab, setActiveTab] = useState<'manutencoes' | 'empenhos' | 'calculoNF' | 'calculoOrcamento'>('manutencoes');
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // State do Cálculo de NF
+  const [parts, setParts] = useState<PartItem[]>([
+    { id: '1', description: '', quantity: 1, price: '', discount: '', tax: '' }
+  ]);
+  const [laborHours, setLaborHours] = useState<string>('');
+  const [laborRate, setLaborRate] = useState<string>('');
+  const [laborTax, setLaborTax] = useState<string>('');
+
+  const addPartRow = () => {
+    const chosen = commitments.find(c => c.id === calcSelectedCommitmentId);
+    const defaultTax = chosen && chosen.partTax !== undefined ? chosen.partTax.toString() : '';
+    setParts(prev => [...prev, { 
+      id: Math.random().toString(), 
+      description: '', 
+      quantity: 1, 
+      price: '', 
+      discount: '0', 
+      tax: defaultTax 
+    }]);
+  };
+
+  const handleCalcCommitmentChange = (commitmentId: string) => {
+    setCalcSelectedCommitmentId(commitmentId);
+    const chosen = commitments.find(c => c.id === commitmentId);
+    if (chosen) {
+      setLaborRate(chosen.laborRate !== undefined ? chosen.laborRate.toString() : '');
+      setLaborTax(chosen.laborTax !== undefined ? chosen.laborTax.toString() : '');
+      setParts(prev => prev.map(p => ({
+        ...p,
+        discount: '0',
+        tax: chosen.partTax !== undefined ? chosen.partTax.toString() : ''
+      })));
+    } else {
+      setLaborRate('');
+      setLaborTax('');
+      setParts(prev => prev.map(p => ({
+        ...p,
+        discount: '0',
+        tax: ''
+      })));
+    }
+  };
+  const removePartRow = (id: string) => {
+    setParts(prev => prev.filter(p => p.id !== id));
+  };
+  const updatePart = (id: string, field: keyof PartItem, value: any) => {
+    setParts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  const partsSummary = useMemo(() => {
+    let grossTotal = 0;
+    let taxTotal = 0;
+    let netTotal = 0;
+
+    parts.forEach(p => {
+      const qty = Number(p.quantity) || 0;
+      const prc = Number(p.price) || 0;
+      const txPercent = Number(p.tax) || 0;
+
+      const sub = qty * prc;
+      const tx = sub * (txPercent / 100);
+      const tot = sub + tx;
+
+      grossTotal += sub;
+      taxTotal += tx;
+      netTotal += tot;
+    });
+
+    return { grossTotal, taxTotal, netTotal };
+  }, [parts]);
+
+  const laborSummary = useMemo(() => {
+    const hours = Number(laborHours) || 0;
+    const rate = Number(laborRate) || 0;
+    const taxPercent = Number(laborTax) || 0;
+
+    const sub = hours * rate;
+    const tx = sub * (taxPercent / 100);
+    const tot = sub + tx;
+
+    return { gross: sub, tax: tx, total: tot };
+  }, [laborHours, laborRate, laborTax]);
+
+  const grandSummary = useMemo(() => {
+    const totalNF = partsSummary.netTotal + laborSummary.total;
+    const totalTax = partsSummary.taxTotal + laborSummary.tax;
+    return { totalNF, totalTax };
+  }, [partsSummary, laborSummary]);
+
+  // State do Cálculo de Orçamento
+  const [orcParts, setOrcParts] = useState<PartItem[]>([
+    { id: '1', description: '', quantity: 1, price: '', discount: '', tax: '0' }
+  ]);
+  const [orcLaborHours, setOrcLaborHours] = useState<string>('');
+  const [orcLaborRate, setOrcLaborRate] = useState<string>('');
+  const [orcSelectedCommitmentId, setOrcSelectedCommitmentId] = useState('');
+
+  const addOrcPartRow = () => {
+    const chosen = commitments.find(c => c.id === orcSelectedCommitmentId);
+    const defaultDiscount = chosen && chosen.partDiscount !== undefined ? chosen.partDiscount.toString() : '';
+    setOrcParts(prev => [...prev, { 
+      id: Math.random().toString(), 
+      description: '', 
+      quantity: 1, 
+      price: '', 
+      discount: defaultDiscount, 
+      tax: '0' 
+    }]);
+  };
+
+  const handleOrcCommitmentChange = (commitmentId: string) => {
+    setOrcSelectedCommitmentId(commitmentId);
+    const chosen = commitments.find(c => c.id === commitmentId);
+    if (chosen) {
+      setOrcLaborRate(chosen.laborRate !== undefined ? chosen.laborRate.toString() : '');
+      setOrcParts(prev => prev.map(p => ({
+        ...p,
+        discount: chosen.partDiscount !== undefined ? chosen.partDiscount.toString() : ''
+      })));
+    } else {
+      setOrcLaborRate('');
+      setOrcParts(prev => prev.map(p => ({
+        ...p,
+        discount: ''
+      })));
+    }
+  };
+
+  const removeOrcPartRow = (id: string) => {
+    setOrcParts(prev => prev.filter(p => p.id !== id));
+  };
+
+  const updateOrcPart = (id: string, field: keyof PartItem, value: any) => {
+    setOrcParts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  const orcPartsSummary = useMemo(() => {
+    let grossTotal = 0;
+    let discountTotal = 0;
+    let netTotal = 0;
+
+    orcParts.forEach(p => {
+      const qty = Number(p.quantity) || 0;
+      const prc = Number(p.price) || 0;
+      const discPercent = Number(p.discount) || 0;
+
+      const sub = qty * prc;
+      const disc = sub * (discPercent / 100);
+      const tot = sub - disc;
+
+      grossTotal += sub;
+      discountTotal += disc;
+      netTotal += tot;
+    });
+
+    return { grossTotal, discountTotal, netTotal };
+  }, [orcParts]);
+
+  const orcLaborSummary = useMemo(() => {
+    const hours = Number(orcLaborHours) || 0;
+    const rate = Number(orcLaborRate) || 0;
+    const tot = hours * rate;
+
+    return { gross: tot, total: tot };
+  }, [orcLaborHours, orcLaborRate]);
+
+  const orcGrandSummary = useMemo(() => {
+    const totalOrc = orcPartsSummary.netTotal + orcLaborSummary.total;
+    const totalDiscount = orcPartsSummary.discountTotal;
+    return { totalOrc, totalDiscount };
+  }, [orcPartsSummary, orcLaborSummary]);
   
   // State da Manutenção
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
@@ -78,6 +259,11 @@ export default function MaintenanceControl() {
   const [compCancellationValue, setCompCancellationValue] = useState('0');
   const [compBudgetedToPay, setCompBudgetedToPay] = useState('0');
   const [compLiquidatedValue, setCompLiquidatedValue] = useState('0');
+  const [compPartDiscount, setCompPartDiscount] = useState('0');
+  const [compPartTax, setCompPartTax] = useState('0');
+  const [compLaborRate, setCompLaborRate] = useState('0');
+  const [compLaborTax, setCompLaborTax] = useState('0');
+  const [calcSelectedCommitmentId, setCalcSelectedCommitmentId] = useState('');
 
   // Helpers de Manutenção
   const handleEditClick = (record: MaintenanceRecord) => {
@@ -247,6 +433,28 @@ export default function MaintenanceControl() {
         >
           Gerenciador de Empenhos
         </button>
+        <button
+          onClick={() => setActiveTab('calculoNF')}
+          className={cn(
+            "text-xs font-black uppercase tracking-widest pb-3 px-1 transition-all border-b-2",
+            activeTab === 'calculoNF' 
+              ? "border-primary text-primary" 
+              : "border-transparent text-on-surface-variant hover:text-on-surface"
+          )}
+        >
+          Cálculo de Nota Fiscal
+        </button>
+        <button
+          onClick={() => setActiveTab('calculoOrcamento')}
+          className={cn(
+            "text-xs font-black uppercase tracking-widest pb-3 px-1 transition-all border-b-2",
+            activeTab === 'calculoOrcamento' 
+              ? "border-primary text-primary" 
+              : "border-transparent text-on-surface-variant hover:text-on-surface"
+          )}
+        >
+          Cálculo de Orçamento
+        </button>
       </div>
 
       <AnimatePresence>
@@ -322,6 +530,10 @@ export default function MaintenanceControl() {
                           setCompCancellationValue('0');
                           setCompBudgetedToPay('0');
                           setCompLiquidatedValue('0');
+                          setCompPartDiscount('0');
+                          setCompPartTax('0');
+                          setCompLaborRate('0');
+                          setCompLaborTax('0');
                           setShowCommitmentModal(true);
                         }}
                         className="bg-primary/5 hover:bg-primary border border-primary/20 hover:border-primary text-primary hover:text-white px-4 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1 flex-shrink-0"
@@ -848,7 +1060,7 @@ export default function MaintenanceControl() {
               </div>
             </section>
         </>
-      ) : (
+      ) : activeTab === 'empenhos' ? (
         /* RENDERIZAR TAB DE EMPENHOS (GERENCIADOR) */
         <div className="space-y-6">
           <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -924,6 +1136,10 @@ export default function MaintenanceControl() {
                   setCompCancellationValue('0');
                   setCompBudgetedToPay('0');
                   setCompLiquidatedValue('0');
+                  setCompPartDiscount('0');
+                  setCompPartTax('0');
+                  setCompLaborRate('0');
+                  setCompLaborTax('0');
                   setShowCommitmentModal(true);
                 }}
                 className="bg-primary text-white px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-1.5 hover:bg-black transition-all shadow-md w-full sm:w-auto justify-center"
@@ -1020,6 +1236,10 @@ export default function MaintenanceControl() {
                                 setCompCancellationValue(c.cancellationValue.toString());
                                 setCompBudgetedToPay(c.budgetedToPay.toString());
                                 setCompLiquidatedValue(c.liquidatedValue.toString());
+                                setCompPartDiscount((c.partDiscount ?? 0).toString());
+                                setCompPartTax((c.partTax ?? 0).toString());
+                                setCompLaborRate((c.laborRate ?? 0).toString());
+                                setCompLaborTax((c.laborTax ?? 0).toString());
                                 setShowCommitmentModal(true);
                               }}
                               className="text-on-surface-variant hover:text-primary transition-colors p-1"
@@ -1130,6 +1350,10 @@ export default function MaintenanceControl() {
                         setCompCancellationValue(c.cancellationValue.toString());
                         setCompBudgetedToPay(c.budgetedToPay.toString());
                         setCompLiquidatedValue(c.liquidatedValue.toString());
+                        setCompPartDiscount((c.partDiscount ?? 0).toString());
+                        setCompPartTax((c.partTax ?? 0).toString());
+                        setCompLaborRate((c.laborRate ?? 0).toString());
+                        setCompLaborTax((c.laborTax ?? 0).toString());
                         setShowCommitmentModal(true);
                       }}
                       className="px-2.5 py-1.5 bg-primary/5 hover:bg-primary/10 text-primary border border-primary/10 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
@@ -1152,7 +1376,742 @@ export default function MaintenanceControl() {
             )}
           </div>
         </div>
-      )}
+      ) : activeTab === 'calculoNF' ? (
+        /* RENDERIZAR TAB DE CÁLCULO DE NF */
+        <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="bg-white border border-outline-variant rounded-2xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+              <h2 className="text-lg font-black text-on-surface uppercase tracking-wider flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" />
+                Calculadora de Valores de Nota Fiscal (NF)
+              </h2>
+              <p className="text-xs text-on-surface-variant mt-1">
+                Simule e calcule os valores finais de notas fiscais com aplicação dinâmica de impostos por item ou serviços.
+              </p>
+            </div>
+
+            {/* Selecionar Empenho de Referência */}
+            <div className="w-full md:w-80 space-y-1.5 flex-shrink-0">
+              <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest block leading-none">
+                Empenho de Referência (Preenchimento Automático)
+              </label>
+              <select
+                value={calcSelectedCommitmentId}
+                onChange={(e) => handleCalcCommitmentChange(e.target.value)}
+                className="w-full bg-surface-container-low border border-outline-variant p-2.5 rounded-lg font-bold text-xs text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+              >
+                <option value="">-- Nenhum selecionado --</option>
+                {commitments.filter(c => c.status === CommitmentStatus.VIGENTE).map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.number} - {c.supplier} - {c.category} - {c.city}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Form de Peças e Mão de Obra */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Seção 1: Peças */}
+              <div className="bg-white border border-outline-variant rounded-2xl overflow-hidden shadow-sm">
+                <div className="p-4 sm:p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+                  <h3 className="font-bold text-on-surface uppercase tracking-widest text-xs sm:text-sm flex items-center gap-2">
+                    <Wrench className="w-4 h-4 text-primary" />
+                    Lista de Peças
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={addPartRow}
+                    className="bg-primary/5 hover:bg-primary border border-primary/20 hover:border-primary text-primary hover:text-white px-3 py-1.5 rounded-lg font-black text-[10px] sm:text-xs uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    + Adicionar Linha
+                  </button>
+                </div>
+
+                {/* Desktop View Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-surface-container/30 border-b border-outline-variant text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
+                        <th className="px-4 py-3 min-w-[200px]">Descrição da Peça</th>
+                        <th className="px-4 py-3 w-[80px] text-center">Qtd</th>
+                        <th className="px-4 py-3 w-[120px] text-right">Unitário (R$)</th>
+                        <th className="px-4 py-3 w-[90px] text-right">Imp (%)</th>
+                        <th className="px-4 py-3 w-[120px] text-right">Total (R$)</th>
+                        <th className="px-4 py-3 w-[60px] text-center"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/30 text-xs">
+                      {parts.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-8 text-center text-on-surface-variant/50 italic">
+                            Nenhuma peça adicionada. Adicione uma linha acima.
+                          </td>
+                        </tr>
+                      ) : (
+                        parts.map((p, idx) => {
+                          const qty = Number(p.quantity) || 0;
+                          const prc = Number(p.price) || 0;
+                          const txPercent = Number(p.tax) || 0;
+
+                          const sub = qty * prc;
+                          const tx = sub * (txPercent / 100);
+                          const totalItem = sub + tx;
+
+                          return (
+                            <tr key={p.id} className="hover:bg-surface-container-low/30 transition-colors">
+                              <td className="px-4 py-2">
+                                <input
+                                  type="text"
+                                  placeholder="Nome/Descrição da peça"
+                                  value={p.description}
+                                  onChange={(e) => updatePart(p.id, 'description', e.target.value)}
+                                  className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                              </td>
+                              <td className="px-4 py-2">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={p.quantity}
+                                  onChange={(e) => updatePart(p.id, 'quantity', e.target.value)}
+                                  className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-center text-on-surface focus:outline-none focus:ring-1 focus:ring-primary font-data-mono"
+                                />
+                              </td>
+                              <td className="px-4 py-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  value={p.price}
+                                  onChange={(e) => updatePart(p.id, 'price', e.target.value)}
+                                  className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-right text-on-surface focus:outline-none focus:ring-1 focus:ring-primary font-data-mono"
+                                />
+                              </td>
+                              <td className="px-4 py-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  placeholder="0"
+                                  value={p.tax}
+                                  onChange={(e) => updatePart(p.id, 'tax', e.target.value)}
+                                  className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-right text-on-surface focus:outline-none focus:ring-1 focus:ring-primary font-data-mono"
+                                />
+                              </td>
+                              <td className="px-4 py-2 text-right font-black text-on-surface font-data-mono">
+                                R$ {totalItem.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                <button
+                                  type="button"
+                                  disabled={parts.length <= 1}
+                                  onClick={() => removePartRow(p.id)}
+                                  className={cn(
+                                    "p-1.5 rounded transition-colors",
+                                    parts.length <= 1 
+                                      ? "text-on-surface-variant/20 cursor-not-allowed" 
+                                      : "text-on-surface-variant hover:text-error hover:bg-error/10 cursor-pointer"
+                                  )}
+                                  title="Remover linha"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile View: Cards list */}
+                <div className="block md:hidden divide-y divide-outline-variant/30 font-sans">
+                  {parts.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-on-surface-variant/50 italic">
+                      Nenhuma peça adicionada. Adicione uma linha acima.
+                    </div>
+                  ) : (
+                    parts.map((p, idx) => {
+                      const qty = Number(p.quantity) || 0;
+                      const prc = Number(p.price) || 0;
+                      const txPercent = Number(p.tax) || 0;
+
+                      const sub = qty * prc;
+                      const tx = sub * (txPercent / 100);
+                      const totalItem = sub + tx;
+
+                      return (
+                        <div key={p.id} className="p-4 space-y-3 bg-surface-container-lowest/30">
+                          <div className="flex justify-between items-center gap-2">
+                            <span className="text-[10px] font-black text-primary uppercase">Item #{idx + 1}</span>
+                            <button
+                              type="button"
+                              disabled={parts.length <= 1}
+                              onClick={() => removePartRow(p.id)}
+                              className="text-on-surface-variant hover:text-error p-1 bg-surface-container rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="block text-[8px] font-bold text-on-surface-variant uppercase tracking-wider">Descrição</label>
+                            <input
+                              type="text"
+                              placeholder="Descrição da peça"
+                              value={p.description}
+                              onChange={(e) => updatePart(p.id, 'description', e.target.value)}
+                              className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-on-surface focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-bold text-on-surface-variant uppercase tracking-wider">Quantidade</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={p.quantity}
+                                onChange={(e) => updatePart(p.id, 'quantity', e.target.value)}
+                                className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-on-surface focus:outline-none font-data-mono"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-bold text-on-surface-variant uppercase tracking-wider">Unitário (R$)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={p.price}
+                                onChange={(e) => updatePart(p.id, 'price', e.target.value)}
+                                className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-on-surface focus:outline-none font-data-mono"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-bold text-on-surface-variant uppercase tracking-wider">Imp (%)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                placeholder="0"
+                                value={p.tax}
+                                onChange={(e) => updatePart(p.id, 'tax', e.target.value)}
+                                className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-on-surface focus:outline-none font-data-mono"
+                              />
+                            </div>
+                            <div className="space-y-1 text-right flex flex-col justify-end">
+                              <span className="block text-[8px] font-bold text-on-surface-variant/70 uppercase tracking-wider">Total</span>
+                              <span className="font-black text-xs text-on-surface font-data-mono">
+                                R$ {totalItem.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Seção 2: Mão de Obra */}
+              <div className="bg-white border border-outline-variant rounded-2xl overflow-hidden shadow-sm p-6 space-y-6">
+                <h3 className="font-bold text-on-surface uppercase tracking-widest text-xs sm:text-sm flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                  Mão de Obra / Serviços
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Horas Trabalhadas</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={laborHours}
+                      onChange={(e) => setLaborHours(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none font-data-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Valor da Hora (R$)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={laborRate}
+                      onChange={(e) => setLaborRate(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none font-data-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Imposto Serviço (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="0"
+                      value={laborTax}
+                      onChange={(e) => setLaborTax(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none font-data-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Painel Consolidado de Resumo */}
+            <div className="lg:col-span-1 space-y-6">
+              <div className="bg-white border border-outline-variant rounded-2xl overflow-hidden shadow-md flex flex-col">
+                <div className="p-4 sm:p-5 border-b border-outline-variant bg-surface-container-low">
+                  <h3 className="font-bold text-on-surface uppercase tracking-widest text-xs flex items-center gap-2">
+                    <FileSpreadsheet className="w-4 h-4 text-primary" />
+                    Resumo Consolidado (NF)
+                  </h3>
+                </div>
+
+                <div className="p-6 space-y-6 flex-1 bg-surface-container-lowest">
+                  {/* Detalhe Peças */}
+                  <div className="space-y-3">
+                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">Resumo de Peças</span>
+                    <div className="space-y-2 text-xs font-bold text-on-surface-variant">
+                      <div className="flex justify-between">
+                        <span>Subtotal Bruto Peças:</span>
+                        <span className="font-data-mono">R$ {partsSummary.grossTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between text-on-surface">
+                        <span>Impostos Peças (+):</span>
+                        <span className="font-data-mono">R$ {partsSummary.taxTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr className="border-outline-variant/30" />
+
+                  {/* Detalhe Mão de Obra */}
+                  <div className="space-y-3">
+                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">Resumo de Mão de Obra</span>
+                    <div className="space-y-2 text-xs font-bold text-on-surface-variant">
+                      <div className="flex justify-between">
+                        <span>Mão de Obra Bruta:</span>
+                        <span className="font-data-mono">R$ {laborSummary.gross.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between text-on-surface">
+                        <span>Impostos Serviço (+):</span>
+                        <span className="font-data-mono">R$ {laborSummary.tax.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr className="border-outline-variant/30" />
+
+                  {/* Soma Subtotal Bruto + Mão de Obra */}
+                  <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+                    <div className="flex justify-between items-center text-xs font-bold text-on-surface-variant">
+                      <span>Soma Subtotal Bruto + Mão de Obra:</span>
+                      <span className="font-data-mono text-primary text-sm font-black">
+                        R$ {(partsSummary.grossTotal + laborSummary.gross).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setParts([{ id: '1', description: '', quantity: 1, price: '', discount: '0', tax: '' }]);
+                        setLaborHours('');
+                        setLaborRate('');
+                        setLaborTax('');
+                        setCalcSelectedCommitmentId('');
+                      }}
+                      className="w-full py-3 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface hover:text-primary rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer text-center"
+                    >
+                      Limpar Simulador
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : activeTab === 'calculoOrcamento' ? (
+          /* RENDERIZAR TAB DE CÁLCULO DE ORÇAMENTO */
+          <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="bg-white border border-outline-variant rounded-2xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+              <h2 className="text-lg font-black text-on-surface uppercase tracking-wider flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" />
+                Calculadora de Orçamento
+              </h2>
+              <p className="text-xs text-on-surface-variant mt-1">
+                Simule e calcule os valores finais de orçamentos brutos com aplicação de descontos em peças ou serviços.
+              </p>
+            </div>
+
+            {/* Selecionar Empenho de Referência */}
+            <div className="w-full md:w-80 space-y-1.5 flex-shrink-0">
+              <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest block leading-none">
+                Empenho de Referência (Preenchimento Automático)
+              </label>
+              <select
+                value={orcSelectedCommitmentId}
+                onChange={(e) => handleOrcCommitmentChange(e.target.value)}
+                className="w-full bg-surface-container-low border border-outline-variant p-2.5 rounded-lg font-bold text-xs text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+              >
+                <option value="">-- Nenhum selecionado --</option>
+                {commitments.filter(c => c.status === CommitmentStatus.VIGENTE).map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.number} - {c.supplier} - {c.category} - {c.city}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Form de Peças e Mão de Obra */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Seção 1: Peças */}
+              <div className="bg-white border border-outline-variant rounded-2xl overflow-hidden shadow-sm">
+                <div className="p-4 sm:p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+                  <h3 className="font-bold text-on-surface uppercase tracking-widest text-xs sm:text-sm flex items-center gap-2">
+                    <Wrench className="w-4 h-4 text-primary" />
+                    Lista de Peças
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={addOrcPartRow}
+                    className="bg-primary/5 hover:bg-primary border border-primary/20 hover:border-primary text-primary hover:text-white px-3 py-1.5 rounded-lg font-black text-[10px] sm:text-xs uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    + Adicionar Linha
+                  </button>
+                </div>
+
+                {/* Desktop View Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-surface-container/30 border-b border-outline-variant text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
+                        <th className="px-4 py-3 min-w-[220px]">Descrição da Peça</th>
+                        <th className="px-4 py-3 w-[100px] text-center">Qtd</th>
+                        <th className="px-4 py-3 w-[150px] text-right">Unitário (R$)</th>
+                        <th className="px-4 py-3 w-[120px] text-right">Desc (%)</th>
+                        <th className="px-4 py-3 w-[150px] text-right">Total (R$)</th>
+                        <th className="px-4 py-3 w-[60px] text-center"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/30 text-xs">
+                      {orcParts.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-8 text-center text-on-surface-variant/50 italic">
+                            Nenhuma peça adicionada. Adicione uma linha acima.
+                          </td>
+                        </tr>
+                      ) : (
+                        orcParts.map((p, idx) => {
+                          const qty = Number(p.quantity) || 0;
+                          const prc = Number(p.price) || 0;
+                          const discPercent = Number(p.discount) || 0;
+
+                          const sub = qty * prc;
+                          const disc = sub * (discPercent / 100);
+                          const totalItem = sub - disc;
+
+                          return (
+                            <tr key={p.id} className="hover:bg-surface-container-low/30 transition-colors">
+                              <td className="px-4 py-2">
+                                <input
+                                  type="text"
+                                  placeholder="Nome/Descrição da peça"
+                                  value={p.description}
+                                  onChange={(e) => updateOrcPart(p.id, 'description', e.target.value)}
+                                  className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                              </td>
+                              <td className="px-4 py-2">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={p.quantity}
+                                  onChange={(e) => updateOrcPart(p.id, 'quantity', e.target.value)}
+                                  className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-center text-on-surface focus:outline-none focus:ring-1 focus:ring-primary font-data-mono"
+                                />
+                              </td>
+                              <td className="px-4 py-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  value={p.price}
+                                  onChange={(e) => updateOrcPart(p.id, 'price', e.target.value)}
+                                  className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-right text-on-surface focus:outline-none focus:ring-1 focus:ring-primary font-data-mono"
+                                />
+                              </td>
+                              <td className="px-4 py-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  placeholder="0"
+                                  value={p.discount}
+                                  onChange={(e) => updateOrcPart(p.id, 'discount', e.target.value)}
+                                  className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-right text-on-surface focus:outline-none focus:ring-1 focus:ring-primary font-data-mono"
+                                />
+                              </td>
+                              <td className="px-4 py-2 text-right font-black text-on-surface font-data-mono">
+                                R$ {totalItem.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                <button
+                                  type="button"
+                                  disabled={orcParts.length <= 1}
+                                  onClick={() => removeOrcPartRow(p.id)}
+                                  className={cn(
+                                    "p-1.5 rounded transition-colors",
+                                    orcParts.length <= 1 
+                                      ? "text-on-surface-variant/20 cursor-not-allowed" 
+                                      : "text-on-surface-variant hover:text-error hover:bg-error/10 cursor-pointer"
+                                  )}
+                                  title="Remover linha"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile View: Cards list */}
+                <div className="block md:hidden divide-y divide-outline-variant/30 font-sans">
+                  {orcParts.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-on-surface-variant/50 italic">
+                      Nenhuma peça adicionada. Adicione uma linha acima.
+                    </div>
+                  ) : (
+                    orcParts.map((p, idx) => {
+                      const qty = Number(p.quantity) || 0;
+                      const prc = Number(p.price) || 0;
+                      const discPercent = Number(p.discount) || 0;
+                      const sub = qty * prc;
+                      const disc = sub * (discPercent / 100);
+                      const totalItem = sub - disc;
+
+                      return (
+                        <div key={p.id} className="p-4 space-y-3 bg-surface-container-lowest/30">
+                          <div className="flex justify-between items-center gap-2">
+                            <span className="text-[10px] font-black text-primary uppercase">Item #{idx + 1}</span>
+                            <button
+                              type="button"
+                              disabled={orcParts.length <= 1}
+                              onClick={() => removeOrcPartRow(p.id)}
+                              className="text-on-surface-variant hover:text-error p-1 bg-surface-container rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="block text-[8px] font-bold text-on-surface-variant uppercase tracking-wider">Descrição</label>
+                            <input
+                              type="text"
+                              placeholder="Descrição da peça"
+                              value={p.description}
+                              onChange={(e) => updateOrcPart(p.id, 'description', e.target.value)}
+                              className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-on-surface focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-bold text-on-surface-variant uppercase tracking-wider">Quantidade</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={p.quantity}
+                                onChange={(e) => updateOrcPart(p.id, 'quantity', e.target.value)}
+                                className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-on-surface focus:outline-none font-data-mono"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-bold text-on-surface-variant uppercase tracking-wider">Unitário (R$)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={p.price}
+                                onChange={(e) => updateOrcPart(p.id, 'price', e.target.value)}
+                                className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-on-surface focus:outline-none font-data-mono"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-bold text-on-surface-variant uppercase tracking-wider">Desc (%)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                placeholder="0"
+                                value={p.discount}
+                                onChange={(e) => updateOrcPart(p.id, 'discount', e.target.value)}
+                                className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-lg text-xs font-bold text-on-surface focus:outline-none font-data-mono"
+                              />
+                            </div>
+                            <div className="space-y-1 text-right flex flex-col justify-end">
+                              <span className="block text-[8px] font-bold text-on-surface-variant/70 uppercase tracking-wider">Total</span>
+                              <span className="font-black text-xs text-on-surface font-data-mono">
+                                R$ {totalItem.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Seção 2: Mão de Obra */}
+              <div className="bg-white border border-outline-variant rounded-2xl overflow-hidden shadow-sm p-6 space-y-6">
+                <h3 className="font-bold text-on-surface uppercase tracking-widest text-xs sm:text-sm flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                  Mão de Obra / Serviços
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Horas Trabalhadas</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={orcLaborHours}
+                      onChange={(e) => setOrcLaborHours(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-xs text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none font-data-mono"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Valor da Hora (R$)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={orcLaborRate}
+                      onChange={(e) => setOrcLaborRate(e.target.value)}
+                      className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-xs text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none font-data-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Painel Consolidado de Resumo */}
+            <div className="lg:col-span-1 space-y-6">
+              <div className="bg-white border border-outline-variant rounded-2xl overflow-hidden shadow-md flex flex-col">
+                <div className="p-4 sm:p-5 border-b border-outline-variant bg-surface-container-low">
+                  <h3 className="font-bold text-on-surface uppercase tracking-widest text-xs flex items-center gap-2">
+                    <FileSpreadsheet className="w-4 h-4 text-primary" />
+                    Resumo Consolidado (Orçamento)
+                  </h3>
+                </div>
+
+                <div className="p-6 space-y-6 flex-1 bg-surface-container-lowest">
+                  {/* Detalhe Peças */}
+                  <div className="space-y-3">
+                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">Resumo de Peças</span>
+                    <div className="space-y-2 text-xs font-bold text-on-surface-variant">
+                      <div className="flex justify-between">
+                        <span>Subtotal Bruto Peças:</span>
+                        <span className="font-data-mono">R$ {orcPartsSummary.grossTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between text-error">
+                        <span>Descontos Peças (-):</span>
+                        <span className="font-data-mono">R$ {orcPartsSummary.discountTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t border-outline-variant/30 text-on-surface text-sm font-black">
+                        <span>Total Líquido Peças:</span>
+                        <span className="font-data-mono text-primary">R$ {orcPartsSummary.netTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr className="border-outline-variant/30" />
+
+                  {/* Detalhe Mão de Obra */}
+                  <div className="space-y-3">
+                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">Resumo de Mão de Obra</span>
+                    <div className="space-y-2 text-xs font-bold text-on-surface-variant">
+                      <div className="flex justify-between">
+                        <span>Mão de Obra Bruta:</span>
+                        <span className="font-data-mono">R$ {orcLaborSummary.gross.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t border-outline-variant/30 text-on-surface text-sm font-black">
+                        <span>Total Líquido Serviço:</span>
+                        <span className="font-data-mono text-primary">R$ {orcLaborSummary.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr className="border-outline-variant/50" />
+
+                  {/* Totalizador Geral */}
+                  <div className="space-y-4 pt-2">
+                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
+                      <div className="flex justify-between items-center text-xs font-bold text-on-surface-variant">
+                        <span>Descontos Consolidados:</span>
+                        <span className="font-data-mono text-error">R$ {orcGrandSummary.totalDiscount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between items-end pt-2 border-t border-primary/10">
+                        <div>
+                          <span className="block text-[8px] font-black text-primary uppercase tracking-widest">Total do Orçamento</span>
+                          <span className="block text-[9px] font-bold text-on-surface-variant leading-none uppercase">Valor Final Calculado</span>
+                        </div>
+                        <span className="text-xl font-black text-primary font-data-mono leading-none">
+                          R$ {orcGrandSummary.totalOrc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrcParts([{ id: '1', description: '', quantity: 1, price: '', discount: '', tax: '0' }]);
+                        setOrcLaborHours('');
+                        setOrcLaborRate('');
+                        setOrcSelectedCommitmentId('');
+                      }}
+                      className="w-full py-3 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface hover:text-primary rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer text-center"
+                    >
+                      Limpar Simulador
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* MODAL DE CADASTRO/EDIÇÃO DE EMPENHOS */}
       <AnimatePresence>
@@ -1359,6 +2318,67 @@ export default function MaintenanceControl() {
                     </div>
                   </div>
                 </div>
+
+                <div className="border-t border-outline-variant pt-6">
+                  <h4 className="text-[11px] font-black text-primary uppercase tracking-widest mb-4">Valores Contratuais de Referência (Calculadora)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {/* Desconto de Peça (%) */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Desconto Peça (%)</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={compPartDiscount}
+                        onChange={(e) => setCompPartDiscount(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                      />
+                    </div>
+                    {/* Imposto de Peça (%) */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Imposto Peça (%)</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={compPartTax}
+                        onChange={(e) => setCompPartTax(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                      />
+                    </div>
+                    {/* Hora Trabalhada (R$) */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Valor Hora (R$)</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={compLaborRate}
+                        onChange={(e) => setCompLaborRate(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                      />
+                    </div>
+                    {/* Imposto Serviço (%) */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Imposto Serviço (%)</label>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={compLaborTax}
+                        onChange={(e) => setCompLaborTax(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Modal Footer */}
@@ -1396,6 +2416,10 @@ export default function MaintenanceControl() {
                       cancellationValue: Number(compCancellationValue || 0),
                       budgetedToPay: Number(compBudgetedToPay || 0),
                       liquidatedValue: Number(compLiquidatedValue || 0),
+                      partDiscount: Number(compPartDiscount || 0),
+                      partTax: Number(compPartTax || 0),
+                      laborRate: Number(compLaborRate || 0),
+                      laborTax: Number(compLaborTax || 0),
                     };
 
                     try {

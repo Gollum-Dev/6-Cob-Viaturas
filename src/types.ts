@@ -98,6 +98,10 @@ export interface Commitment {
   liquidatedValue: number;
   balance: number;
   createdAt: string;
+  partDiscount?: number;
+  partTax?: number;
+  laborRate?: number;
+  laborTax?: number;
 }
 
 export enum MaintenanceStatus {
