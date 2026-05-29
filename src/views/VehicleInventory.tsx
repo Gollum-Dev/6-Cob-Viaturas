@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Filter, Plus, Edit, Eye, ChevronLeft, ChevronRight, Trash2, Car, X, Radio, DollarSign, Disc, Settings, FileText, Calendar, Hash, Zap, Shield, MapPin } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useVehicles } from '../context/VehicleContext';
@@ -8,7 +8,7 @@ import { cn } from '../lib/utils';
 
 export default function VehicleInventory() {
   const navigate = useNavigate();
-  const { vehicles, deleteVehicle } = useVehicles();
+  const { vehicles, deleteVehicle, updateVehicle } = useVehicles();
   const { user } = useAuth();
 
   const isCBU = user?.role === UserRole.CBU;
@@ -17,6 +17,41 @@ export default function VehicleInventory() {
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [unitFilter, setUnitFilter] = useState('Todos');
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+
+  // Inline odometer editing state
+  const [editingOdometerId, setEditingOdometerId] = useState<string | null>(null);
+  const [tempOdometer, setTempOdometer] = useState<string>('');
+  const [isSavingOdometer, setIsSavingOdometer] = useState<boolean>(false);
+
+  const handleStartEditOdometer = (v: Vehicle, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingOdometerId(v.id);
+    setTempOdometer(v.odometer.toString());
+  };
+
+  const handleSaveOdometer = async (v: Vehicle, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newOdometer = parseInt(tempOdometer, 10);
+    if (isNaN(newOdometer) || newOdometer < 0) {
+      alert('Por favor, insira um valor válido de quilometragem.');
+      return;
+    }
+
+    setIsSavingOdometer(true);
+    try {
+      await updateVehicle(v.id, { odometer: newOdometer });
+      setEditingOdometerId(null);
+    } catch (err: any) {
+      alert('Erro ao atualizar odômetro: ' + (err.message || err));
+    } finally {
+      setIsSavingOdometer(false);
+    }
+  };
+
+  const handleCancelEditOdometer = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingOdometerId(null);
+  };
 
   const getStatusInfo = (status: VehicleStatus) => {
     switch (status) {
@@ -197,11 +232,54 @@ export default function VehicleInventory() {
                         {statusInfo.label}
                       </span>
                     </td>
-                    <td className="px-4 py-6">
-                      <div className="flex items-baseline gap-1">
-                        <span className="font-black text-on-surface tracking-tight">{v.odometer.toLocaleString()}</span>
-                        <span className="text-[8px] font-black text-on-surface-variant uppercase opacity-55">KM</span>
-                      </div>
+                    <td className="px-4 py-6" onClick={(e) => e.stopPropagation()}>
+                      {editingOdometerId === v.id ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="\d*"
+                            value={tempOdometer}
+                            onChange={(e) => setTempOdometer(e.target.value.replace(/\D/g, ''))}
+                            className="w-20 bg-surface-container-low border border-outline-variant p-1.5 rounded-lg text-xs font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest text-on-surface text-center"
+                            disabled={isSavingOdometer}
+                          />
+                          <button
+                            onClick={(e) => handleSaveOdometer(v, e)}
+                            disabled={isSavingOdometer}
+                            className="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-[10px] font-black uppercase cursor-pointer"
+                            title="Salvar"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={handleCancelEditOdometer}
+                            disabled={isSavingOdometer}
+                            className="p-1.5 bg-error hover:bg-error-container text-white rounded-lg text-[10px] font-black uppercase cursor-pointer"
+                            title="Cancelar"
+                          >
+                            X
+                          </button>
+                        </div>
+                      ) : (
+                        <div 
+                          className="flex items-center gap-1.5 group/odo cursor-pointer hover:bg-surface-container-low/40 p-1 px-2 rounded-lg -ml-2 w-fit transition-colors"
+                          onClick={(e) => {
+                            if (!isCBU) {
+                              handleStartEditOdometer(v, e);
+                            }
+                          }}
+                          title={!isCBU ? "Clique para editar o odômetro" : undefined}
+                        >
+                          <div className="flex items-baseline gap-0.5">
+                            <span className="font-black text-on-surface tracking-tight">{v.odometer.toLocaleString()}</span>
+                            <span className="text-[8px] font-black text-on-surface-variant uppercase opacity-55">KM</span>
+                          </div>
+                          {!isCBU && (
+                            <Edit className="w-3.5 h-3.5 text-on-surface-variant/40 group-hover/odo:text-primary transition-colors opacity-0 group-hover/odo:opacity-100" />
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-6" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-center gap-1">
@@ -322,12 +400,55 @@ export default function VehicleInventory() {
                     <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest">Tipo</p>
                     <p className="text-[10px] font-black text-on-surface uppercase tracking-tight truncate">{v.type}</p>
                   </div>
-                  <div className="space-y-0.5">
+                  <div className="space-y-0.5" onClick={(e) => e.stopPropagation()}>
                     <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest">Odômetro</p>
-                    <div className="flex items-baseline gap-0.5">
-                      <span className="text-[10px] font-black text-on-surface uppercase tracking-tight">{v.odometer.toLocaleString()}</span>
-                      <span className="text-[7px] font-black text-on-surface-variant uppercase opacity-55">KM</span>
-                    </div>
+                    {editingOdometerId === v.id ? (
+                      <div className="flex items-center gap-1 mt-1">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="\d*"
+                          value={tempOdometer}
+                          onChange={(e) => setTempOdometer(e.target.value.replace(/\D/g, ''))}
+                          className="w-16 bg-surface-container-low border border-outline-variant p-1 rounded-lg text-[10px] font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase text-on-surface text-center"
+                          disabled={isSavingOdometer}
+                        />
+                        <button
+                          onClick={(e) => handleSaveOdometer(v, e)}
+                          disabled={isSavingOdometer}
+                          className="p-1 bg-green-500 hover:bg-green-600 text-white rounded text-[8px] font-black cursor-pointer"
+                          title="Salvar"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          onClick={handleCancelEditOdometer}
+                          disabled={isSavingOdometer}
+                          className="p-1 bg-error hover:bg-error-container text-white rounded text-[8px] font-black cursor-pointer"
+                          title="Cancelar"
+                        >
+                          X
+                        </button>
+                      </div>
+                    ) : (
+                      <div 
+                        className="flex items-center gap-1 cursor-pointer hover:bg-surface-container-low/40 rounded -ml-1 p-0.5 w-fit transition-colors"
+                        onClick={(e) => {
+                          if (!isCBU) {
+                            handleStartEditOdometer(v, e);
+                          }
+                        }}
+                        title={!isCBU ? "Clique para editar o odômetro" : undefined}
+                      >
+                        <div className="flex items-baseline gap-0.5">
+                          <span className="text-[10px] font-black text-on-surface uppercase tracking-tight">{v.odometer.toLocaleString()}</span>
+                          <span className="text-[7px] font-black text-on-surface-variant uppercase opacity-55">KM</span>
+                        </div>
+                        {!isCBU && (
+                          <Edit className="w-2.5 h-2.5 text-on-surface-variant/40" />
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest">Status</p>
