@@ -291,52 +291,52 @@ export default function MovimentacaoDiaria() {
       </div>
 
       {/* Period Consolidation Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {/* Entradas */}
         <motion.div
           whileHover={{ y: -2 }}
-          className="bg-surface-container-lowest p-6 rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
+          className="bg-surface-container-lowest p-2 sm:p-6 rounded-xl sm:rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
         >
-          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1">
-            <TrendingUp className="w-4 h-4 text-green-500" />
+          <span className="text-[7px] sm:text-[9px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-0.5 sm:gap-1">
+            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 shrink-0" />
             Total Entradas
           </span>
-          <div className="flex justify-between items-end mt-4">
-            <span className="text-3xl font-black text-green-500">+{periodTotals.entradas.toFixed(1)}h</span>
-            <span className="text-[10px] font-black uppercase text-green-500/70 bg-green-500/10 px-2.5 py-1 rounded-full">Créditos</span>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-1 sm:mt-4 gap-1 sm:gap-0">
+            <span className="text-sm sm:text-3xl font-black text-green-500 leading-none">+{periodTotals.entradas.toFixed(1)}h</span>
+            <span className="text-[6.5px] sm:text-[10px] font-black uppercase text-green-500/70 bg-green-500/10 px-1 sm:px-2.5 py-0.5 sm:py-1 rounded-full inline-block">Créditos</span>
           </div>
         </motion.div>
 
         {/* Saídas */}
         <motion.div
           whileHover={{ y: -2 }}
-          className="bg-surface-container-lowest p-6 rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
+          className="bg-surface-container-lowest p-2 sm:p-6 rounded-xl sm:rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
         >
-          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1">
-            <TrendingDown className="w-4 h-4 text-error" />
+          <span className="text-[7px] sm:text-[9px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-0.5 sm:gap-1">
+            <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-error shrink-0" />
             Total Saídas
           </span>
-          <div className="flex justify-between items-end mt-4">
-            <span className="text-3xl font-black text-error">-{periodTotals.saidas.toFixed(1)}h</span>
-            <span className="text-[10px] font-black uppercase text-error/70 bg-error/10 px-2.5 py-1 rounded-full">Débitos</span>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-1 sm:mt-4 gap-1 sm:gap-0">
+            <span className="text-sm sm:text-3xl font-black text-error leading-none">-{periodTotals.saidas.toFixed(1)}h</span>
+            <span className="text-[6.5px] sm:text-[10px] font-black uppercase text-error/70 bg-error/10 px-1 sm:px-2.5 py-0.5 sm:py-1 rounded-full inline-block">Débitos</span>
           </div>
         </motion.div>
 
         {/* Saldo Líquido do Período */}
         <motion.div
           whileHover={{ y: -2 }}
-          className={`p-6 rounded-[24px] border shadow-sm flex flex-col justify-between ${
+          className={`p-2 sm:p-6 rounded-xl sm:rounded-[24px] border shadow-sm flex flex-col justify-between ${
             periodTotals.saldo >= 0 
               ? 'bg-gradient-to-br from-green-500/5 to-transparent border-green-500/20' 
               : 'bg-gradient-to-br from-error/5 to-transparent border-error/20'
           }`}
         >
-          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Saldo do Período</span>
-          <div className="flex justify-between items-end mt-4">
-            <span className={`text-3xl font-black ${periodTotals.saldo >= 0 ? 'text-green-600' : 'text-error'}`}>
+          <span className="text-[7px] sm:text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Saldo do Período</span>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-1 sm:mt-4 gap-1 sm:gap-0">
+            <span className={`text-sm sm:text-3xl font-black leading-none ${periodTotals.saldo >= 0 ? 'text-green-600' : 'text-error'}`}>
               {periodTotals.saldo >= 0 ? '+' : ''}{periodTotals.saldo.toFixed(1)}h
             </span>
-            <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${
+            <span className={`text-[6.5px] sm:text-[10px] font-black uppercase px-1 sm:px-2.5 py-0.5 sm:py-1 rounded-full inline-block ${
               periodTotals.saldo >= 0 ? 'text-green-600 bg-green-600/10' : 'text-error bg-error/10'
             }`}>
               {periodTotals.saldo >= 0 ? 'Superávit' : 'Déficit'}
@@ -347,15 +347,15 @@ export default function MovimentacaoDiaria() {
         {/* Total KM Rodados */}
         <motion.div
           whileHover={{ y: -2 }}
-          className="bg-surface-container-lowest p-6 rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
+          className="bg-surface-container-lowest p-2 sm:p-6 rounded-xl sm:rounded-[24px] border border-outline-variant shadow-sm flex flex-col justify-between"
         >
-          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1">
-            <ArrowUpDown className="w-4 h-4 text-blue-500" />
+          <span className="text-[7px] sm:text-[9px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-0.5 sm:gap-1">
+            <ArrowUpDown className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 shrink-0" />
             Total KM Rodados
           </span>
-          <div className="flex justify-between items-end mt-4">
-            <span className="text-3xl font-black text-blue-500">{periodTotals.km.toFixed(0)} km</span>
-            <span className="text-[10px] font-black uppercase text-blue-500/70 bg-blue-500/10 px-2.5 py-1 rounded-full">Distância</span>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-1 sm:mt-4 gap-1 sm:gap-0">
+            <span className="text-sm sm:text-3xl font-black text-blue-500 leading-none">{periodTotals.km.toFixed(0)} km</span>
+            <span className="text-[6.5px] sm:text-[10px] font-black uppercase text-blue-500/70 bg-blue-500/10 px-1 sm:px-2.5 py-0.5 sm:py-1 rounded-full inline-block">Distância</span>
           </div>
         </motion.div>
       </div>
