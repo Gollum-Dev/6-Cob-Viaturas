@@ -6,6 +6,24 @@ import { useAuth } from '../context/AuthContext';
 import { VehicleStatus, UserRole } from '../types';
 import { cn } from '../lib/utils';
 
+const calculateNextOilChangeDate = (lastDateStr: string): string => {
+  if (!lastDateStr) return '';
+  const parts = lastDateStr.split('-');
+  if (parts.length !== 3) return '';
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // 0-based month
+  const day = parseInt(parts[2], 10);
+  
+  const date = new Date(year, month, day);
+  date.setFullYear(date.getFullYear() + 1);
+  
+  const nextYear = date.getFullYear();
+  const nextMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const nextDay = String(date.getDate()).padStart(2, '0');
+  
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+};
+
 export default function EditVehicleForm() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -309,7 +327,15 @@ export default function EditVehicleForm() {
                   <input 
                     type="date" 
                     value={formData.lastOilChangeDate}
-                    onChange={(e) => setFormData({ ...formData, lastOilChangeDate: e.target.value })}
+                    onChange={(e) => {
+                      const newLastDate = e.target.value;
+                      const newNextDate = calculateNextOilChangeDate(newLastDate);
+                      setFormData({ 
+                        ...formData, 
+                        lastOilChangeDate: newLastDate,
+                        nextOilChangeDate: newNextDate 
+                      });
+                    }}
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
                   />
                 </div>
@@ -334,8 +360,9 @@ export default function EditVehicleForm() {
                   <input 
                     type="date" 
                     value={formData.nextOilChangeDate}
-                    onChange={(e) => setFormData({ ...formData, nextOilChangeDate: e.target.value })}
-                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary"
+                    readOnly
+                    disabled
+                    className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface/50 focus:outline-none cursor-not-allowed opacity-75"
                   />
                 </div>
 

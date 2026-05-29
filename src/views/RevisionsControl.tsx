@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Wrench, Disc, Gauge, Droplets, AlertTriangle, Edit } from 'lucide-react';
 import { useVehicles } from '../context/VehicleContext';
 import { useAuth } from '../context/AuthContext';
-import { UserRole } from '../types';
+import { UserRole, VehicleStatus } from '../types';
 import { cn } from '../lib/utils';
 
 export default function RevisionsControl() {
@@ -22,7 +22,7 @@ export default function RevisionsControl() {
     today.setHours(0, 0, 0, 0);
 
     return vehicles
-      .filter(v => v.tireValidityDate)
+      .filter(v => v.status === VehicleStatus.AVAILABLE && v.tireValidityDate)
       .map(v => {
         const [year, month, day] = v.tireValidityDate!.split('-').map(Number);
         const validityDate = new Date(year, month - 1, day);
@@ -44,7 +44,7 @@ export default function RevisionsControl() {
     today.setHours(0, 0, 0, 0);
 
     return vehicles
-      .filter(v => v.nextOilChangeDate)
+      .filter(v => v.status === VehicleStatus.AVAILABLE && v.nextOilChangeDate)
       .map(v => {
         const [year, month, day] = v.nextOilChangeDate!.split('-').map(Number);
         const validityDate = new Date(year, month - 1, day);
@@ -63,7 +63,7 @@ export default function RevisionsControl() {
 
   const oilChangeKmAlerts = useMemo(() => {
     return vehicles
-      .filter(v => v.lastOilChangeOdometer !== undefined)
+      .filter(v => v.status === VehicleStatus.AVAILABLE && v.lastOilChangeOdometer !== undefined)
       .map(v => {
         const nextChangeKm = (v.lastOilChangeOdometer || 0) + 10000;
         const kmRemaining = nextChangeKm - v.odometer;
