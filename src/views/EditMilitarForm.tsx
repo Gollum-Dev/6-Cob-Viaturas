@@ -218,6 +218,7 @@ export default function EditMilitarForm() {
                     <option value="3º SGT">3º SGT</option>
                     <option value="CB">CB</option>
                     <option value="SD">SD</option>
+                    <option value="BRIGADISTA">BRIGADISTA</option>
                   </select>
                 </div>
               </div>
