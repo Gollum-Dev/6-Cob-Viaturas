@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Clock, Plus, Trash2, Award, Calendar, FileText, CheckCircle, ChevronLeft, ChevronRight, RefreshCw, Sparkles, Filter } from 'lucide-react';
+import { Clock, Plus, Trash2, Award, Calendar, FileText, CheckCircle, ChevronLeft, ChevronRight, RefreshCw, Sparkles, Filter, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, TimeBankType, TimeBankRecord } from '../types';
 import { supabase } from '../lib/supabase';
@@ -10,6 +10,7 @@ export default function TimeBank() {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [records, setRecords] = useState<TimeBankRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Form State
   const [type, setType] = useState<TimeBankType>(TimeBankType.OVERTIME);
@@ -40,6 +41,17 @@ export default function TimeBank() {
       }
     }
   }, [user, isManager]);
+
+  // Filter users based on search query
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery) return registeredUsers;
+    const query = searchQuery.toLowerCase();
+    return registeredUsers.filter(u => 
+      u.name.toLowerCase().includes(query) || 
+      u.rank.toLowerCase().includes(query) ||
+      u.milNumber.includes(query)
+    );
+  }, [registeredUsers, searchQuery]);
 
   // Fetch records whenever selected user changes
   const fetchRecords = async () => {
@@ -199,22 +211,42 @@ export default function TimeBank() {
         </div>
 
         {isManager && (
-          <div className="flex flex-col gap-1.5 min-w-[280px] w-full md:w-auto">
-            <label className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest pl-1">Selecionar Militar</label>
-            <div className="relative">
-              <select
-                value={selectedUserId}
-                onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full bg-surface-container-low border border-outline-variant p-3 pr-10 rounded-xl text-xs font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest cursor-pointer appearance-none text-on-surface"
-              >
-                {registeredUsers.map(u => (
-                  <option key={u.id} value={u.id}>
-                    {u.rank} {u.name} ({u.milNumber}) - {u.unit}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant/60">
-                <Award className="w-3.5 h-3.5" />
+          <div className="flex flex-col md:flex-row gap-3 min-w-[280px] w-full md:w-auto">
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest pl-1">Buscar Militar</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Nome, Posto ou Número"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 pl-9 rounded-xl text-xs font-bold focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest text-on-surface"
+                />
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-on-surface-variant/60">
+                  <Search className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest pl-1">Selecionar Militar</label>
+              <div className="relative">
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="w-full bg-surface-container-low border border-outline-variant p-3 pr-10 rounded-xl text-xs font-black focus:outline-none focus:ring-1 focus:ring-primary uppercase tracking-widest cursor-pointer appearance-none text-on-surface"
+                >
+                  {filteredUsers.map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.rank} {u.name} ({u.milNumber}) - {u.unit}
+                    </option>
+                  ))}
+                  {filteredUsers.length === 0 && (
+                    <option value="" disabled>Nenhum militar encontrado</option>
+                  )}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant/60">
+                  <Award className="w-3.5 h-3.5" />
+                </div>
               </div>
             </div>
           </div>
