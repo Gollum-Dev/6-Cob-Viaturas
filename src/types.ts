@@ -151,10 +151,12 @@ export interface ChecklistSubmission {
   vehicleId: string;
   vehiclePrefix: string;
   vehicleType: string;
+  vehicleUnit?: string;
   userId: string;
   userName: string;
   userRank: string;
   userMilNumber: string;
+  userUnit?: string;
   odometer: number;
   items: { description: string; status: boolean; observation?: string }[];
 }

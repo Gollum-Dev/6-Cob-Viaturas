@@ -15,6 +15,7 @@ export default function AuditLogs() {
   const [vehicleFilter, setVehicleFilter] = useState('');
   const [militarFilter, setMilitarFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  const [unitFilter, setUnitFilter] = useState('Todos');
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [editingSubmission, setEditingSubmission] = useState<any>(null);
 
@@ -96,9 +97,19 @@ export default function AuditLogs() {
         matchesDate = sub.timestamp.startsWith(formattedDate);
       }
 
-      return matchesStatus && matchesVehicle && matchesMilitar && matchesDate;
+      let matchesUnit = true;
+      if (unitFilter !== 'Todos') {
+        matchesUnit = sub.vehicleUnit === unitFilter || sub.userUnit === unitFilter;
+      }
+
+      return matchesStatus && matchesVehicle && matchesMilitar && matchesDate && matchesUnit;
     });
-  }, [submissions, statusFilter, vehicleFilter, militarFilter, dateFilter]);
+  }, [submissions, statusFilter, vehicleFilter, militarFilter, dateFilter, unitFilter]);
+
+  const units = useMemo(() => {
+    const u = new Set(submissions.map(sub => sub.vehicleUnit).filter(Boolean));
+    return ['Todos', ...Array.from(u)].sort();
+  }, [submissions]);
 
   const generatePDF = (submission: any) => {
     const doc = new jsPDF();
@@ -267,7 +278,10 @@ export default function AuditLogs() {
       </div>
 
       <div className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-outline-variant bg-surface-container-low grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div className={cn(
+          "p-6 border-b border-outline-variant bg-surface-container-low grid grid-cols-1 sm:grid-cols-2 gap-4 items-end",
+          user?.role === UserRole.ADMINISTRADOR ? "lg:grid-cols-5" : "lg:grid-cols-4"
+        )}>
           {/* Status Filter */}
           <div className="flex flex-col gap-1.5 w-full">
             <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Status</label>
@@ -327,6 +341,25 @@ export default function AuditLogs() {
               />
             </div>
           </div>
+
+          {/* Unit Filter (Administrador only) */}
+          {user?.role === UserRole.ADMINISTRADOR && (
+            <div className="flex flex-col gap-1.5 w-full">
+              <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Unidade</label>
+              <div className="relative w-full">
+                <select 
+                  value={unitFilter}
+                  onChange={(e) => setUnitFilter(e.target.value)}
+                  className="w-full appearance-none flex items-center gap-2 px-4 py-3 bg-white border border-outline-variant text-on-surface-variant font-bold rounded-lg hover:bg-surface-container transition-all text-xs uppercase tracking-widest cursor-pointer pr-10 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                >
+                  {units.map(unit => (
+                    <option key={unit} value={unit}>{unit === 'Todos' ? 'Todas as Unidades' : (unit as string).toUpperCase()}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline pointer-events-none" />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Desktop View: Table */}
@@ -337,6 +370,7 @@ export default function AuditLogs() {
                 <th className="px-8 py-6">Data / Hora</th>
                 <th className="px-8 py-6">Militar Responsável</th>
                 <th className="px-8 py-6">Viatura</th>
+                {user?.role === UserRole.ADMINISTRADOR && <th className="px-8 py-6">Unidade</th>}
                 <th className="px-8 py-6">Odômetro</th>
                 <th className="px-8 py-6 text-center">Status</th>
                 <th className="px-8 py-6 text-center">Itens OK</th>
@@ -379,6 +413,11 @@ export default function AuditLogs() {
                           <span className="text-[10px] font-medium text-on-surface-variant opacity-60">({sub.vehicleType})</span>
                         </div>
                       </td>
+                      {user?.role === UserRole.ADMINISTRADOR && (
+                        <td className="px-8 py-6 font-bold text-on-surface text-[11px] uppercase tracking-wider">
+                          {sub.vehicleUnit || sub.userUnit || '-'}
+                        </td>
+                      )}
                       <td className="px-8 py-6 font-data-mono text-on-surface-variant">
                         {sub.odometer.toLocaleString('pt-BR')} KM
                       </td>
@@ -497,6 +536,11 @@ export default function AuditLogs() {
                         <span className="font-bold text-on-surface">{sub.vehiclePrefix}</span>
                         <span className="text-[9px] font-semibold text-on-surface-variant opacity-60">({sub.vehicleType})</span>
                       </div>
+                      {user?.role === UserRole.ADMINISTRADOR && (
+                        <span className="block text-[9px] font-bold text-on-surface-variant opacity-80 uppercase tracking-widest mt-1">
+                          {sub.vehicleUnit || sub.userUnit || '-'}
+                        </span>
+                      )}
                     </div>
 
                     <div>

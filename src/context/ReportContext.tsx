@@ -25,9 +25,11 @@ function mapSubmissionFromDB(dbS: any): ChecklistSubmission {
     items: dbS.items,
     vehiclePrefix: dbS.vehicles?.prefix || 'Desconhecido',
     vehicleType: dbS.vehicles?.type || 'Desconhecido',
+    vehicleUnit: dbS.vehicles?.unit || '',
     userName: dbS.users?.name || 'Usuário Indefinido',
     userRank: dbS.users?.rank || '',
     userMilNumber: dbS.users?.mil_number || 'N/A',
+    userUnit: dbS.users?.unit || '',
   };
 }
 
@@ -42,7 +44,7 @@ export function ReportProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     const { data, error } = await supabase
       .from('checklists')
-      .select('*, users(name, rank, mil_number), vehicles(prefix, type)')
+      .select('*, users(name, rank, mil_number, unit), vehicles(prefix, type, unit)')
       .order('created_at', { ascending: false });
     
     if (!error && data) {
@@ -82,7 +84,7 @@ export function ReportProvider({ children }: { children: ReactNode }) {
     const { data: inserted, error } = await supabase
       .from('checklists')
       .insert([dbPayload])
-      .select('*, users(name, rank, mil_number), vehicles(prefix, type)')
+      .select('*, users(name, rank, mil_number, unit), vehicles(prefix, type, unit)')
       .single();
     
     if (!error && inserted) {
@@ -104,7 +106,7 @@ export function ReportProvider({ children }: { children: ReactNode }) {
       .from('checklists')
       .update(dbPayload)
       .eq('id', id)
-      .select('*, users(name, rank, mil_number), vehicles(prefix, type)')
+      .select('*, users(name, rank, mil_number, unit), vehicles(prefix, type, unit)')
       .single();
 
     if (!error && updated) {
