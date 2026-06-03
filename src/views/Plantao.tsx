@@ -28,6 +28,7 @@ export default function Plantao() {
   const [overtimeHours, setOvertimeHours] = useState<{ [key: string]: string }>({});
   const [folgaHours, setFolgaHours] = useState<{ [key: string]: string }>({});
   const [kmDriven, setKmDriven] = useState<{ [key: string]: string }>({});
+  const [extraDescription, setExtraDescription] = useState<{ [key: string]: string }>({});
   
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -143,13 +144,15 @@ export default function Plantao() {
 
         // 2. Overtime if specified
         const extraVal = parseFloat(overtimeHours[userId] || '0');
+        const desc = extraDescription[userId] || '';
+
         if (!isNaN(extraVal) && extraVal > 0) {
           recordsToInsert.push({
             user_id: userId,
             type: TimeBankType.OVERTIME, // 'EXTRA'
             hours: extraVal,
             date: date,
-            description: 'Hora Extra lançada em Plantão',
+            description: desc ? `Hora Extra (Plantão): ${desc}` : 'Hora Extra lançada em Plantão',
             created_by: user?.id
           });
         }
@@ -162,7 +165,7 @@ export default function Plantao() {
             type: TimeBankType.TIME_OFF, // 'FOLGA'
             hours: folgaVal,
             date: date,
-            description: 'Folga/Abate lançado em Plantão',
+            description: desc ? `Folga/Abate (Plantão): ${desc}` : 'Folga/Abate lançado em Plantão',
             created_by: user?.id
           });
         }
@@ -183,6 +186,7 @@ export default function Plantao() {
         setOvertimeHours({});
         setFolgaHours({});
         setKmDriven({});
+        setExtraDescription({});
         
         // Auto-clear success message
         setTimeout(() => {
@@ -360,13 +364,14 @@ export default function Plantao() {
                 ) : filteredUsers.length > 0 ? (
                   filteredUsers.map((u) => {
                     const isChecked = !!selectedUsers[u.id];
+                    const hasExtraOrFolga = (parseFloat(overtimeHours[u.id] || '0') > 0) || (parseFloat(folgaHours[u.id] || '0') > 0);
                     return (
-                      <tr 
-                        key={u.id} 
-                        className={`transition-all group ${
-                          isChecked ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-surface-container-low/30'
-                        }`}
-                      >
+                      <React.Fragment key={u.id}>
+                        <tr 
+                          className={`transition-all group ${
+                            isChecked ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-surface-container-low/30'
+                          }`}
+                        >
                         {/* Checkbox */}
                         <td className="px-8 py-5 text-center">
                           <input 
@@ -465,7 +470,29 @@ export default function Plantao() {
                           />
                         </td>
 
-                      </tr>
+                        {/* Descrição input (Removido daqui e passado para linha extra abaixo) */}
+
+                        </tr>
+                        {hasExtraOrFolga && (
+                          <tr className={`${isChecked ? 'bg-primary/5' : 'bg-surface-container-low/30'} border-b border-outline-variant/30`}>
+                            <td colSpan={7} className="px-8 pb-5 pt-1">
+                              <div className="animate-in fade-in zoom-in duration-200">
+                                <label className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest block mb-1.5 ml-2">Motivo da Hora Extra / Folga (Opcional)</label>
+                                <input 
+                                  type="text"
+                                  placeholder="Detalhe o motivo..."
+                                  disabled={!isChecked}
+                                  value={extraDescription[u.id] || ''}
+                                  onChange={(e) => setExtraDescription(prev => ({ ...prev, [u.id]: e.target.value }))}
+                                  className={`w-full border border-outline-variant p-3 rounded-xl text-xs font-bold focus:outline-none focus:border-primary/50 transition-all ${
+                                    !isChecked ? 'opacity-30 cursor-not-allowed border-transparent bg-surface-container-lowest' : 'bg-white shadow-inner'
+                                  }`}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })
                 ) : (
@@ -492,6 +519,7 @@ export default function Plantao() {
             ) : filteredUsers.length > 0 ? (
               filteredUsers.map((u) => {
                 const isChecked = !!selectedUsers[u.id];
+                const hasExtraOrFolga = (parseFloat(overtimeHours[u.id] || '0') > 0) || (parseFloat(folgaHours[u.id] || '0') > 0);
                 return (
                   <div 
                     key={u.id}
@@ -587,6 +615,18 @@ export default function Plantao() {
                             className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-xl text-xs font-bold focus:outline-none focus:border-primary/50 shadow-inner"
                           />
                         </div>
+                        {hasExtraOrFolga && (
+                          <div className="col-span-3 space-y-1 mt-1 animate-in fade-in zoom-in duration-200">
+                            <label className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Descrição (Hora Extra/Folga)</label>
+                            <input 
+                              type="text"
+                              placeholder="Motivo (Opcional)"
+                              value={extraDescription[u.id] || ''}
+                              onChange={(e) => setExtraDescription(prev => ({ ...prev, [u.id]: e.target.value }))}
+                              className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-xl text-xs font-bold focus:outline-none focus:border-primary/50 shadow-inner"
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
 
