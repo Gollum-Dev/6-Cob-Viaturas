@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, Award, Shield, MapPin, Eye, EyeOff, CheckCircle2, AlertTriangle, Key, Phone, Fingerprint, Contact, Calendar } from 'lucide-react';
+import { User, Lock, Award, Shield, MapPin, Eye, EyeOff, CheckCircle2, AlertTriangle, Key, Phone, Fingerprint, Contact, Calendar, Database, Download } from 'lucide-react';
 import { motion } from 'motion/react';
+import { UserRole } from '../types';
+import { createLocalBackup } from '../lib/backup';
 
 export default function SettingsView() {
   const { user, updatePassword } = useAuth();
@@ -276,6 +278,39 @@ export default function SettingsView() {
               </div>
             </form>
           </div>
+
+          {/* Backup do Sistema (Apenas Admin/Dev) */}
+          {(user.role === UserRole.ADMINISTRADOR || user.role === UserRole.DESENVOLVEDOR) && (
+            <div className="bg-surface-container-lowest rounded-[24px] border border-outline-variant p-6 md:p-8 shadow-xl mt-8">
+              <h2 className="text-lg font-black text-on-surface uppercase tracking-wider mb-6 flex items-center gap-2 border-b border-outline-variant pb-4">
+                <Database className="w-5 h-5 text-primary" />
+                Backup de Segurança
+              </h2>
+              <p className="text-sm text-on-surface-variant font-medium mb-6">
+                Faça o download de todos os registros do banco de dados (viaturas, militares, relatórios, manutenções, etc) de forma local no seu computador no formato JSON.
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  setSuccessMsg(null);
+                  setErrorMsg(null);
+                  setIsLoading(true);
+                  const res = await createLocalBackup();
+                  setIsLoading(false);
+                  if (res.success) {
+                    setSuccessMsg('Backup gerado e baixado com sucesso!');
+                  } else {
+                    setErrorMsg(res.error || 'Erro ao realizar o backup.');
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full bg-surface-container-high text-on-surface border border-outline py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-on-surface hover:text-white transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                {isLoading ? 'Gerando Arquivo...' : 'Gerar Backup Local'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
