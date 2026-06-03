@@ -251,6 +251,7 @@ export default function AddVehicleForm() {
                   <input 
                     type="date" 
                     value={formData.lastOilChangeDate}
+                    max={new Date().toISOString().split('T')[0]}
                     onChange={(e) => {
                       const newLastDate = e.target.value;
                       const newNextDate = calculateNextOilChangeDate(newLastDate);
