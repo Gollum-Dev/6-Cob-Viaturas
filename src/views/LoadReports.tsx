@@ -5,6 +5,8 @@ import { useLoadChecklists } from '../context/LoadChecklistContext';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { cn } from '../lib/utils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function LoadReports() {
   const { loadSubmissions, deleteLoadSubmission, updateLoadSubmission } = useLoadChecklists();
@@ -143,6 +145,54 @@ export default function LoadReports() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleGeneratePDF = (sub: any) => {
+    const doc = new jsPDF();
+    
+    // Configurações do cabeçalho
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("Relatório de Alteração de Carga", 105, 20, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Mapa de Carga: ${sub.loadMapName}`, 14, 35);
+    doc.text(`Data: ${sub.timestamp}`, 14, 42);
+    doc.text(`Viatura/Lotação: ${sub.vehiclePrefix || 'Avulso'}`, 14, 49);
+    doc.text(`Militar Responsável: ${sub.userRank} ${sub.userName}`, 14, 56);
+    doc.text(`Matrícula: ${sub.userMilNumber}`, 14, 63);
+    doc.text(`Unidade: ${sub.unit}`, 14, 70);
+
+    // Filtrar apenas os itens com alteração
+    const alteredItems = sub.items.filter((i: any) => !i.status);
+
+    autoTable(doc, {
+      startY: 80,
+      head: [['Material', 'Setor', 'Qtd', 'Ressalva']],
+      body: alteredItems.map((item: any) => [
+        item.name,
+        item.sectorName || 'Geral',
+        item.quantity?.toString() || '1',
+        item.observation || 'Sem observação'
+      ]),
+      headStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 10, cellPadding: 5 },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 15 },
+        3: { cellWidth: 'auto' }
+      }
+    });
+
+    // Adicionar assinatura
+    const finalY = (doc as any).lastAutoTable.finalY || 100;
+    doc.setFontSize(10);
+    doc.text("___________________________________________________", 105, finalY + 40, { align: "center" });
+    doc.text(`${sub.userRank} ${sub.userName} - Resp. pela Conferência`, 105, finalY + 45, { align: "center" });
+
+    doc.save(`Ressalva_Carga_${sub.loadMapName.replace(/ /g, '_')}_${sub.timestamp.replace(/[\/ :]/g, '-')}.pdf`);
   };
 
   return (
@@ -715,7 +765,14 @@ export default function LoadReports() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-surface-container-low border-t border-outline-variant flex justify-end">
+            <div className="p-4 bg-surface-container-low border-t border-outline-variant flex justify-end gap-3">
+              <button 
+                onClick={() => handleGeneratePDF(selectedSubmission)}
+                className="bg-error text-white hover:bg-red-700 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Gerar PDF das Alterações
+              </button>
               <button 
                 onClick={() => setSelectedSubmission(null)}
                 className="bg-on-surface text-white hover:bg-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
