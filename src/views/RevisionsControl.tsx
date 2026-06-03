@@ -124,6 +124,7 @@ export default function RevisionsControl() {
               <thead>
                 <tr className="bg-surface-container/30 border-b border-outline-variant">
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Viatura</th>
+                  {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Unidade</th>}
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Validade</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Dias Restantes</th>
@@ -135,7 +136,7 @@ export default function RevisionsControl() {
               <tbody className="divide-y divide-outline-variant/30">
                 {tireValidityAlerts.length === 0 ? (
                   <tr>
-                    <td colSpan={!isCBU && !isCiaOP ? 5 : 4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                    <td colSpan={(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) ? 6 : (!isCBU && !isCiaOP ? 5 : 4)} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                       Nenhuma data de validade de pneus cadastrada.
                     </td>
                   </tr>
@@ -146,6 +147,11 @@ export default function RevisionsControl() {
                         <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
                         <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
                       </td>
+                      {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
+                        <td className="px-6 py-4 font-bold text-on-surface text-[11px] uppercase tracking-wider">
+                          {alert.unit || '-'}
+                        </td>
+                      )}
                       <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">
                         {new Date(alert.tireValidityDate!).toLocaleDateString('pt-BR')}
                       </td>
@@ -198,6 +204,11 @@ export default function RevisionsControl() {
                       <div>
                         <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
                         <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                        {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
+                          <span className="block text-[9px] font-bold text-on-surface-variant opacity-80 uppercase tracking-widest mt-1">
+                            {alert.unit || '-'}
+                          </span>
+                        )}
                       </div>
                       {!isCBU && !isCiaOP && (
                         <button 
@@ -295,6 +306,7 @@ export default function RevisionsControl() {
               <thead>
                 <tr className="bg-surface-container/30 border-b border-outline-variant">
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Viatura</th>
+                  {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Unidade</th>}
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Próxima Troca</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">KM Restante</th>
@@ -306,7 +318,7 @@ export default function RevisionsControl() {
               <tbody className="divide-y divide-outline-variant/30">
                 {oilChangeKmAlerts.length === 0 ? (
                   <tr>
-                    <td colSpan={!isCBU && !isCiaOP ? 5 : 4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                    <td colSpan={(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) ? 6 : (!isCBU && !isCiaOP ? 5 : 4)} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                       Nenhuma informação de quilometragem de óleo cadastrada.
                     </td>
                   </tr>
@@ -317,6 +329,11 @@ export default function RevisionsControl() {
                         <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
                         <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
                       </td>
+                      {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
+                        <td className="px-6 py-4 font-bold text-on-surface text-[11px] uppercase tracking-wider">
+                          {alert.unit || '-'}
+                        </td>
+                      )}
                       <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">
                         {alert.nextChangeKm.toLocaleString()} KM
                       </td>
@@ -369,6 +386,11 @@ export default function RevisionsControl() {
                       <div>
                         <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
                         <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                        {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
+                          <span className="block text-[9px] font-bold text-on-surface-variant opacity-80 uppercase tracking-widest mt-1">
+                            {alert.unit || '-'}
+                          </span>
+                        )}
                       </div>
                       {!isCBU && !isCiaOP && (
                         <button 
@@ -466,6 +488,7 @@ export default function RevisionsControl() {
               <thead>
                 <tr className="bg-surface-container/30 border-b border-outline-variant">
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[100px]">Viatura</th>
+                  {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Unidade</th>}
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Próxima Troca</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[120px]">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[150px]">Dias Restantes</th>
@@ -477,7 +500,7 @@ export default function RevisionsControl() {
               <tbody className="divide-y divide-outline-variant/30">
                 {oilChangeAlerts.length === 0 ? (
                   <tr>
-                    <td colSpan={!isCBU && !isCiaOP ? 5 : 4} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
+                    <td colSpan={(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) ? 6 : (!isCBU && !isCiaOP ? 5 : 4)} className="px-6 py-12 text-center text-sm text-on-surface-variant italic opacity-50">
                       Nenhuma data de próxima troca de óleo cadastrada.
                     </td>
                   </tr>
@@ -488,6 +511,11 @@ export default function RevisionsControl() {
                         <span className="font-black text-primary text-xs uppercase">{alert.prefix}</span>
                         <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
                       </td>
+                      {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
+                        <td className="px-6 py-4 font-bold text-on-surface text-[11px] uppercase tracking-wider">
+                          {alert.unit || '-'}
+                        </td>
+                      )}
                       <td className="px-6 py-4 text-xs font-bold text-on-surface-variant font-data-mono">
                         {new Date(alert.nextOilChangeDate!).toLocaleDateString('pt-BR')}
                       </td>
@@ -540,6 +568,11 @@ export default function RevisionsControl() {
                       <div>
                         <span className="font-black text-primary text-xs uppercase tracking-wider">{alert.prefix}</span>
                         <span className="block text-[9px] font-bold text-on-surface-variant uppercase">{alert.type}</span>
+                        {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
+                          <span className="block text-[9px] font-bold text-on-surface-variant opacity-80 uppercase tracking-widest mt-1">
+                            {alert.unit || '-'}
+                          </span>
+                        )}
                       </div>
                       {!isCBU && !isCiaOP && (
                         <button 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Shield, Download, User, FileText, AlertTriangle, ChevronDown, Package, ClipboardCheck, Eye, X, Pencil, Trash2, Save } from 'lucide-react';
+import { Shield, Download, User, FileText, AlertTriangle, ChevronDown, Package, ClipboardCheck, Eye, X, Pencil, Trash2, Save, Car } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLoadChecklists } from '../context/LoadChecklistContext';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,11 @@ export default function LoadReports() {
   const { loadSubmissions, deleteLoadSubmission, updateLoadSubmission } = useLoadChecklists();
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'OK' | 'ISSUE'>('ALL');
+  const [vehicleFilter, setVehicleFilter] = useState('');
+  const [mapFilter, setMapFilter] = useState('');
+  const [militarFilter, setMilitarFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [unitFilter, setUnitFilter] = useState('ALL');
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [editingSubmission, setEditingSubmission] = useState<any>(null);
 
@@ -18,6 +23,11 @@ export default function LoadReports() {
   const todaySubmissions = useMemo(() => {
     return loadSubmissions.filter(sub => sub.timestamp.startsWith(today));
   }, [loadSubmissions, today]);
+
+  const units = useMemo(() => {
+    const uniqueUnits = new Set(loadSubmissions.map(sub => sub.unit).filter(Boolean));
+    return Array.from(uniqueUnits).sort();
+  }, [loadSubmissions]);
 
   // Breakdown of submissions by load map name
   const submissionMapBreakdown = useMemo(() => {
@@ -69,9 +79,28 @@ export default function LoadReports() {
         (statusFilter === 'OK' && !hasIssues) ||
         (statusFilter === 'ISSUE' && hasIssues);
 
-      return matchesStatus;
+      const matchesVehicle = !vehicleFilter || 
+        (sub.vehiclePrefix ? sub.vehiclePrefix.toLowerCase().includes(vehicleFilter.toLowerCase()) : 'avulso'.includes(vehicleFilter.toLowerCase()));
+
+      const matchesMap = !mapFilter ||
+        (sub.loadMapName && sub.loadMapName.toLowerCase().includes(mapFilter.toLowerCase()));
+
+      const matchesMilitar = !militarFilter ||
+        sub.userName.toLowerCase().includes(militarFilter.toLowerCase()) ||
+        (sub.userRank && sub.userRank.toLowerCase().includes(militarFilter.toLowerCase()));
+
+      let matchesDate = true;
+      if (dateFilter) {
+        const [year, month, day] = dateFilter.split('-');
+        const formattedDate = `${day}/${month}/${year}`;
+        matchesDate = sub.timestamp.startsWith(formattedDate);
+      }
+
+      const matchesUnit = unitFilter === 'ALL' || sub.unit === unitFilter;
+
+      return matchesStatus && matchesVehicle && matchesMap && matchesMilitar && matchesDate && matchesUnit;
     });
-  }, [loadSubmissions, statusFilter]);
+  }, [loadSubmissions, statusFilter, vehicleFilter, mapFilter, militarFilter, dateFilter, unitFilter]);
 
   const handleExportCSV = () => {
     if (loadSubmissions.length === 0) {
@@ -262,19 +291,102 @@ export default function LoadReports() {
       </div>
 
       <div className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-outline-variant bg-surface-container-low flex flex-wrap gap-4 items-center">
-          <div className="flex gap-2">
-            <div className="relative group">
+        <div className={cn(
+          "p-6 border-b border-outline-variant bg-surface-container-low grid grid-cols-1 sm:grid-cols-2 gap-4 items-end",
+          (user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) ? "lg:grid-cols-6" : "lg:grid-cols-5"
+        )}>
+          {/* Status Filter */}
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Status</label>
+            <div className="relative w-full">
               <select 
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="appearance-none flex items-center gap-2 px-6 py-3 border border-outline text-on-surface-variant font-bold rounded-lg hover:bg-surface-container transition-all text-sm uppercase tracking-widest cursor-pointer pr-10"
+                className="w-full appearance-none flex items-center gap-2 px-4 py-2.5 bg-white border border-outline-variant text-on-surface-variant font-bold rounded-lg hover:bg-surface-container transition-all text-xs uppercase tracking-widest cursor-pointer pr-10 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
               >
                 <option value="ALL">Todos os Status</option>
                 <option value="OK">Sem Alteração</option>
                 <option value="ISSUE">Com Ressalva</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Unit Filter */}
+          {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
+            <div className="flex flex-col gap-1.5 w-full">
+              <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Unidade</label>
+              <div className="relative w-full">
+                <select
+                  value={unitFilter}
+                  onChange={(e) => setUnitFilter(e.target.value)}
+                  className="w-full appearance-none flex items-center gap-2 px-4 py-2.5 bg-white border border-outline-variant text-on-surface-variant font-bold rounded-lg hover:bg-surface-container transition-all text-xs uppercase tracking-widest cursor-pointer pr-10 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                >
+                  <option value="ALL">Todas as Unidades</option>
+                  {units.map(unit => (
+                    <option key={unit} value={unit}>{unit}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline pointer-events-none" />
+              </div>
+            </div>
+          )}
+
+          {/* Map Filter */}
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Mapa de Carga</label>
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={mapFilter}
+                onChange={(e) => setMapFilter(e.target.value)}
+                placeholder="Nome do mapa..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-outline-variant text-on-surface font-bold rounded-lg text-xs uppercase tracking-wider placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              />
+              <Package className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
+            </div>
+          </div>
+
+          {/* Vehicle Filter */}
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Viatura Vinculada</label>
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={vehicleFilter}
+                onChange={(e) => setVehicleFilter(e.target.value)}
+                placeholder="Ex: ABS-01, Avulso..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-outline-variant text-on-surface font-bold rounded-lg text-xs uppercase tracking-wider placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              />
+              <Car className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
+            </div>
+          </div>
+
+          {/* Militar Filter */}
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Militar Responsável</label>
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={militarFilter}
+                onChange={(e) => setMilitarFilter(e.target.value)}
+                placeholder="Nome ou Graduação..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-outline-variant text-on-surface font-bold rounded-lg text-xs uppercase tracking-wider placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
+            </div>
+          </div>
+
+          {/* Date Filter */}
+          <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Dia / Data</label>
+            <div className="relative w-full">
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-outline-variant text-on-surface font-bold rounded-lg text-xs uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all cursor-pointer"
+              />
             </div>
           </div>
         </div>

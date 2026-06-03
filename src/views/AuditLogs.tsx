@@ -280,7 +280,7 @@ export default function AuditLogs() {
       <div className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
         <div className={cn(
           "p-6 border-b border-outline-variant bg-surface-container-low grid grid-cols-1 sm:grid-cols-2 gap-4 items-end",
-          user?.role === UserRole.ADMINISTRADOR ? "lg:grid-cols-5" : "lg:grid-cols-4"
+          (user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) ? "lg:grid-cols-5" : "lg:grid-cols-4"
         )}>
           {/* Status Filter */}
           <div className="flex flex-col gap-1.5 w-full">
@@ -343,7 +343,7 @@ export default function AuditLogs() {
           </div>
 
           {/* Unit Filter (Administrador only) */}
-          {user?.role === UserRole.ADMINISTRADOR && (
+          {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
             <div className="flex flex-col gap-1.5 w-full">
               <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Unidade</label>
               <div className="relative w-full">
@@ -370,7 +370,7 @@ export default function AuditLogs() {
                 <th className="px-8 py-6">Data / Hora</th>
                 <th className="px-8 py-6">Militar Responsável</th>
                 <th className="px-8 py-6">Viatura</th>
-                {user?.role === UserRole.ADMINISTRADOR && <th className="px-8 py-6">Unidade</th>}
+                {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && <th className="px-8 py-6">Unidade</th>}
                 <th className="px-8 py-6">Odômetro</th>
                 <th className="px-8 py-6 text-center">Status</th>
                 <th className="px-8 py-6 text-center">Itens OK</th>
@@ -413,7 +413,7 @@ export default function AuditLogs() {
                           <span className="text-[10px] font-medium text-on-surface-variant opacity-60">({sub.vehicleType})</span>
                         </div>
                       </td>
-                      {user?.role === UserRole.ADMINISTRADOR && (
+                      {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
                         <td className="px-8 py-6 font-bold text-on-surface text-[11px] uppercase tracking-wider">
                           {sub.vehicleUnit || sub.userUnit || '-'}
                         </td>
@@ -536,7 +536,7 @@ export default function AuditLogs() {
                         <span className="font-bold text-on-surface">{sub.vehiclePrefix}</span>
                         <span className="text-[9px] font-semibold text-on-surface-variant opacity-60">({sub.vehicleType})</span>
                       </div>
-                      {user?.role === UserRole.ADMINISTRADOR && (
+                      {(user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) && (
                         <span className="block text-[9px] font-bold text-on-surface-variant opacity-80 uppercase tracking-widest mt-1">
                           {sub.vehicleUnit || sub.userUnit || '-'}
                         </span>
