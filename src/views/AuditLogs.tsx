@@ -5,6 +5,8 @@ import { useReports } from '../context/ReportContext';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { cn } from '../lib/utils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function AuditLogs() {
   const { submissions, deleteSubmission, updateSubmission } = useReports();
@@ -97,6 +99,37 @@ export default function AuditLogs() {
       return matchesStatus && matchesVehicle && matchesMilitar && matchesDate;
     });
   }, [submissions, statusFilter, vehicleFilter, militarFilter, dateFilter]);
+
+  const generatePDF = (submission: any) => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(16);
+    doc.text('Relatorio de Alteracoes e Ressalvas', 14, 20);
+    
+    doc.setFontSize(10);
+    doc.text(`Viatura: ${submission.vehiclePrefix} (${submission.vehicleType})`, 14, 30);
+    doc.text(`Odometro: ${submission.odometer?.toLocaleString('pt-BR')} KM`, 14, 36);
+    doc.text(`Militar Responsavel: ${submission.userRank} ${submission.userName} (${submission.userMilNumber})`, 14, 42);
+    doc.text(`Data/Hora: ${submission.timestamp}`, 14, 48);
+    
+    const anomalies = submission.items.filter((item: any) => !item.status);
+    
+    const tableData = anomalies.map((item: any) => [
+      item.description,
+      item.observation || 'Nenhuma observacao descrita.'
+    ]);
+    
+    autoTable(doc, {
+      startY: 55,
+      head: [['Item com Alteracao', 'Ressalva / Observacao']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [220, 38, 38] },
+      styles: { fontSize: 9 }
+    });
+    
+    doc.save(`relatorio_alteracoes_${submission.vehiclePrefix}_${submission.timestamp.replace(/[\/\s:]/g, '_')}.pdf`);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -603,7 +636,14 @@ export default function AuditLogs() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-surface-container-low border-t border-outline-variant flex justify-end">
+            <div className="p-4 bg-surface-container-low border-t border-outline-variant flex justify-end gap-3">
+              <button 
+                onClick={() => generatePDF(selectedSubmission)}
+                className="bg-primary/10 text-primary hover:bg-primary hover:text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                Gerar PDF
+              </button>
               <button 
                 onClick={() => setSelectedSubmission(null)}
                 className="bg-on-surface text-white hover:bg-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
