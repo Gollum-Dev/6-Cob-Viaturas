@@ -64,7 +64,7 @@ export default function EditMilitarForm() {
       setRank(userToEdit.rank || 'SD');
       setRole(userToEdit.role || UserRole.OPERACIONAL);
       setUnit(userToEdit.unit || 'POUSO ALEGRE');
-      setPassword(userToEdit.password || '');
+      setPassword(''); // Deixa em branco para não mostrar a senha atual
       setPhone(userToEdit.phone ? formatPhone(userToEdit.phone) : '');
       setCpf(userToEdit.cpf ? formatCPF(userToEdit.cpf) : '');
       setRg(userToEdit.rg || '');
@@ -101,7 +101,7 @@ export default function EditMilitarForm() {
     }
 
     await updateUser(id!, {
-      password,
+      password: password || existingUser?.password,
       role,
       milNumber,
       rank,
@@ -267,15 +267,14 @@ export default function EditMilitarForm() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest pl-1 flex items-center gap-2">
                     <Lock className="w-3 h-3" />
-                    Senha de Acesso
+                    Nova Senha de Acesso (Opcional)
                   </label>
                   <input
                     type="password"
-                    required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner"
-                    placeholder="Defina uma senha..."
+                    placeholder="Deixe em branco para manter a atual..."
                   />
                 </div>
               </div>

@@ -29,6 +29,7 @@ export default function Plantao() {
   const [folgaHours, setFolgaHours] = useState<{ [key: string]: string }>({});
   const [kmDriven, setKmDriven] = useState<{ [key: string]: string }>({});
   const [extraDescription, setExtraDescription] = useState<{ [key: string]: string }>({});
+  const [isAdm, setIsAdm] = useState<{ [key: string]: boolean }>({});
   
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -130,17 +131,22 @@ export default function Plantao() {
       const recordsToInsert: any[] = [];
 
       activeUserIds.forEach(userId => {
-        // 1. Base Worked Hours (1.14h)
+        // 1. Base Worked Hours (1.14h) or 0 if ADM
         const kmVal = parseFloat(kmDriven[userId] || '0');
-        recordsToInsert.push({
-          user_id: userId,
-          type: TimeBankType.WORKED, // 'TRABALHADA'
-          hours: 1.14,
-          date: date,
-          description: 'Serviço de Plantão Operacional (Crédito Base)',
-          created_by: user?.id,
-          km: !isNaN(kmVal) && kmVal > 0 ? kmVal : 0
-        });
+        const admChecked = isAdm[userId];
+        const baseHours = admChecked ? 0 : 1.14;
+
+        if (baseHours > 0 || kmVal > 0) {
+          recordsToInsert.push({
+            user_id: userId,
+            type: TimeBankType.WORKED, // 'TRABALHADA'
+            hours: baseHours,
+            date: date,
+            description: admChecked ? 'Serviço ADM' : 'Serviço de Plantão Operacional (Crédito Base)',
+            created_by: user?.id,
+            km: !isNaN(kmVal) && kmVal > 0 ? kmVal : 0
+          });
+        }
 
         // 2. Overtime if specified
         const extraVal = parseFloat(overtimeHours[userId] || '0');
@@ -187,6 +193,7 @@ export default function Plantao() {
         setFolgaHours({});
         setKmDriven({});
         setExtraDescription({});
+        setIsAdm({});
         
         // Auto-clear success message
         setTimeout(() => {
@@ -349,12 +356,13 @@ export default function Plantao() {
                   <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[140px]">KM Rodado</th>
                   <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[140px]">Hora Extra (+h)</th>
                   <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[140px]">Folga (-h)</th>
+                  <th className="px-8 py-5 text-center text-[10px] font-black text-on-surface-variant/70 uppercase tracking-[0.2em] border-b border-outline-variant w-[80px]">ADM</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="px-8 py-20 text-center">
+                    <td colSpan={8} className="px-8 py-20 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
                         <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60">Carregando militares...</p>
@@ -364,6 +372,7 @@ export default function Plantao() {
                 ) : filteredUsers.length > 0 ? (
                   filteredUsers.map((u) => {
                     const isChecked = !!selectedUsers[u.id];
+                    const admChecked = !!isAdm[u.id];
                     const hasExtraOrFolga = (parseFloat(overtimeHours[u.id] || '0') > 0) || (parseFloat(folgaHours[u.id] || '0') > 0);
                     return (
                       <React.Fragment key={u.id}>
@@ -417,9 +426,9 @@ export default function Plantao() {
                         {/* Automatic addition indicator */}
                         <td className="px-8 py-5">
                           <span className={`text-[10px] font-black uppercase tracking-wider ${
-                            isChecked ? 'text-green-600' : 'text-on-surface-variant/40'
+                            isChecked ? (admChecked ? 'text-orange-500' : 'text-green-600') : 'text-on-surface-variant/40'
                           }`}>
-                            {isChecked ? '+1.14h Plantão' : '--'}
+                            {isChecked ? (admChecked ? '0h (ADM)' : '+1.14h Plantão') : '--'}
                           </span>
                         </td>
 
@@ -470,12 +479,24 @@ export default function Plantao() {
                           />
                         </td>
 
+                        {/* ADM Checkbox */}
+                        <td className="px-8 py-5 text-center">
+                          <input 
+                            type="checkbox"
+                            checked={admChecked}
+                            disabled={!isChecked}
+                            onChange={() => setIsAdm(prev => ({ ...prev, [u.id]: !prev[u.id] }))}
+                            className={`w-5 h-5 rounded-lg border-outline-variant text-orange-500 focus:ring-orange-500 cursor-pointer accent-orange-500 ${!isChecked && 'opacity-30'} mx-auto block`}
+                            title="Marcar como ADM (Não soma lançamento base)"
+                          />
+                        </td>
+
                         {/* Descrição input (Removido daqui e passado para linha extra abaixo) */}
 
                         </tr>
                         {hasExtraOrFolga && (
                           <tr className={`${isChecked ? 'bg-primary/5' : 'bg-surface-container-low/30'} border-b border-outline-variant/30`}>
-                            <td colSpan={7} className="px-8 pb-5 pt-1">
+                            <td colSpan={8} className="px-8 pb-5 pt-1">
                               <div className="animate-in fade-in zoom-in duration-200">
                                 <label className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest block mb-1.5 ml-2">Motivo da Hora Extra / Folga (Opcional)</label>
                                 <input 
@@ -497,7 +518,7 @@ export default function Plantao() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-8 py-20 text-center">
+                    <td colSpan={8} className="px-8 py-20 text-center">
                       <div className="flex flex-col items-center justify-center opacity-30">
                         <Users className="w-16 h-16 mb-4" />
                         <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Nenhum militar encontrado</p>
@@ -519,6 +540,7 @@ export default function Plantao() {
             ) : filteredUsers.length > 0 ? (
               filteredUsers.map((u) => {
                 const isChecked = !!selectedUsers[u.id];
+                const admChecked = !!isAdm[u.id];
                 const hasExtraOrFolga = (parseFloat(overtimeHours[u.id] || '0') > 0) || (parseFloat(folgaHours[u.id] || '0') > 0);
                 return (
                   <div 
@@ -570,16 +592,16 @@ export default function Plantao() {
                       <div className="text-right">
                         <p className="text-[8px] font-black text-on-surface-variant/50 uppercase tracking-widest">Base Plantão</p>
                         <span className={`font-black uppercase tracking-wider text-[9px] ${
-                          isChecked ? 'text-green-600' : 'text-on-surface-variant/40'
+                          isChecked ? (admChecked ? 'text-orange-500' : 'text-green-600') : 'text-on-surface-variant/40'
                         }`}>
-                          {isChecked ? '+1.14h' : '--'}
+                          {isChecked ? (admChecked ? '0h (ADM)' : '+1.14h') : '--'}
                         </span>
                       </div>
                     </div>
 
                     {/* Inputs */}
                     {isChecked && (
-                      <div className="grid grid-cols-3 gap-2 pt-1">
+                      <div className="grid grid-cols-4 gap-2 pt-1">
                         <div className="space-y-1">
                           <label className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">KM Rodado</label>
                           <input 
@@ -615,8 +637,18 @@ export default function Plantao() {
                             className="w-full bg-surface-container-low border border-outline-variant p-2 rounded-xl text-xs font-bold focus:outline-none focus:border-primary/50 shadow-inner"
                           />
                         </div>
+                        <div className="space-y-1 flex flex-col items-center justify-center pt-2">
+                          <label className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest mb-1">ADM</label>
+                          <input 
+                            type="checkbox"
+                            checked={admChecked}
+                            disabled={!isChecked}
+                            onChange={() => setIsAdm(prev => ({ ...prev, [u.id]: !prev[u.id] }))}
+                            className={`w-4 h-4 rounded border-outline-variant text-orange-500 focus:ring-orange-500 cursor-pointer accent-orange-500 ${!isChecked && 'opacity-30'}`}
+                          />
+                        </div>
                         {hasExtraOrFolga && (
-                          <div className="col-span-3 space-y-1 mt-1 animate-in fade-in zoom-in duration-200">
+                          <div className="col-span-4 space-y-1 mt-1 animate-in fade-in zoom-in duration-200">
                             <label className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Descrição (Hora Extra/Folga)</label>
                             <input 
                               type="text"
