@@ -1,13 +1,13 @@
 import { FireExtinguisher, Camera, Send, CheckCircle2, AlertCircle, Clock, User, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVehicles } from '../context/VehicleContext';
 import { useAuth } from '../context/AuthContext';
 import { useReports } from '../context/ReportContext';
 import { cn } from '../lib/utils';
 
-const checklistCategories = [
+const defaultChecklistCategories = [
   {
     title: "Elétrica e Painel",
     items: [
@@ -48,21 +48,45 @@ const checklistCategories = [
   }
 ];
 
-const checklistItems = checklistCategories.flatMap(c => c.items);
-
 export default function ChecklistForm() {
   const navigate = useNavigate();
   const { vehicles, updateVehicle } = useVehicles();
   const { user } = useAuth();
   const { addSubmission } = useReports();
-  const [statuses, setStatuses] = useState<Record<number, boolean>>(
-    Object.fromEntries(checklistItems.map((_, i) => [i, true]))
-  );
+  const [statuses, setStatuses] = useState<Record<number, boolean>>({});
   const [observations, setObservations] = useState<Record<number, string>>({});
   const [odometer, setOdometer] = useState<string>('');
   const [selectedPrefix, setSelectedPrefix] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
+
+  const selectedVehicleObj = vehicles.find(v => v.prefix === selectedPrefix);
+
+  const currentCategories = useMemo(() => {
+    if (selectedVehicleObj?.type === 'CARRETINHA') {
+      return [
+        {
+          title: "Inspeção Carretinha",
+          items: [
+            "SISTEMA ELÉTRICO: VERIFICAR O FUNCIONAMENTO DAS LUZES E A TOMADA DE CONEXÃO COM A VIATURA.",
+            "EIXO DE RODAGEM: VERIFICAR ESTADO GERAL.",
+            "PINTURA: VERIFICAR CONSERVAÇÃO E SINAIS DE FERRUGEM.",
+            "CONDIÇÕES DOS PNEUS: VERIFICAR DESGASTE E CALIBRAGEM."
+          ]
+        }
+      ];
+    }
+    return defaultChecklistCategories;
+  }, [selectedVehicleObj?.type]);
+
+  const currentChecklistItems = useMemo(() => {
+    return currentCategories.flatMap(c => c.items);
+  }, [currentCategories]);
+
+  useEffect(() => {
+    setStatuses(Object.fromEntries(currentChecklistItems.map((_, i) => [i, true])));
+    setObservations({});
+  }, [currentChecklistItems]);
 
   const toggleStatus = (index: number) => {
     setStatuses(prev => ({ ...prev, [index]: !prev[index] }));
@@ -117,7 +141,7 @@ export default function ChecklistForm() {
       userRank: user.rank,
       userMilNumber: user.milNumber,
       odometer: newOdometer,
-      items: checklistItems.map((item, index) => ({
+      items: currentChecklistItems.map((item, index) => ({
         description: item,
         status: statuses[index],
         observation: observations[index] || ''
@@ -205,12 +229,12 @@ export default function ChecklistForm() {
         <section className="bg-white border border-outline-variant rounded-xl shadow-sm overflow-hidden">
           <div className="bg-surface-container-high px-4 md:px-8 py-4 border-b border-outline-variant flex items-center justify-between">
             <h4 className="font-black text-on-surface uppercase tracking-widest text-[10px] md:text-xs">ITENS DE INSPEÇÃO</h4>
-            <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-bold text-[9px] md:text-[10px]">{checklistItems.length} Itens</span>
+            <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-bold text-[9px] md:text-[10px]">{currentChecklistItems.length} Itens</span>
           </div>
           
           <div className="divide-y divide-outline-variant/30">
-            {checklistCategories.map((category, catIndex) => {
-              const startIndex = checklistCategories.slice(0, catIndex).reduce((acc, curr) => acc + curr.items.length, 0);
+            {currentCategories.map((category, catIndex) => {
+              const startIndex = currentCategories.slice(0, catIndex).reduce((acc, curr) => acc + curr.items.length, 0);
               return (
                 <div key={catIndex}>
                   <div className="bg-surface-container-low px-4 md:px-8 py-3 flex items-center gap-2">

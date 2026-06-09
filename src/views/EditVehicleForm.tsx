@@ -222,6 +222,7 @@ export default function EditVehicleForm() {
                     <option value="RESGATE">RESGATE</option>
                     <option value="APOIO">APOIO</option>
                     <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
+                    <option value="CARRETINHA">CARRETINHA</option>
                   </select>
                 </div>
 

@@ -70,7 +70,8 @@ export default function VehicleInventory() {
   };
 
   const vehicleTypes = useMemo(() => {
-    const types = new Set(vehicles.map(v => v.type));
+    const predefined = ['SALVAMENTO', 'SOCORRO', 'RESGATE', 'APOIO', 'ADMINISTRATIVO', 'CARRETINHA'];
+    const types = new Set([...predefined, ...vehicles.map(v => v.type).filter(Boolean)]);
     return ['Todos', ...Array.from(types)];
   }, [vehicles]);
 
