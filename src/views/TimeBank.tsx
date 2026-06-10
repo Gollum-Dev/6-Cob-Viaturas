@@ -15,6 +15,7 @@ export default function TimeBank() {
   // Form State
   const [type, setType] = useState<TimeBankType>(TimeBankType.OVERTIME);
   const [hours, setHours] = useState<string>('');
+  const [km, setKm] = useState<string>('');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -77,7 +78,8 @@ export default function TimeBank() {
           date: r.date,
           description: r.description,
           createdAt: r.created_at,
-          createdBy: r.created_by
+          createdBy: r.created_by,
+          km: r.km
         }));
         setRecords(mappedRecords);
       }
@@ -120,9 +122,11 @@ export default function TimeBank() {
     e.preventDefault();
     setFormError(null);
 
-    const parsedHours = parseFloat(hours);
-    if (isNaN(parsedHours) || parsedHours <= 0) {
-      setFormError('Insira uma quantidade de horas válida maior que zero.');
+    const parsedHours = parseFloat(hours) || 0;
+    const parsedKm = parseFloat(km) || 0;
+
+    if (parsedHours <= 0 && parsedKm <= 0) {
+      setFormError('Insira uma quantidade válida de horas ou KM maior que zero.');
       return;
     }
 
@@ -141,7 +145,8 @@ export default function TimeBank() {
           hours: parsedHours,
           date,
           description: description.trim() || null,
-          created_by: user?.id
+          created_by: user?.id,
+          km: parsedKm > 0 ? parsedKm : 0
         });
 
       if (error) {
@@ -149,6 +154,7 @@ export default function TimeBank() {
       } else {
         // Clear form fields
         setHours('');
+        setKm('');
         setDescription('');
         // Refresh records
         fetchRecords();
@@ -357,19 +363,32 @@ export default function TimeBank() {
                 </div>
               </div>
 
-              {/* Hours */}
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest pl-1">Quantidade de Horas</label>
-                <input
-                  type="number"
-                  step="0.5"
-                  min="0.5"
-                  required
-                  placeholder="Ex: 8.5 ou 12"
-                  value={hours}
-                  onChange={(e) => setHours(e.target.value)}
-                  className="w-full bg-surface-container-low border border-outline-variant p-3.5 rounded-xl text-xs font-bold focus:outline-none focus:border-primary/50 shadow-inner"
-                />
+              {/* Hours and KM */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest pl-1">Horas</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    placeholder="Ex: 8.5"
+                    value={hours}
+                    onChange={(e) => setHours(e.target.value)}
+                    className="w-full bg-surface-container-low border border-outline-variant p-3.5 rounded-xl text-xs font-bold focus:outline-none focus:border-primary/50 shadow-inner"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest pl-1">KM Rodado</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    placeholder="Ex: 120"
+                    value={km}
+                    onChange={(e) => setKm(e.target.value)}
+                    className="w-full bg-surface-container-low border border-outline-variant p-3.5 rounded-xl text-xs font-bold focus:outline-none focus:border-primary/50 shadow-inner"
+                  />
+                </div>
               </div>
 
               {/* Date */}
@@ -475,11 +494,23 @@ export default function TimeBank() {
                     </div>
 
                     <div className="flex items-center gap-3 self-end sm:self-center">
-                      <span className={`text-sm font-black ${
-                        record.type === TimeBankType.TIME_OFF ? 'text-error' : 'text-on-surface'
-                      }`}>
-                        {record.type === TimeBankType.TIME_OFF ? '-' : '+'}{record.hours.toFixed(1)}h
-                      </span>
+                      <div className="text-right">
+                        {record.hours > 0 && (
+                          <span className={`text-sm font-black block ${
+                            record.type === TimeBankType.TIME_OFF ? 'text-error' : 'text-on-surface'
+                          }`}>
+                            {record.type === TimeBankType.TIME_OFF ? '-' : '+'}{record.hours.toFixed(1)}h
+                          </span>
+                        )}
+                        {(record.km && record.km > 0) ? (
+                          <span className="text-sm font-black text-on-surface block mt-0.5">
+                            +{record.km} km
+                          </span>
+                        ) : null}
+                        {record.hours === 0 && (!record.km || record.km === 0) && (
+                          <span className="text-sm font-black text-on-surface block">0h</span>
+                        )}
+                      </div>
                       {isManager && (
                         <button
                           onClick={() => handleDelete(record.id)}
