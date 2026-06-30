@@ -14,13 +14,13 @@ export default function ChatView() {
   const [searchTerm, setSearchTerm] = useState('');
   
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const isAdmin = user?.role === UserRole.ADMINISTRADOR;
+  const isAdmin = user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR;
 
   // Filter non-admin users for the administrator to chat with
   const chatPartners = useMemo(() => {
     if (!isAdmin) return [];
     return registeredUsers
-      .filter((u) => u.role !== UserRole.ADMINISTRADOR)
+      .filter((u) => u.role !== UserRole.ADMINISTRADOR && u.role !== UserRole.DESENVOLVEDOR)
       .filter((u) => {
         const term = searchTerm.toLowerCase();
         return (
@@ -127,10 +127,8 @@ export default function ChatView() {
 
   const getUnitColor = (unit: string) => {
     switch ((unit || '').toUpperCase()) {
-      case 'ITAJUBA': return 'bg-purple-100 text-purple-700';
-      case 'POUSO ALEGRE': return 'bg-cyan-100 text-cyan-700';
-      case 'EXTREMA': return 'bg-emerald-100 text-emerald-700';
-      case 'PARAISOPOLIS': return 'bg-orange-100 text-orange-700';
+      case '1ª CIA OP': return 'bg-purple-100 text-purple-700';
+      case '6COB': return 'bg-cyan-100 text-cyan-700';
       default: return 'bg-gray-100 text-gray-700';
     }
   };

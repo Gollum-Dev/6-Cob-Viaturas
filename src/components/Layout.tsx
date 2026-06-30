@@ -25,7 +25,7 @@ export default function Layout() {
         </main>
         <footer className="p-6 text-center border-t border-outline-variant bg-surface-container-lowest">
           <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest leading-relaxed">
-            © 2026 CORPO DE BOMBEIROS MILITAR / 7ª CIA IND - LOGS DE FROTA DIGITAIS - DADOS OPERACIONAIS CONFIDENCIAIS
+            © 2026 CORPO DE BOMBEIROS MILITAR / 6º COB - LOGS DE FROTA DIGITAIS - DADOS OPERACIONAIS CONFIDENCIAIS
           </p>
         </footer>
       </div>

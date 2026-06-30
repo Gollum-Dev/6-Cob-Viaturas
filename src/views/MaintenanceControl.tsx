@@ -2220,9 +2220,8 @@ export default function MaintenanceControl() {
                       className="w-full bg-surface-container-low border border-outline-variant p-3 rounded-lg font-bold text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
                     >
                       <option value="">Selecione...</option>
-                      <option value="ITAJUBA">ITAJUBA</option>
-                      <option value="EXTREMA">EXTREMA</option>
-                      <option value="POUSO ALEGRE">POUSO ALEGRE</option>
+                      <option value="1ª CIA OP">1ª CIA OP</option>
+                      <option value="6COB">6COB</option>
                     </select>
                   </div>
 

@@ -101,7 +101,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                user.role === UserRole.OPERACIONAL ? 'Operacional' : user.role}
             </span>
             <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 truncate">
-              {user.unit || '7ª CIA IND'}
+              {user.unit || '6º COB'}
             </span>
           </div>
         </div>

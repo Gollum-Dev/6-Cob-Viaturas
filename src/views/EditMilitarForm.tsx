@@ -15,7 +15,7 @@ export default function EditMilitarForm() {
   const [fullName, setFullName] = useState('');
   const [rank, setRank] = useState('SD');
   const [role, setRole] = useState<UserRole>(UserRole.OPERACIONAL);
-  const [unit, setUnit] = useState('POUSO ALEGRE');
+  const [unit, setUnit] = useState('6COB');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [cpf, setCpf] = useState('');
@@ -63,7 +63,7 @@ export default function EditMilitarForm() {
       setFullName(userToEdit.fullName || '');
       setRank(userToEdit.rank || 'SD');
       setRole(userToEdit.role || UserRole.OPERACIONAL);
-      setUnit(userToEdit.unit || 'POUSO ALEGRE');
+      setUnit(userToEdit.unit || '6COB');
       setPassword(''); // Deixa em branco para não mostrar a senha atual
       setPhone(userToEdit.phone ? formatPhone(userToEdit.phone) : '');
       setCpf(userToEdit.cpf ? formatCPF(userToEdit.cpf) : '');
@@ -257,10 +257,8 @@ export default function EditMilitarForm() {
                     disabled={currentUser?.role !== UserRole.ADMINISTRADOR && currentUser?.role !== UserRole.DESENVOLVEDOR}
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner appearance-none cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
                   >
-                    <option value="POUSO ALEGRE">POUSO ALEGRE</option>
-                    <option value="ITAJUBA">ITAJUBA</option>
-                    <option value="EXTREMA">EXTREMA</option>
-                    <option value="PARAISOPOLIS">PARAISOPOLIS</option>
+                    <option value="6COB">6COB</option>
+                    <option value="1ª CIA OP">1ª CIA OP</option>
                   </select>
                 </div>
 

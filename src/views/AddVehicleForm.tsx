@@ -32,7 +32,7 @@ export default function AddVehicleForm() {
     prefix: '',
     plate: '',
     type: 'SALVAMENTO',
-    unit: user?.role === UserRole.ADMINISTRADOR ? 'ITAJUBA' : user?.unit || 'ITAJUBA',
+    unit: (user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) ? '1ª CIA OP' : user?.unit || '1ª CIA OP',
     odometer: 0,
     lastOilChangeDate: '',
     nextOilChangeDate: '',
@@ -182,14 +182,12 @@ export default function AddVehicleForm() {
                   <select 
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    disabled={user?.role !== UserRole.ADMINISTRADOR}
+                    disabled={user?.role !== UserRole.ADMINISTRADOR && user?.role !== UserRole.DESENVOLVEDOR}
                     className="w-full bg-surface-container-low border border-outline-variant p-4 rounded-lg font-bold text-on-surface focus:outline-none focus:border-primary appearance-none disabled:opacity-75 disabled:cursor-not-allowed"
                     required
                   >
-                    <option value="ITAJUBA">ITAJUBA</option>
-                    <option value="POUSO ALEGRE">POUSO ALEGRE</option>
-                    <option value="EXTREMA">EXTREMA</option>
-                    <option value="PARAISOPOLIS">PARAISOPOLIS</option>
+                    <option value="1ª CIA OP">1ª CIA OP</option>
+                    <option value="6COB">6COB</option>
                   </select>
                 </div>
 

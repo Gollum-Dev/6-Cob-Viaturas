@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-const supabaseUrl = 'https://ufkyzxjrgqahpzuwlgws.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVma3l6eGpyZ3FhaHB6dXdsZ3dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTk5OTAsImV4cCI6MjA5NDUzNTk5MH0.sCJkMEMUiCeXoqUBjEuDIp_hNCa8K1LGO735MffC218';
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function test() {

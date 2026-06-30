@@ -96,7 +96,7 @@ export default function Login() {
                 </div>
               </div>
               <h1 className="text-2xl font-black text-on-surface uppercase tracking-tight mb-2">
-                7ª CIA IND
+                6º COB
               </h1>
               <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.3em] opacity-60">Sistema de Gestão Operacional</p>
             </div>
