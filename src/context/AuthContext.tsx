@@ -237,24 +237,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (
-    password: string, 
-    role: UserRole, 
-    milNumber: string, 
-    rank: string, 
-    name: string, 
+    password: string,
+    role: UserRole,
+    milNumber: string,
+    rank: string,
+    name: string,
     unit: string,
     phone?: string,
     cpf?: string,
     rg?: string,
     birthDate?: string,
     fullName?: string
-  ) => {
+  ): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.rpc('create_military_user', {
+      const email = milNumberToEmail(milNumber);
+      
+      // Passo 1: Cria o usuário na tabela de autenticação usando a API oficial (Gera o Hash de Senha corretamente no formato Argon2)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (authError) {
+        console.error('Error in signUp:', authError.message);
+        return false;
+      }
+
+      if (!authData.user) {
+        return false;
+      }
+
+      // Passo 2: Confirma o e-mail do usuário e cria o perfil na tabela public.users
+      const { error: rpcError } = await supabase.rpc('setup_new_military_user', {
+        p_user_id: authData.user.id,
         p_mil_number: milNumber,
-        p_password: password,
         p_role: role,
-        p_rank: rank ? rank.toUpperCase() : '',
+        p_rank: rank,
         p_name: name,
         p_unit: unit,
         p_phone: phone || null,
@@ -264,18 +282,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         p_full_name: fullName || null
       });
 
-      if (error) {
-        console.error('Registration failed via RPC:', error);
+      if (rpcError) {
+        console.error('Error creating user profile:', rpcError.message);
+        // Fallback: Tenta deletar o auth user se o profile falhar
+        await supabase.rpc('delete_military_user', { p_user_id: authData.user.id });
         return false;
       }
 
-      // Atualiza a lista local de usuários se for administrador ou desenvolvedor
+      // Adiciona o novo usuário na lista de registeredUsers se for admin
       if (user?.role === UserRole.ADMINISTRADOR || user?.role === UserRole.DESENVOLVEDOR) {
-        setRegisteredUsers(prev => [...prev, {
-          id: data,
+        const newUser = {
+          id: authData.user.id,
           role,
           milNumber,
-          rank: rank ? rank.toUpperCase() : '',
+          rank,
           name,
           unit,
           phone,
@@ -283,7 +303,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           rg,
           birthDate,
           fullName,
-        }]);
+        };
+        setRegisteredUsers(prev => [...prev, newUser]);
       }
 
       return true;
