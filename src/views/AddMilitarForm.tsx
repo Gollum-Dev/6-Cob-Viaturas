@@ -62,12 +62,12 @@ export default function AddMilitarForm() {
     }
 
     setIsSubmitting(true);
-    const success = await register(password, role, milNumber, rank, name, unit, phone || undefined, cpf || undefined, rg || undefined, birthDate || undefined, fullName || undefined);
+    const result = await register(password, role, milNumber, rank, name, unit, phone || undefined, cpf || undefined, rg || undefined, birthDate || undefined, fullName || undefined);
     
-    if (success) {
+    if (result.success) {
       navigate('/militares');
     } else {
-      setError('Ocorreu um erro ao cadastrar o militar. Verifique se ele já está cadastrado.');
+      setError(`Erro: ${result.error || 'Ocorreu um erro desconhecido ao cadastrar o militar.'}`);
       setIsSubmitting(false);
     }
   };

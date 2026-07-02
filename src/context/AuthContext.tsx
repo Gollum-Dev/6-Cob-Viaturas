@@ -18,8 +18,9 @@ interface AuthContextType {
     phone?: string,
     cpf?: string,
     rg?: string,
-    birthDate?: string
-  ) => Promise<boolean>;
+    birthDate?: string,
+    fullName?: string
+  ) => Promise<{ success: boolean, error?: string }>;
   updateUser: (id: string, updates: Partial<User>) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
   updatePassword: (password: string) => Promise<{ success: boolean; error: string | null }>;
@@ -248,7 +249,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     rg?: string,
     birthDate?: string,
     fullName?: string
-  ): Promise<boolean> => {
+  ): Promise<{ success: boolean, error?: string }> => {
     try {
       const email = milNumberToEmail(milNumber);
       
@@ -260,11 +261,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (authError) {
         console.error('Error in signUp:', authError.message);
-        return false;
+        return { success: false, error: authError.message };
       }
 
       if (!authData.user) {
-        return false;
+        return { success: false, error: 'Erro ao obter dados do usuário após o cadastro.' };
       }
 
       // Passo 2: Confirma o e-mail do usuário e cria o perfil na tabela public.users
@@ -286,7 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error creating user profile:', rpcError.message);
         // Fallback: Tenta deletar o auth user se o profile falhar
         await supabase.rpc('delete_military_user', { p_user_id: authData.user.id });
-        return false;
+        return { success: false, error: `Erro no banco de dados (RPC): ${rpcError.message}` };
       }
 
       // Adiciona o novo usuário na lista de registeredUsers se for admin
@@ -307,10 +308,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRegisteredUsers(prev => [...prev, newUser]);
       }
 
-      return true;
-    } catch (err) {
+      return { success: true };
+    } catch (err: any) {
       console.error(err);
-      return false;
+      return { success: false, error: err.message || 'Erro inesperado durante o cadastro.' };
     }
   };
 
