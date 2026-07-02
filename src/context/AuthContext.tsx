@@ -253,11 +253,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const email = milNumberToEmail(milNumber);
       
+      // Guarda a sessão do administrador atual para não ser deslogado
+      const { data: { session: adminSession } } = await supabase.auth.getSession();
+      
       // Passo 1: Cria o usuário na tabela de autenticação usando a API oficial (Gera o Hash de Senha corretamente no formato Argon2)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
       });
+
+      // Restaura imediatamente a sessão do administrador, caso o signUp tenha feito o auto-login do novo usuário
+      if (adminSession) {
+        await supabase.auth.setSession({
+          access_token: adminSession.access_token,
+          refresh_token: adminSession.refresh_token,
+        });
+      }
 
       if (authError) {
         console.error('Error in signUp:', authError.message);
