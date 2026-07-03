@@ -50,7 +50,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="px-6 mb-10 flex justify-between items-center">
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-black text-white tracking-tight drop-shadow-sm uppercase truncate">
-            {user?.unit || '7ª Cia Ind'}
+            {user?.unit || '6º COB'}
           </h1>
           <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mt-1">Gestão Operacional</p>
         </div>

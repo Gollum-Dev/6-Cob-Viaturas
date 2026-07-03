@@ -229,7 +229,7 @@ export default function Home() {
               {getGreeting()}, {user?.rank} {user?.name}
             </h2>
             <p className="text-xs sm:text-sm text-slate-200 max-w-2xl font-medium tracking-wide leading-relaxed">
-              Seja bem-vindo à Central Operacional da 7ª Cia Ind. Selecione um dos atalhos rápidos abaixo para acessar e gerenciar as funções administrativas e operacionais disponíveis para o seu perfil.
+              Seja bem-vindo à Central Operacional do 6º COB. Selecione um dos atalhos rápidos abaixo para acessar e gerenciar as funções administrativas e operacionais disponíveis para o seu perfil.
             </p>
           </div>
           
