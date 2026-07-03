@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
-import { supabase } from '../lib/supabase';
-
+import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 // We map registered users locally for the UI (like a user management screen) if needed,
 // but for true security, fetching users should happen on the backend or via RLS policies.
 interface AuthContextType {
@@ -253,22 +253,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const email = milNumberToEmail(milNumber);
       
-      // Guarda a sessão do administrador atual para não ser deslogado
-      const { data: { session: adminSession } } = await supabase.auth.getSession();
+      // Create a secondary client so we don't log out the admin during signUp
+      const adminAuthClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      });
       
       // Passo 1: Cria o usuário na tabela de autenticação usando a API oficial (Gera o Hash de Senha corretamente no formato Argon2)
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await adminAuthClient.auth.signUp({
         email,
         password,
       });
-
-      // Restaura imediatamente a sessão do administrador, caso o signUp tenha feito o auto-login do novo usuário
-      if (adminSession) {
-        await supabase.auth.setSession({
-          access_token: adminSession.access_token,
-          refresh_token: adminSession.refresh_token,
-        });
-      }
 
       if (authError) {
         console.error('Error in signUp:', authError.message);
